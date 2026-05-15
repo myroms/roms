@@ -2460,7 +2460,7 @@
      &          'horizontal decorrelation x-scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
@@ -2469,7 +2469,7 @@
      &          'horizontal decorrelation y-scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # else
@@ -2501,7 +2501,7 @@
      &            'horizontal decorrelation x-scale'
         Vinfo( 3)='meter'
         status=def_var(ng, model, ncid, varid, NF_TYPE,                 &
-     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 2, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
@@ -2543,7 +2543,7 @@
       Vinfo( 3)='meter'
 #  ifdef MULTI_SCALE_B
       status=def_var(ng, model, ncid, varid, NF_TYPE,                   &
-     &               2, (/statedim, scaledim, brydim/), Aval,           &
+     &               3, (/statedim, scaledim, brydim/), Aval,           &
      &               Vinfo, ncname, SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  else
@@ -6054,7 +6054,7 @@
      &          'horizontal decorrelation x-scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
-     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
@@ -6063,7 +6063,7 @@
      &          'horizontal decorrelation y-scale'
       Vinfo( 3)='meter'
       status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
-     &               1, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
+     &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  else
@@ -6095,7 +6095,7 @@
      &            'horizontal decorrelation x-scale'
         Vinfo( 3)='meter'
         status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
-     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 2, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
@@ -6104,7 +6104,7 @@
      &            'horizontal decorrelation y-scale'
         Vinfo( 3)='meter'
         status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,            &
-     &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
+     &                 2, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  else
@@ -6137,7 +6137,7 @@
       Vinfo( 3)='meter'
       status=def_var(ng, model, pioFile, pioVar, PIO_TYPE,              &
 #   ifdef MULTI_SCALE_B
-     &               2, (/statedim, scaledim, brydim/), Aval,           &
+     &               3, (/statedim, scaledim, brydim/), Aval,           &
      &               Vinfo, ncname, SetParAccess = .FALSE.)
 #   else
      &               2, (/statedim, brydim/), Aval, Vinfo, ncname,      &

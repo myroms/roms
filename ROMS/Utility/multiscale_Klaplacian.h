@@ -127,7 +127,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -224,23 +226,6 @@
      &                            tl_FE(i,j+1)-tl_FE(i,j))
         END DO
       END DO
-
-#ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    Awrk)
-!^
-      CALL mp_exchange2d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_Awrk)
-#endif
 !
 !  Load K-Laplacian solution.
 !
@@ -251,6 +236,21 @@
           tl_A(i,j)=tl_Awrk(i,j)
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r2d_tl
@@ -349,7 +349,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -367,6 +369,20 @@
 !
 !  Adjoint of load K-Laplacian solution.
 !
+#ifdef DISTRIBUTE
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+!
+#endif
       DO j=Jstr,Jend
         DO i=Istr,Iend
 !^        tl_A(i,j)=tl_Awrk(i,j)
@@ -375,23 +391,6 @@
           ad_A(i,j)=0.0_r8
         END DO
       END DO
-
-#ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
-!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Awrk)
-!^
-      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_Awrk)
-#endif
 !
 !  Adjoint of compute K-Laplacian.
 !
@@ -409,7 +408,7 @@
         END DO
       END DO
 !
-!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!  Adjoint of compute XI- and ETA-components of diffusive flux.
 !
       DO j=Jstr,Jend+1
         DO i=Istr,Iend
@@ -449,7 +448,7 @@
         END DO
       END DO
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -473,6 +472,7 @@
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
+!
 #endif
 !^    CALL dabc_r2d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj,                           &
@@ -566,7 +566,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
@@ -658,23 +660,6 @@
      &                            tl_FE(i,j+1)-tl_FE(i,j))
         END DO
       END DO
-
-#ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    Awrk)
-!^
-      CALL mp_exchange2d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_Awrk)
-#endif
 !
 !  Load K-Laplacian solution.
 !
@@ -685,6 +670,21 @@
           tl_A(i,j)=tl_Awrk(i,j)
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u2d_tl
@@ -776,7 +776,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
@@ -794,6 +796,20 @@
 !
 !  Adjoint of load K-Laplacian solution.
 !
+#ifdef DISTRIBUTE
+!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_Awrk)
+!
+#endif
       DO j=Jstr,Jend
         DO i=IstrU,Iend
 !^        tl_A(i,j)=tl_Awrk(i,j)
@@ -802,23 +818,6 @@
           ad_A(i,j)=0.0_r8
         END DO
       END DO
-
-#ifdef DISTRIBUTE
-!
-!  Adjoint of Exchange boundary data.
-!
-!^    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj,                           &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Awrk)
-!^
-      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_Awrk)
-#endif
 !
 !  Adjoint of compute K-Laplacian.
 !
@@ -836,7 +835,7 @@
         END DO
       END DO
 !
-!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!  Adjoint of compute XI- and ETA-components of diffusive flux.
 !
       DO j=Jstr,Jend+1
         DO i=IstrU,Iend
@@ -871,7 +870,7 @@
         END DO
       END DO
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
@@ -988,7 +987,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -1081,23 +1082,6 @@
      &                            tl_FE(i,j)-tl_FE(i,j-1))
         END DO
       END DO
-
-#ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^      CALL mp_exchange2d (ng, tile, model, 1,                         &
-!^   &                      LBi, UBi, LBj, UBj,                         &
-!^   &                      NghostPoints,                               &
-!^   &                      EWperiodic(ng), NSperiodic(ng),             &
-!^   &                      Awrk)
-!^
-        CALL mp_exchange2d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      tl_Awrk)
-#endif
 !
 !  Load K-Laplacian solution.
 !
@@ -1108,6 +1092,21 @@
           tl_A(i,j)=tl_Awrk(i,j)
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^      CALL mp_exchange2d (ng, tile, model, 1,                         &
+!^   &                      LBi, UBi, LBj, UBj,                         &
+!^   &                      NghostPoints,                               &
+!^   &                      EWperiodic(ng), NSperiodic(ng),             &
+!^   &                      A)
+!^
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
+     &                      EWperiodic(ng), NSperiodic(ng),             &
+     &                      tl_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v2d_tl
@@ -1199,7 +1198,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -1214,26 +1215,23 @@
           Khy(i,j)=0.5_r8*cffy/REAL(Mlap-2,r8)
         END DO
       END DO
-
+!
+!  Adjoint of load K-Laplacian solution.
+!
 #ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
 !^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Awrk)
+!^   &                    tl_A)
 !^
       CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
+!
 #endif
-!
-!  Adjoint of load K-Laplacian solution.
-!
       DO j=JstrV,Jend
         DO i=Istr,Iend
 !^        tl_A(i,j)=tl_Awrk(i,j)
@@ -1259,7 +1257,7 @@
         END DO
       END DO
 !
-!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!  Adjoint of compute XI- and ETA-components of diffusive flux.
 !
       DO j=JstrV-1,Jend
         DO i=Istr,Iend
@@ -1294,7 +1292,7 @@
         END DO
       END DO
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -1305,6 +1303,7 @@
         END DO
       END DO
 #ifdef DISTRIBUTE
+!
 !^    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -1317,6 +1316,7 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_A)
 #endif
+!
 !^    CALL dabc_v2d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    tl_A)
@@ -1419,7 +1419,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -1471,9 +1473,11 @@
 
 # ifdef GEOPOTENTIAL_HCONV
 !
-!  Diffusion along geopotential surfaces: Compute horizontal and
-!  vertical gradients.  Notice the recursive blocking sequence.  The
-!  vertical placement of the gradients is:
+!  Diffusion along geopotential surfaces.
+!  =====================================
+!
+!  Compute horizontal and vertical gradients. Notice the recursive
+!  blocking sequence. The vertical placement of the gradients is:
 !
 !        dAdx,dAde(:,:,k1) k     rho-points
 !        dAdx,dAde(:,:,k2) k+1   rho-points
@@ -1512,6 +1516,7 @@
 #  endif
             END DO
           END DO
+!
           DO j=Jstr,Jend+1
             DO i=Istr,Iend
               cff=0.5_r8*(GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
@@ -1540,6 +1545,7 @@
             END DO
           END DO
         END IF
+!
         IF ((k.eq.0).or.(k.eq.N(ng))) THEN
           DO j=Jstr-1,Jend+1
             DO i=Istr-1,Iend+1
@@ -1663,6 +1669,8 @@
             END DO
           END IF
 !
+!  Compute horizontal K-Laplacian operator.
+!
           DO j=Jstr,Jend
             DO i=Istr,Iend
 !^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
@@ -1685,8 +1693,10 @@
 #else
 
 !
-!  Diffusion along S-coordinates: compute XI- and ETA-components of
-!  diffusive flux.
+!  Diffusion along S-coordinates.
+!  =============================
+!
+!  Compute XI- and ETA-components of diffusive flux.
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
@@ -1723,6 +1733,8 @@
           END DO
         END DO
 !
+!  Compute horizontal K-Laplacian operator.
+!
         DO j=Jstr,Jend
           DO i=Istr,Iend
 !^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
@@ -1738,23 +1750,6 @@
         END DO
       END DO
 # endif
-
-# ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    Awrk)
-!^
-      CALL mp_exchange3d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    tl_Awrk)
-# endif
 !
 !  Load K-Laplacian solution.
 !
@@ -1767,6 +1762,21 @@
           END DO
         END DO
       END DO
+
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r3d_tl
@@ -1872,7 +1882,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -1890,6 +1902,20 @@
 !
 !  Adjoint of load K-Laplacian solution.
 !
+# ifdef DISTRIBUTE
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+!
+# endif
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -1901,28 +1927,13 @@
         END DO
       END DO
 
-# ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
-!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Awrk)
-!^
-      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       NghostPoints,                              &
-     &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_Awrk)
-# endif
-
 # ifdef GEOPOTENTIAL_HCONV
 !
-!  Diffusion along geopotential surfaces: Compute horizontal and
-!  vertical gradients.  Notice the recursive blocking sequence.  The
-!  vertical placement of the gradients is:
+!  Adjoint of diffusion along geopotential surfaces.
+!  ================================================
+!
+!  Compute horizontal and vertical gradients. Notice the recursive
+!  blocking sequence. The vertical placement of the gradients is:
 !
 !        dAdx,dAde(:,:,k1) k     rho-points
 !        dAdx,dAde(:,:,k2) k+1   rho-points
@@ -2000,7 +2011,7 @@
 !
         IF (k.gt.0) THEN
 !
-!  Compute adjoint K-Laplacian geopotential operator.
+!  Adjoint of compute K-Laplacian geopotential operator.
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
@@ -2022,7 +2033,7 @@
             END DO
           END DO
 !
-!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  Adjoint of compute components of the rotated A flux (A m3/s) along
 !  geopotential surfaces.
 !
           IF (k.lt.N(ng)) THEN
@@ -2234,7 +2245,10 @@
 
 # else
 !
-!  Compute adjoint horizontal K-Laplacian operator.
+!  Adjoint of diffusion along S-coordinates.
+!  ========================================
+!
+!  Adjoint of compute horizontal K-Laplacian operator.
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
@@ -2252,7 +2266,7 @@
           END DO
         END DO
 !
-!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!  Adjoint of compute XI- and ETA-components of diffusive flux.
 !
         DO j=Jstr,Jend+1
           DO i=Istr,Iend
@@ -2294,7 +2308,7 @@
       END DO
 # endif
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO k=1,N(ng)
         DO j=Jstr-1,Jend+1
@@ -2419,7 +2433,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
@@ -2471,9 +2487,11 @@
 
 # ifdef GEOPOTENTIAL_HCONV
 !
-!  Diffusion along geopotential surfaces: Compute horizontal and
-!  vertical gradients.  Notice the recursive blocking sequence.  The
-!  vertical placement of the gradients is:
+!  Diffusion along geopotential surfaces.
+!  =====================================
+!
+!  Compute horizontal and vertical gradients. Notice the recursive
+!  blocking sequence. The vertical placement of the gradients is:
 !
 !        dZdx_r,dAdx,dAde(:,:,k1) k     rho-points
 !        dZdx_r,dAdx,dAde(:,:,k2) k+1   rho-points
@@ -2693,6 +2711,8 @@
             END DO
           END IF
 !
+!  Compute horizontal K-Laplacian operator.
+!
           DO j=Jstr,Jend
             DO i=IstrU,Iend
 !^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
@@ -2718,8 +2738,10 @@
 # else
 
 !
-!  Diffusion along S-coordinates: compute XI- and ETA-components of
-!  diffusive flux.
+!  Diffusion along S-coordinates.
+!  =============================
+!
+!  Compute XI- and ETA-components of diffusive flux.
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
@@ -2751,6 +2773,8 @@
           END DO
         END DO
 !
+!  Compute horizontal K-Laplacian operator.
+!
         DO j=Jstr,Jend
           DO i=IstrU,Iend
 !^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
@@ -2766,23 +2790,6 @@
         END DO
       END DO
 # endif
-
-# ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^      CALL mp_exchange3d (ng, tile, model, 1,                         &
-!^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-!^   &                      NghostPoints,                               &
-!^   &                      EWperiodic(ng), NSperiodic(ng),             &
-!^   &                      Awrk(:,:,:))
-!^
-        CALL mp_exchange3d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      tl_Awrk(:,:,:))
-# endif
 !
 !  Load K-Laplacian solution.
 !
@@ -2795,6 +2802,21 @@
           END DO
         END DO
       END DO
+
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u3d_tl
@@ -2895,7 +2917,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=Jstr-1,Jend+1
         DO i=IstrU-1,Iend+1
@@ -2913,6 +2937,20 @@
 !
 !  Adjoint of load K-Laplacian solution.
 !
+# ifdef DISTRIBUTE
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+!
+# endif
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
@@ -2924,28 +2962,13 @@
         END DO
       END DO
 
-# ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
-!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
-!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    NghostPoints,                                 &
-!^   &                    EWperiodic(ng), NSperiodic(ng),               &
-!^   &                    tl_Awrk)
-!^
-      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
-     &                       NghostPoints,                              &
-     &                       EWperiodic(ng), NSperiodic(ng),            &
-     &                       ad_Awrk)
-# endif
-
 # ifdef GEOPOTENTIAL_HCONV
 !
-!  Diffusion along geopotential surfaces: Compute horizontal and
-!  vertical gradients.  Notice the recursive blocking sequence.  The
-!  vertical placement of the gradients is:
+!  Adjoint of diffusion along geopotential surfaces.
+!  ================================================
+!
+!  Compute horizontal and vertical gradients. Notice the recursive
+!  blocking sequence. The vertical placement of the gradients is:
 !
 !        dZdx_r,dAdx,dAde(:,:,k1) k     rho-points
 !        dZdx_r,dAdx,dAde(:,:,k2) k+1   rho-points
@@ -3038,7 +3061,7 @@
 !
         IF (k.gt.0) THEN
 !
-!  Compute adjoint geopotential K-Laplacian operator.
+!  Adjoint of compute geopotential K-Laplacian operator.
 !
           DO j=Jstr,Jend
             DO i=IstrU,Iend
@@ -3062,7 +3085,7 @@
             END DO
           END DO
 !
-!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  Adjoint of compute components of rotated A flux (A m3/s) along
 !  geopotential surfaces.
 !
           IF (k.lt.N(ng)) THEN
@@ -3280,7 +3303,10 @@
 # else
 
 !
-!  Compute horizontal H-Laplacian operator.
+!  Adjoint of diffusion along S-coordinates.
+!  ========================================
+!
+!  Adjoint of compute horizontal K-Laplacian operator.
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
@@ -3298,7 +3324,7 @@
           END DO
         END DO
 !
-!  Compute XI- and ETA-components of the adjoint diffusive flux.
+!  Adjoint of compute XI- and ETA-components adjoint diffusive flux.
 !
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
@@ -3335,7 +3361,7 @@
       END DO
 # endif
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO k=1,N(ng)
         DO j=Jstr-1,Jend+1
@@ -3460,7 +3486,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -3733,6 +3761,8 @@
             END DO
           END IF
 !
+!  Compute horizontal K-Laplacian operator.
+!
           DO j=JstrV,Jend
             DO i=Istr,Iend
 !^            Awrk(i,j,k)=Awrk(i,j,k)-                                  &
@@ -3790,6 +3820,8 @@
           END DO
         END DO
 !
+!  Compute horizontal K-Laplacian operator.
+!
         DO j=JstrV,Jend
           DO i=Istr,Iend
 !^          Awrk(i,j,k)=Awrk(i,j,k)-                                    &
@@ -3805,23 +3837,6 @@
         END DO
       END DO
 # endif
-
-# ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^      CALL mp_exchange3d (ng, tile, model, 1,                         &
-!^   &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-!^   &                      NghostPoints,                               &
-!^   &                      EWperiodic(ng), NSperiodic(ng),             &
-!^   &                      Awrk(:,:,:))
-!^
-        CALL mp_exchange3d (ng, tile, model, 1,                         &
-     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
-     &                      NghostPoints,                               &
-     &                      EWperiodic(ng), NSperiodic(ng),             &
-     &                      tl_Awrk(:,:,:))
-# endif
 !
 !  Load K-Laplacian solution.
 !
@@ -3834,6 +3849,21 @@
           END DO
         END DO
       END DO
+
+# ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v3d_tl
@@ -3934,7 +3964,9 @@
       END DO
 !
 !  Set horizontal diffusion coefficients (Khx, Khy) with units of
-!  correlation length squared.
+!  correlation length squared (Equation 44, Weaver and Mirouze, 2013).
+!  For d=2, kappa=D*D/(2*(M-2)), where D is the Daley length scale and
+!  d is the space dimension.
 !
       DO j=JstrV-1,Jend+1
         DO i=Istr-1,Iend+1
@@ -3952,21 +3984,7 @@
 !
 !  Adjoint of load K-Laplacian solution.
 !
-      DO k=1,N(ng)
-        DO j=JstrV,Jend
-          DO i=Istr,Iend
-!^          tl_A(i,j,k)=tl_Awrk(i,j,k)
-!^
-            ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
-            ad_A(i,j,k)=0.0_r8
-          END DO
-        END DO
-      END DO
-
 # ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
 !^    CALL mp_exchange3d (ng, tile, model, 1,                           &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !^   &                    NghostPoints,                                 &
@@ -3978,13 +3996,26 @@
      &                       NghostPoints,                              &
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_Awrk)
+!
 # endif
+      DO k=1,N(ng)
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!^          tl_A(i,j,k)=tl_Awrk(i,j,k)
+!^
+            ad_Awrk(i,j,k)=ad_Awrk(i,j,k)+ad_A(i,j,k)
+            ad_A(i,j,k)=0.0_r8
+          END DO
+        END DO
+      END DO
 
 # ifdef GEOPOTENTIAL_HCONV
 !
-!  Diffusion along geopotential surfaces: Compute horizontal and
-!  vertical gradients.  Notice the recursive blocking sequence.  The
-!  vertical placement of the gradients is:
+!  Adjoint of diffusion along geopotential surfaces.
+!  ================================================
+!
+!  Compute horizontal and vertical gradients. Notice the recursive
+!  blocking sequence. The vertical placement of the gradients is:
 !
 !        dZde_r,dAdx,dAde(:,:,k1) k     rho-points
 !        dZde_r,dAdx,dAde(:,:,k2) k+1   rho-points
@@ -4077,7 +4108,7 @@
 !
         IF (k.gt.0) THEN
 !
-!  Compute adjoint geopotential K-Laplacian operator.
+!  Adjoint of compute geopotential K-Laplacian operator.
 !
           DO j=JstrV,Jend
             DO i=Istr,Iend
@@ -4100,7 +4131,7 @@
             END DO
           END DO
 !
-!  Compute components of the adjoint rotated A flux (A m3/s) along
+!  Adjoint of compute components of rotated A flux (A m3/s) along
 !  geopotential surfaces.
 !
           IF (k.lt.N(ng)) THEN
@@ -4318,7 +4349,10 @@
 # else
 
 !
-!  Compute adjoint K-Laplacian operator.
+!  Adjoint of diffusion along S-coordinates.
+!  ========================================
+!
+!  Adjoint of compute K-Laplacian operator.
 !
       DO k=1,N(ng)
         DO j=JstrV,Jend
@@ -4336,7 +4370,7 @@
           END DO
         END DO
 !
-!  Compute XI- and ETA-components of diffusive flux.
+!  Adjoint of compute XI- and ETA-components of diffusive flux.
 !
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
@@ -4373,7 +4407,7 @@
       END DO
 # endif
 !
-!  Set adjoint initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       DO k=1,N(ng)
         DO j=JstrV-1,Jend+1
@@ -4579,7 +4613,7 @@
      &                          LBij, UBij,                             &
      &                          tl_A)
       END SELECT
-!
+
 # ifdef DISTRIBUTE
 !
 !^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
@@ -4717,7 +4751,7 @@
 !
       END SELECT
 !
-!  Compute K-Laplacian.
+!  Compute lateral boundary edge K-Laplacian.
 !
       SELECT CASE (ctype)
 !
@@ -4808,8 +4842,6 @@
       END IF
 
 # ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
 !
 !^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
 !^   &                        LBij, UBij,                               &
@@ -4968,11 +5000,10 @@
             Khx(i)=cffx/REAL(2*Mlap-3,r8)
           END DO
       END SELECT
-
+!
+!  Adjoint of load K-Laplacian solution.
+!
 # ifdef DISTRIBUTE
-!
-!  Adjoint of exchange boundary data.
-!
 !^    CALL mp_exchange2d_bry (ng, tile, model, 1, ibry,                 &
 !^   &                        LBij, UBij,                               &
 !^   &                        NghostPoints,                             &
@@ -4984,10 +5015,8 @@
      &                           NghostPoints,                          &
      &                           EWperiodic(ng), NSperiodic(ng),        &
      &                           ad_A)
+!
 # endif
-!
-!  Adjoint of load K-Laplacian solution.
-!
       IF (Lboundary(ibry)) THEN
         SELECT CASE (ibry)
           CASE (iwest, ieast)
@@ -5007,7 +5036,7 @@
         END SELECT
       END IF
 !
-!  Adjoint of compute K-Laplacian.
+!  Adjoint of compute lateral boundary edge K-Laplacian.
 !
       SELECT CASE (ctype)
 !
@@ -5435,7 +5464,7 @@
      &                          LBij, UBij, 1, N(ng),                   &
      &                          tl_A)
       END SELECT
-!
+
 #  ifdef DISTRIBUTE
 !
 !^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
@@ -5588,7 +5617,7 @@
 !
       END SELECT
 !
-!  Compute K-Laplacian.
+!  Compute lateral boundary edge K-Laplacian.
 !
       SELECT CASE (ctype)
 !
@@ -5670,23 +5699,6 @@
           END IF
 !
       END SELECT
-
-#  ifdef DISTRIBUTE
-!
-!  Exchange boundary data.
-!
-!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
-!^   &                        LBij, UBij, 1, N(ng),                     &
-!^   &                        NghostPoints,                             &
-!^   &                        EWperiodic(ng), NSperiodic(ng),           &
-!^   &                        Awrk)
-!^
-      CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
-     &                        LBij, UBij, 1, N(ng),                     &
-     &                        NghostPoints,                             &
-     &                        EWperiodic(ng), NSperiodic(ng),           &
-     &                        tl_Awrk)
-#  endif
 !
 !  Load K-Laplacian solution.
 !
@@ -5709,6 +5721,21 @@
           END DO
         END IF
       END IF
+
+#  ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        Awrk)
+!^
+      CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+     &                        LBij, UBij, 1, N(ng),                     &
+     &                        NghostPoints,                             &
+     &                        EWperiodic(ng), NSperiodic(ng),           &
+     &                        tl_Awrk)
+#  endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_b2d_tl
@@ -5851,8 +5878,22 @@
           END DO
       END SELECT
 !
-!  Load K-Laplacian solution.
+!  Adjoint of load K-Laplacian solution.
 !
+#  ifdef DISTRIBUTE
+!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
+!^   &                        LBij, UBij, 1, N(ng),                     &
+!^   &                        NghostPoints,                             &
+!^   &                        EWperiodic(ng), NSperiodic(ng),           &
+!^   &                        tl_Awrk)
+!^
+      CALL ad_mp_exchange3d_bry (ng, tile, model, 1, ibry,              &
+     &                           LBij, UBij, 1, N(ng),                  &
+     &                           NghostPoints,                          &
+     &                           EWperiodic(ng), NSperiodic(ng),        &
+     &                           ad_A)
+!
+#  endif
       IF (Lboundary(ibry)) THEN
         IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
           DO k=1,N(ng)
@@ -5874,25 +5915,8 @@
           END DO
         END IF
       END IF
-
-#  ifdef DISTRIBUTE
 !
-!  Adjoint of exchange boundary data.
-!
-!^    CALL mp_exchange3d_bry (ng, tile, model, 1, ibry,                 &
-!^   &                        LBij, UBij, 1, N(ng),                     &
-!^   &                        NghostPoints,                             &
-!^   &                        EWperiodic(ng), NSperiodic(ng),           &
-!^   &                        tl_Awrk)
-!^
-      CALL ad_mp_exchange3d_bry (ng, tile, model, 1, ibry,              &
-     &                           LBij, UBij, 1, N(ng),                  &
-     &                           NghostPoints,                          &
-     &                           EWperiodic(ng), NSperiodic(ng),        &
-     &                           ad_A)
-#  endif
-!
-!  Adjoint of compute K-Laplacian.
+!  Adjoint of compute lateral boundary edge K-Laplacian.
 !
       SELECT CASE (ctype)
 !
@@ -6110,7 +6134,7 @@
 !
       END SELECT
 !
-!  Set adjoint operator initial conditions.
+!  Adjoint of set operator initial conditions.
 !
       IF (Lboundary(ibry)) THEN
         IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN

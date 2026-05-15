@@ -819,16 +819,16 @@
      &                         ad_ustr(:,:,:,Linp),                     &
      &                         ad_vstr(:,:,:,Linp))
 # endif
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrT,JendT
             DO i=IstrP,IendT
-              ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)*HnormSUS(i,j)
+              ad_ustr(i,j,ir,Linp)=HnormSUS(i,j)*ad_ustr(i,j,ir,Linp)
             END DO
           END DO
 !
           DO j=JstrP,JendT
             DO i=IstrT,IendT
-              ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)*HnormSVS(i,j)
+              ad_vstr(i,j,ir,Linp)=HnormSVS(i,j)*ad_vstr(i,j,ir,Linp)
             END DO
           END DO
         END DO
@@ -850,11 +850,11 @@
      &                             ad_tflux(:,:,:,Linp,itrc))
 !
 # endif
-            DO k=1,Nfrec(ng)
+            DO ir=1,Nfrec(ng)
               DO j=JstrT,JendT
                 DO i=IstrT,IendT
-                  ad_tflux(i,j,k,Linp,itrc)=ad_tflux(i,j,k,Linp,itrc)*  &
-     &                                      HnormSTF(i,j,itrc)
+                  ad_tflux(i,j,ir,Linp,itrc)=HnormSTF(i,j,itrc)*        &
+     &                                       ad_tflux(i,j,ir,Linp,itrc)
                 END DO
               END DO
             END DO
@@ -902,13 +902,13 @@
 !  Adjoint 3D U-momentum:  Implicit vertical diffusion and
 !                          CG/CI horizontal convolution.
 !
-      CALL self%ad_Vdiff (ng, tile, model, isUvel, u3dvar,              &
-     &                    NVsteps(rec,isUvel)/ifac,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    DTsizeV(rec,isUvel),                          &
-     &                    MIXING(ng) % Kv,                              &
-     &                    ad_u(:,:,:,Linp))
+      CALL self%ad_Vdiff_u3d (ng, tile, model, isUvel,                  &
+     &                        NVsteps(rec,isUvel)/ifac,                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        DTsizeV(rec,isUvel),                      &
+     &                        MIXING(ng) % Kv,                          &
+     &                        ad_u(:,:,:,Linp))
 !
       CALL self%ad_CI_3d (ng, tile, model, isUvel, u3dvar,              &
      &                    ns, NiterCI(ns,ng), ifac, Lweak,              &
@@ -919,13 +919,13 @@
 !  Adjoint 3D V-momentum:  Implicit vertical diffusion and
 !                          CG/CI horizontal convolution.
 !
-      CALL self%ad_Vdiff (ng, tile, model, isVvel, v3dvar,              &
-     &                    NVsteps(rec,isUvel)/ifac,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    DTsizeV(rec,isUvel),                          &
-     &                    MIXING(ng) % Kv,                              &
-     &                    ad_v(:,:,:,Linp))
+      CALL self%ad_Vdiff_v3d (ng, tile, model, isVvel,                  &
+     &                        NVsteps(rec,isUvel)/ifac,                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        DTsizeV(rec,isUvel),                      &
+     &                        MIXING(ng) % Kv,                          &
+     &                        ad_v(:,:,:,Linp))
 !
       CALL self%ad_CI_3d (ng, tile, model, isVvel, v3dvar,              &
      &                    ns, NiterCI(ns,ng), ifac, Lweak,              &
@@ -939,13 +939,13 @@
 
       TRACER_LOOP : DO itrc=1,NT(ng)
         ifield=isTvar(itrc)
-        CALL self%ad_Vdiff (ng, tile, model, ifield, r3dvar,            &
-     &                      NVsteps(rec,ifield)/ifac,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      DTsizeV(rec,ifield),                        &
-     &                      MIXING(ng) % Kv,                            &
-     &                      ad_t(:,:,:,Linp,itrc))
+        CALL self%ad_Vdiff_r3d (ng, tile, model, ifield,                &
+     &                          NVsteps(rec,ifield)/ifac,               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          DTsizeV(rec,ifield),                    &
+     &                          MIXING(ng) % Kv,                        &
+     &                          ad_t(:,:,:,Linp,itrc))
 !
         CALL self%ad_CI_3d (ng, tile, model, ifield, r3dvar,            &
      &                      ns, NiterCI(ns,ng), ifac, Lweak,            &
@@ -1097,18 +1097,18 @@
 !  Adjoint surface momentum stress: CG/CI horizontal convolution.
 !
       IF (.not.Lweak) THEN
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           CALL self%ad_CI_2d (ng, tile, model, isUstr, u2dvar,          &
      &                        ns, NiterCI(ns,ng), ifac, Lweak,          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        ad_ustr(:,:,k,Linp))
+     &                        ad_ustr(:,:,ir,Linp))
 !
           CALL self%ad_CI_2d (ng, tile, model, isVstr, v2dvar,          &
      &                        ns, NiterCI(ns,ng), ifac, Lweak,          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        ad_vstr(:,:,k,Linp))
+     &                        ad_vstr(:,:,ir,Linp))
         END DO
       END IF
 # endif
@@ -1121,12 +1121,12 @@
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
             ifield=isTsur(itrc)
-            DO k=1,Nfrec(ng)
+            DO ir=1,Nfrec(ng)
               CALL self%ad_CI_2d (ng, tile, model, ifield, r2dvar,      &
      &                            ns, NiterCI(ns,ng), ifac, Lweak,      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
-     &                            ad_tflux(:,:,k,Linp,itrc))
+     &                            ad_tflux(:,:,ir,Linp,itrc))
             END DO
           END IF
         END DO
@@ -1517,7 +1517,7 @@
      &                         ad_vstr(:,:,:,Linp))
 !
 # endif
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrT,JendT
             DO i=IstrP,IendT
               ad_ustr(i,j,ir,Linp)=ad_ustr(i,j,ir,Linp)/                &
@@ -1559,7 +1559,7 @@
             fac=1.0_r8/SQRT(GRID(ng)%om_r(i,j)*GRID(ng)%on_r(i,j))
             DO itrc=1,NT(ng)
               IF (Lstflux(itrc,ng)) THEN
-                DO k=1,Nfrec(ng)
+                DO ir=1,Nfrec(ng)
                   ad_tflux(i,j,ir,Linp,itrc)=fac*                       &
      &                                       ad_tflux(i,j,ir,Linp,itrc)
                 END DO

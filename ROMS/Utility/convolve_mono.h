@@ -181,7 +181,9 @@
 #ifdef BALANCE_OPERATOR
           CALL ad_balance (ng, tile, Rini, Rold(ng))
 #endif
+#ifndef DIRAC
           CALL ad_variability (ng, tile, Rold(ng), Lweak)
+#endif
           CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
         END DO
 #ifdef PROFILE
@@ -204,7 +206,9 @@
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
           CALL tl_convolution (ng, tile, Rnew(ng), Lweak, 2)
+#ifndef DIRAC
           CALL tl_variability (ng, tile, Rnew(ng), Lweak)
+#endif
 #ifdef BALANCE_OPERATOR
           CALL tl_balance (ng, tile, Rini, Rnew(ng))
 #endif

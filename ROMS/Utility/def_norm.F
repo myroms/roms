@@ -149,11 +149,25 @@
       ncname=NRM(ifile,ng)%name
 !
       DEFINE : IF (LdefNRM(ifile,ng)) THEN
+        IF (Master) THEN
+          SELECT CASE (ifile)
+            CASE (1)
+              Text='Creating prior B-normalization file:'
+            CASE (2)              
+              Text='Creating model Q-normalization file:'
+            CASE (3)
+              Text='Creating boundary B-normalization file:'
+            CASE (4)
+              Text='Creating forcing B-normalization file:'
+          END SELECT          
+          WRITE (stdout,5) TRIM(Text), TRIM(ncname)
+        END IF
+!
         CALL netcdf_create (ng, iTLM, TRIM(ncname), NRM(ifile,ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,10) TRIM(ncname)
           RETURN
-        END IF
+        END IF         
 !
 !-----------------------------------------------------------------------
 !  Define the dimensions of staggered fields.
@@ -1486,6 +1500,7 @@
         NRM(ifile,ng)%Rindex=0
       END IF QUERY
 !
+   5  FORMAT (2x,'DEF_NORM_NF90    - ',a,t65,a)
   10  FORMAT (/,' DEF_NORM_NF90 - unable to create norm NetCDF',        &
      &        ' file: ',a)
   20  FORMAT (a,', ',a)
@@ -1564,6 +1579,20 @@
       ncname=NRM(ifile,ng)%name
 !
       DEFINE : IF (LdefNRM(ifile,ng)) THEN
+        IF (Master) THEN
+          SELECT CASE (ifile)
+            CASE (1)
+              Text='Creating prior B-normalization file:'
+            CASE (2)              
+              Text='Creating model Q-normalization file:'
+            CASE (3)
+              Text='Creating boundary B-normalization file:'
+            CASE (4)
+              Text='Creating forcing B-normalization file:'
+          END SELECT          
+          WRITE (stdout,5) TRIM(Text), TRIM(ncname)
+        END IF
+!
         CALL pio_netcdf_create (ng, iTLM, TRIM(ncname),                 &
      &                          NRM(ifile,ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
@@ -3018,6 +3047,7 @@
         NRM(ifile,ng)%Rindex=0
       END IF QUERY
 !
+   5  FORMAT (2x,'DEF_NORM_PIO     - ',a,t65,a)
   10  FORMAT (/,' DEF_NORM_PIO - unable to create norm NetCDF',         &
      &        ' file: ',a)
   20  FORMAT (a,', ',a)

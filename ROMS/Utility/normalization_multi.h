@@ -1041,13 +1041,13 @@
 !
 !  Implicit vertical convolution.
 !
-                      CALL self%ad_Vdiff (ng, tile, iADM, isUvel,       &
-     &                                    u3dvar,                       &
-     &                                    NVsteps(ifile,isUvel)/ifac,   &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    IminS, ImaxS, JminS, JmaxS,   &
-     &                                    DTsizeV(ifile,isUvel),        &
-     &                                    Kv, A3d)
+                      CALL self%ad_Vdiff_u3d (ng, tile, iADM, isUvel,   &
+     &                                      NVsteps(ifile,isUvel)/ifac, &
+     &                                        LBi, UBi, LBj, UBj,       &
+     &                                        IminS, ImaxS,             &
+     &                                        JminS, JmaxS,             &
+     &                                        DTsizeV(ifile,isUvel),    &
+     &                                        Kv, A3d)
 !
 !  Apply lateral boundary conditions.
 !
@@ -1209,13 +1209,13 @@
 !
 !  Implicit vertical convolution.
 !
-                      CALL self%ad_Vdiff (ng, tile, iADM, isVvel,       &
-     &                                    v3dvar,                       &
-     &                                    NVsteps(ifile,isVvel)/ifac,   &
-     &                                    LBi, UBi, LBj, UBj,           &
-     &                                    IminS, ImaxS, JminS, JmaxS,   &
-     &                                    DTsizeV(ifile,isVvel),        &
-     &                                    Kv, A3d)
+                      CALL self%ad_Vdiff_v3d (ng, tile, iADM, isVvel,   &
+     &                                      NVsteps(ifile,isVvel)/ifac, &
+     &                                        LBi, UBi, LBj, UBj,       &
+     &                                        IminS, ImaxS,             &
+     &                                        JminS, JmaxS,             &
+     &                                        DTsizeV(ifile,isVvel),    &
+     &                                        Kv, A3d)
 !
 !  Apply lateral boundary conditions.
 !
@@ -1402,13 +1402,13 @@
 !
 !  Implicit vertical convolution.
 !
-                        CALL self%ad_Vdiff (ng, tile, iADM, ifield,     &
-     &                                      r3dvar,                     &
+                        CALL self%ad_Vdiff_r3d (ng, tile, iADM, ifield, &
      &                                      NVsteps(ifile,ifield)/ifac, &
-     &                                      LBi, UBi, LBj, UBj,         &
-     &                                      IminS, ImaxS, JminS, JmaxS, &
-     &                                      DTsizeV(ifile,ifield),      &
-     &                                      Kv, A3d)
+     &                                          LBi, UBi, LBj, UBj,     &
+     &                                          IminS, ImaxS,           &
+     &                                          JminS, JmaxS,           &
+     &                                          DTsizeV(ifile,ifield),  &
+     &                                          Kv, A3d)
 !
 !  Apply lateral boundary conditions.
 !
@@ -2718,7 +2718,7 @@
 !
 !  Write out into output NetCDF file.
 !
-          IF (ANY(CnormB(is,:))) THEN
+          IF (ANY(CnormB(ifield,:))) THEN
             IDmeta=idSbry(isTvar(itrc))
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
@@ -3102,8 +3102,8 @@
           Lsame=.FALSE.
           DO itrc=1,NT(ng)
             IF (Lstflux(itrc,ng)) THEN
-              is=isTsur(itrc)
-              IF (Cnorm(rec,is)) Lsame=.TRUE.
+              ifield=isTsur(itrc)
+              IF (Cnorm(rec,ifield)) Lsame=.TRUE.
             END IF
           END DO
           IF (Lsame) THEN
@@ -4014,12 +4014,12 @@
 !
 !  Implicit vertical convolution.
 !
-                CALL self%ad_Vdiff (ng, tile, iTLM, isUvel, u3dvar,     &
-     &                              NVsteps(ifile,isUvel)/ifac,         &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              IminS, ImaxS, JminS, JmaxS,         &
-     &                              DTsizeV(ifile,isUvel),              &
-     &                              Kv, A3d)
+                CALL self%tl_Vdiff_u3d (ng, tile, iTLM, isUvel,         &
+     &                                  NVsteps(ifile,isUvel)/ifac,     &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
+     &                                  DTsizeV(ifile,isUvel),          &
+     &                                  Kv, A3d)
 !
                 DO k=1,N(ng)
                   DO j=Jstr,Jend
@@ -4161,12 +4161,12 @@
 !
 !  Implicit vertical convolution.
 !
-                CALL self%ad_Vdiff (ng, tile, iTLM, isVvel, v3dvar,     &
-     &                              NVsteps(ifile,isUvel)/ifac,         &
-     &                              LBi, UBi, LBj, UBj,                 &
-     &                              IminS, ImaxS, JminS, JmaxS,         &
-     &                              DTsizeV(ifile,isUvel),              &
-     &                              Kv, A3d)
+                CALL self%tl_Vdiff_v3d (ng, tile, iTLM, isVvel,         &
+     &                                  NVsteps(ifile,isUvel)/ifac,     &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
+     &                                  DTsizeV(ifile,isUvel),          &
+     &                                  Kv, A3d)
 !
                 DO k=1,N(ng)
                   DO j=JstrV,Jend
@@ -4260,8 +4260,8 @@
           IF (Master) THEN
             Lsame=.FALSE.
             DO itrc=1,NT(ng)
-              is=isTvar(itrc)
-              IF (Cnorm(ifile,is)) Lsame=.TRUE.
+              ifield=isTvar(itrc)
+              IF (Cnorm(ifile,ifield)) Lsame=.TRUE.
             END DO
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
@@ -4349,12 +4349,12 @@
 !
 !  Implicit vertical convolution.
 !
-                  CALL self%tl_Vdiff (ng, tile, iTLM, ifield, r3dvar,   &
-     &                                NVsteps(ifile,ifield)/ifac,       &
-     &                                LBi, UBi, LBj, UBj,               &
-     &                                IminS, ImaxS, JminS, JmaxS,       &
-     &                                DTsizeV(ifile,ifield),            &
-     &                                Kv, A3d)
+                  CALL self%tl_Vdiff_r3d (ng, tile, iTLM, ifield,       &
+     &                                    NVsteps(ifile,ifield)/ifac,   &
+     &                                    LBi, UBi, LBj, UBj,           &
+     &                                    IminS, ImaxS, JminS, JmaxS,   &
+     &                                    DTsizeV(ifile,ifield),        &
+     &                                    Kv, A3d)
 !
                   DO k=1,N(ng)
                     DO j=Jstr,Jend
@@ -5659,7 +5659,7 @@
 !
 !  Write out into output NetCDF file.
 !
-          IF (ANY(CnormB(is,:))) THEN
+          IF (ANY(CnormB(ifield,:))) THEN
             IDmeta=idSbry(isTvar(itrc))
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)

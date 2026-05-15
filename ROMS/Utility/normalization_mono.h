@@ -350,7 +350,7 @@
 #endif
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: i, ic, ifile, is, j, jc, rec
+      integer :: i, ic, ifile, j, jc, rec
       integer :: ifield, nfield
 #ifdef SOLVE3D
       integer :: UBt, itrc, k, kc, ntrc
@@ -2765,7 +2765,7 @@
 !
 !  Write out into output NetCDF file.
 !
-          IF (ANY(CnormB(is,:))) THEN
+          IF (ANY(CnormB(ifield,:))) THEN
             IDmeta=idSbry(isTvar(itrc))
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
@@ -3164,8 +3164,8 @@
           Lsame=.FALSE.
           DO itrc=1,NT(ng)
             IF (Lstflux(itrc,ng)) THEN
-              is=isTsur(itrc)
-              IF (Cnorm(rec,is)) Lsame=.TRUE.
+              ifield=isTsur(itrc)
+              IF (Cnorm(rec,ifield)) Lsame=.TRUE.
             END IF
           END DO
           IF (Lsame) THEN
@@ -3241,8 +3241,8 @@
      &                                     LBi, UBi, LBj, UBj,          &
      &                                     IminS, ImaxS, JminS, JmaxS,  &
      &                                     NghostPoints,                &
-     &                                     NHsteps(rec,is)/ifac,        &
-     &                                     DTsizeH(rec,is),             &
+     &                                     NHsteps(rec,ifield)/ifac,    &
+     &                                     DTsizeH(rec,ifield),         &
      &                                     Kh,                          &
      &                                     GRID(ng) % pm,               &
      &                                     GRID(ng) % pn,               &
@@ -3473,7 +3473,7 @@
       logical :: Lconvolve(4)
 #endif
 !
-      integer :: i, ifile, is, iter, j, rec
+      integer :: i, ifile, iter, j, rec
       integer :: ifield, nfield
 #ifdef SOLVE3D
       integer :: UBt, itrc, k
@@ -4329,8 +4329,8 @@
           IF (Master) THEN
             Lsame=.FALSE.
             DO itrc=1,NT(ng)
-              is=isTvar(itrc)
-              IF (Cnorm(ifile,is)) Lsame=.TRUE.
+              ifield=isTvar(itrc)
+              IF (Cnorm(ifile,ifield)) Lsame=.TRUE.
             END DO
             IF (Lsame) THEN
               WRITE (stdout,20) TRIM(Text),                             &
@@ -4403,10 +4403,10 @@
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 NghostPoints,                    &
-     &                                 NHsteps(ifile,is)/ifac,          &
-     &                                 NVsteps(ifile,is)/ifac,          &
-     &                                 DTsizeH(ifile,is),               &
-     &                                 DTsizeV(ifile,is),               &
+     &                                 NHsteps(ifile,ifield)/ifac,      &
+     &                                 NVsteps(ifile,ifield)/ifac,      &
+     &                                 DTsizeH(ifile,ifield),           &
+     &                                 DTsizeV(ifile,ifield),           &
      &                                 Kh, Kv,                          &
      &                                 GRID(ng) % pm,                   &
      &                                 GRID(ng) % pn,                   &
@@ -5615,10 +5615,10 @@
      &                                     1, N(ng),                    &
      &                                     IminS, ImaxS, JminS, JmaxS,  &
      &                                     NghostPoints,                &
-     &                                     NHstepsB(ibry,is)/ifac,      &
-     &                                     NVstepsB(ibry,is)/ifac,      &
-     &                                     DTsizeHB(ibry,is),           &
-     &                                     DTsizeVB(ibry,is),           &
+     &                                     NHstepsB(ibry,ifield)/ifac,  &
+     &                                     NVstepsB(ibry,ifield)/ifac,  &
+     &                                     DTsizeHB(ibry,ifield),       &
+     &                                     DTsizeVB(ibry,ifield),       &
      &                                     Kh, Kv,                      &
      &                                     GRID(ng) % pm,               &
      &                                     GRID(ng) % pn,               &
@@ -5716,7 +5716,7 @@
 !
 !  Write out into output NetCDF file.
 !
-          IF (ANY(CnormB(is,:))) THEN
+          IF (ANY(CnormB(ifield,:))) THEN
             IDmeta=idSbry(isTvar(itrc))
 !
             SELECT CASE (NRM(ifile,ng)%IOtype)
@@ -6322,6 +6322,7 @@
       IstrP=BOUNDS(ng)%IstrP(tile)
       IendT=BOUNDS(ng)%IendT(tile)
       JstrP=BOUNDS(ng)%JstrP(tile)
+      JstrT=BOUNDS(ng)%JstrT(tile)
       JendT=BOUNDS(ng)%JendT(tile)
 !
       Imin=IstrT
@@ -6414,6 +6415,7 @@
       IstrP=BOUNDS(ng)%IstrP(tile)
       IendT=BOUNDS(ng)%IendT(tile)
       JstrP=BOUNDS(ng)%JstrP(tile)
+      JstrT=BOUNDS(ng)%JstrT(tile)
       JendT=BOUNDS(ng)%JendT(tile)
 !
       Imin=IstrT

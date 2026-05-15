@@ -381,8 +381,12 @@
 !
 !  Implicit Vertical Diffusion solver.
 !
-        PROCEDURE :: tl_Vdiff      => multiscale_Vdiff_tl
-        PROCEDURE :: ad_Vdiff      => multiscale_Vdiff_ad
+        PROCEDURE :: tl_Vdiff_r3d  => multiscale_Vdiff_r3d_tl
+        PROCEDURE :: ad_Vdiff_r3d  => multiscale_Vdiff_r3d_ad
+        PROCEDURE :: tl_Vdiff_u3d  => multiscale_Vdiff_u3d_tl
+        PROCEDURE :: ad_Vdiff_u3d  => multiscale_Vdiff_u3d_ad
+        PROCEDURE :: tl_Vdiff_v3d  => multiscale_Vdiff_v3d_tl
+        PROCEDURE :: ad_Vdiff_v3d  => multiscale_Vdiff_v3d_ad
 #  ifdef ADJUST_BOUNDARY
 !
         PROCEDURE :: tl_bry_Vdiff  => multiscale_bry_Vdiff_tl
@@ -970,7 +974,7 @@
 !  
       FUNCTION multiscale_print (ng, ifield, ms, iterDiff, Ndiff,       &
      &                           iter, Niter, label, deps,              &
-     &                           level) RESULT (status)
+     &                           level, boundary) RESULT (status)
 !
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: ifield    ! state field ID
@@ -980,6 +984,7 @@
       integer,            intent(in   ) :: iter      ! solver iteration
       integer,            intent(in   ) :: Niter     ! CG/CI iterations
       integer, optional,  intent(in   ) :: level     ! vertical level
+      integer, optional,  intent(in   ) :: boundary  ! boundary edge
       real (r8),          intent(in   ) :: deps      ! convergence norm
       character (len=*),  intent(in   ) :: label     ! solver label
 !
@@ -992,34 +997,52 @@
       status=0
 !
       IF (Master) THEN
-        IF ((iterDiff.eq.1).and.(iter.eq.0)) THEN
-          WRITE (iunit,10) label, TRIM(Vname(1,idSvar(ifield))), ms
+        IF (PRESENT(level)) THEN
+          IF ((iterDiff.eq.1).and.(level.eq.1).and.(iter.eq.0)) THEN
+            IF (PRESENT(boundary)) THEN
+              WRITE (iunit,10) label, TRIM(Vname(1,idSvar(ifield))),    &
+     &                         ms, boundary
+            ELSE
+              WRITE (iunit,20) label, TRIM(Vname(1,idSvar(ifield))), ms
+            END IF
+          END IF
+        ELSE
+          IF ((iterDiff.eq.1).and.(iter.eq.0)) THEN
+            IF (PRESENT(boundary)) THEN
+              WRITE (iunit,10) label, TRIM(Vname(1,idSvar(ifield))),    &
+     &                         ms, boundary
+            ELSE
+              WRITE (iunit,20) label, TRIM(Vname(1,idSvar(ifield))), ms
+            END IF
+          END IF
         END IF
         IF (iter.eq.Niter) THEN
           IF (PRESENT(level)) THEN
-            WRITE (iunit,20) iterDiff, iter, deps, level
+            WRITE (iunit,30) iterDiff, iter, deps, level
           ELSE
-            WRITE (iunit,30) iterDiff, iter, deps
+            WRITE (iunit,40) iterDiff, iter, deps
           END IF
         END IF
         IF (iterDiff.eq.Ndiff) THEN
           IF (PRESENT(level)) THEN
-            WRITE (iunit,40) iterDiff, iter, deps, level
+            WRITE (iunit,50) iterDiff, iter, deps, level
           ELSE
-            WRITE (iunit,50) iterDiff, iter, deps
+            WRITE (iunit,60) iterDiff, iter, deps
           END IF
           FLUSH (iunit)
         END IF
       END IF
 !
-  10  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,/)
-  20  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
-     &        'deps = ',1p,e12.5,2x,'level = ',i0) 
+  10  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,    &
+     &        ', boundary = ',i0,/)
+  20  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,/)
   30  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
-     &        'deps = ',1p,e12.5) 
-  40  FORMAT (7x,'K-DIFF => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
      &        'deps = ',1p,e12.5,2x,'level = ',i0) 
+  40  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5) 
   50  FORMAT (7x,'K-DIFF => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
+     &        'deps = ',1p,e12.5,2x,'level = ',i0) 
+  60  FORMAT (7x,'K-DIFF => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
      &        'deps = ',1p,e12.5) 
 !
       RETURN

@@ -1056,6 +1056,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' DIURNAL_SRFLUX,'
 #endif
+#if defined DIRAC && defined CORRELATION
+!
+      IF (Master) WRITE (stdout,20) 'DIRAC',                            &
+     &   'Background-error covariance spreading with Dirac functions'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+7)=' DIRAC,'
+#endif
 #ifdef DJ_GRADPS
 !
       IF (Master) WRITE (stdout,20) 'DJ_GRADPS',                        &

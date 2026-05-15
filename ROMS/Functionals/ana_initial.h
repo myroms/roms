@@ -14,7 +14,9 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
       USE mod_grid
+      USE mod_iounits
       USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
@@ -29,6 +31,10 @@
      &  __FILE__
 !
 #include "tile.h"
+!
+      IF (Master) THEN
+        WRITE (stdout,10) model
+      END IF
 !
       IF (model.eq.iNLM) THEN
         CALL ana_NLMinitial_tile (ng, tile, model,                      &
@@ -94,6 +100,8 @@
 #endif
         ANANAME(10)=MyFile
       END IF
+!
+ 10   FORMAT (/,1x,'Analytical Initial Conditions, kernel = ',i0,/)
 !
       RETURN
       END SUBROUTINE ana_initial

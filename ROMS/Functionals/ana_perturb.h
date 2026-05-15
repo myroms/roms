@@ -327,6 +327,7 @@
       KperAD=INT(user(8))
 #endif
       IF (Master) THEN
+        WRITE (stdout,'(1x,a,/)') 'Dirac Delta Function Perturbations:'
         IF (TLmodel) THEN
           IF (ivarTL.eq.isUbar) THEN
             WRITE (stdout,10) 'tl_ubar perturbed at (i,j) = ',          &
@@ -489,6 +490,7 @@
 # endif
 #endif
         END IF
+        WRITE (stdout,'(1x)')
       END IF
 !
 !-----------------------------------------------------------------------
@@ -782,7 +784,7 @@
       Lperturb(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
       Lperturb(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lperturb(inorth)=DOMAIN(ng)%Northern_Edge(tile)
-
+!
       DO ir=1,Nbrec(ng)
         DO ib=1,4
 !
@@ -1071,15 +1073,15 @@
 # endif
 #endif
 !
- 10   FORMAT (/,' ANA_PERTURB - Tangent ', a, 2i4,/)
+ 10   FORMAT (' ANA_PERTURB - Tangent ', a, 2i4)
 #ifdef SOLVE3D
- 20   FORMAT (/,' ANA_PERTURB - Tangent ', a, 3i4,/)
- 30   FORMAT (/,' ANA_PERTURB - Tangent ', a, 4i4,/)
+ 20   FORMAT (' ANA_PERTURB - Tangent ', a, 3i4)
+ 30   FORMAT (' ANA_PERTURB - Tangent ', a, 4i4)
 #endif
- 40   FORMAT (/,' ANA_PERTURB - Adjoint ', a, 2i4,/)
+ 40   FORMAT (' ANA_PERTURB - Adjoint ', a, 2i4)
 #ifdef SOLVE3D
- 50   FORMAT (/,' ANA_PERTURB - Adjoint ', a, 3i4,/)
- 60   FORMAT (/,' ANA_PERTURB - Adjoint ', a, 4i4,/)
+ 50   FORMAT (' ANA_PERTURB - Adjoint ', a, 3i4)
+ 60   FORMAT (' ANA_PERTURB - Adjoint ', a, 4i4)
 #endif
 !
       RETURN

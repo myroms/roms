@@ -54,8 +54,6 @@
       USE mod_scalars
       USE mod_stepping
 !
-      USE ad_def_his_mod,       ONLY : ad_def_his
-      USE ad_wrt_his_mod,       ONLY : ad_wrt_his
       USE analytical_mod,       ONLY : ana_perturb
       USE close_io_mod,         ONLY : close_inp,                       &
      &                                 close_out
@@ -74,6 +72,8 @@
       USE stdout_mod,           ONLY : Set_StdOutUnit,                  &
      &                                 stdout_unit
       USE strings_mod,          ONLY : FoundError
+      USE tl_def_his_mod,       ONLY : tl_def_his
+      USE tl_wrt_his_mod,       ONLY : tl_wrt_his
       USE wrt_rst_mod,          ONLY : wrt_rst
 !
       implicit none
@@ -106,7 +106,7 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: STDrec, Tindex
+      integer :: NRMrec, STDrec, Tindex
       integer :: chunk_size, ng, thread, tile
 #ifdef _OPENMP
       integer :: my_threadnum
@@ -226,29 +226,33 @@
 !  Read in standard deviation factors for error covariance.
 !-----------------------------------------------------------------------
 !
+#ifdef WEAK_CONSTRAINT
+      NSA=2               ! include weak constraint error hypothesis
+#else
+      NSA=1               ! only strong constraint error hypothesis
+#endif
+!
 !  Initial conditions standard deviation. They are loaded in Tindex=1
 !  of the e_var(...,Tindex) state variables.
 !
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
-          CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !  Model error standard deviation. They are loaded in Tindex=2
 !  of the e_var(...,Tindex) state variables.
 !
-      STDrec=1
-      Tindex=2
-      DO ng=1,Ngrids
-        IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
+      IF (NSA.eq.2) THEN
+        STDrec=1
+        Tindex=2
+        DO ng=1,Ngrids
           CALL get_state (ng, 11, 11, STD(2,ng), STDrec, Tindex)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
+        END DO
+      END IF
 
 #ifdef ADJUST_BOUNDARY
 !
@@ -257,10 +261,8 @@
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
-          CALL get_state (ng, 12, 12, STD(3,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 12, 12, STD(3,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -270,10 +272,8 @@
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
-          CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 #endif
 !
@@ -281,11 +281,14 @@
 !  Compute or read in error covariance normalization factors.
 !-----------------------------------------------------------------------
 !
-      DO ng=1,Ngrids
+      NESTED_LOOP : DO ng=1,Ngrids
+!
+!  Process normalization coefficients.
+!
+        GET_NORMALIZATION : IF (ANY(LwrtNRM(:,ng))) THEN
 !
 !  If computing, define output normalization NetCDF file(s).
 !
-        IF (ANY(LwrtNRM(:,ng))) THEN
           IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
             CALL def_norm (ng, iNLM, 1)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -345,8 +348,33 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
-        END IF
-      END DO
+!
+!  Otherwise, read in normalization coefficients.
+!
+        ELSE
+        
+          NRMrec=1
+          CALL get_state (ng, 14, 14, NRM(1,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          IF (NSA.eq.2) THEN
+            CALL get_state (ng, 15, 15, NRM(2,ng), NRMrec, 2)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+
+#ifdef ADJUST_BOUNDARY
+!
+          CALL get_state (ng, 16, 16, NRM(3,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+          CALL get_state (ng, 17, 17, NRM(4,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+        END IF GET_NORMALIZATION 
+      END DO NESTED_LOOP
 !
       RETURN
       END SUBROUTINE ROMS_initialize
@@ -381,13 +409,14 @@
 !  in routine "ana_perturb". Then, convolve solution with the adjoint
 !  diffusion operator.
 !
-      ADmodel=.TRUE.
+      ADmodel=.FALSE.
+      TLmodel=.TRUE.
 !
       DO ng=1,Ngrids
         Lold(ng)=1
-        Lnew(ng)=1
+        Lnew(ng)=2
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_perturb (ng, tile, iADM)
+          CALL ana_perturb (ng, tile, iTLM)
         END DO
       END DO
 !
@@ -402,20 +431,20 @@
       DO ng=1,Ngrids
         kstp(ng)=Lnew(ng)
 #ifdef SOLVE3D
-        nstp(ng)=Lnew(ng)
+        nrhs(ng)=Lnew(ng)
 #endif
-        LdefADJ(ng)=.TRUE.
-        LwrtADJ(ng)=.TRUE.
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
         LwrtState2d(ng)=.TRUE.
-        CALL ad_def_his (ng, LdefADJ(ng))
+        CALL tl_def_his (ng, LdefTLM(ng))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.TRUE.
 #endif
 #ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
+        CALL tl_wrt_his (ng, MyRank)
 #else
-        CALL ad_wrt_his (ng, -1)
+        CALL tl_wrt_his (ng, -1)
 #endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS

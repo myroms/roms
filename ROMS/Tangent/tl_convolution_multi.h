@@ -389,7 +389,7 @@
       logical, dimension(4) :: Lconvolve
 !
 #endif
-      integer :: i, ib, ir, is, j, k, rec
+      integer :: i, ib, ir, j, k, rec
 #ifdef SOLVE3D
       integer :: ifield, itrc
 #endif
@@ -930,13 +930,13 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    tl_u(:,:,:,Linp))
 !
-      CALL self%tl_Vdiff (ng, tile, model, isUvel, u3dvar,              &
-     &                    NVsteps(rec,isUvel)/ifac,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    DTsizeV(rec,isUvel),                          &
-     &                    MIXING(ng) % Kv,                              &
-     &                    tl_u(:,:,:,Linp))
+      CALL self%tl_Vdiff_u3d (ng, tile, model, isUvel,                  &
+     &                        NVsteps(rec,isUvel)/ifac,                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        DTsizeV(rec,isUvel),                      &
+     &                        MIXING(ng) % Kv,                          &
+     &                        tl_u(:,:,:,Linp))
 !
 !  Tangent linear 3D V-momentum:  CG/CI horizontal convolution and
 !                                 implicit vertical diffusion.
@@ -947,13 +947,13 @@
      &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    tl_v(:,:,:,Linp))
 !
-      CALL self%tl_Vdiff (ng, tile, model, isVvel, v3dvar,              &
-     &                    NVsteps(rec,isUvel)/ifac,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    DTsizeV(rec,isUvel),                          &
-     &                    MIXING(ng) % Kv,                              &
-     &                    tl_v(:,:,:,Linp))
+      CALL self%tl_Vdiff_v3d (ng, tile, model, isVvel,                  &
+     &                        NVsteps(rec,isUvel)/ifac,                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        DTsizeV(rec,isUvel),                      &
+     &                        MIXING(ng) % Kv,                          &
+     &                        tl_v(:,:,:,Linp))
 !
 !  Tangent linear tracer variables:  CG/CI horizontal convolution and
 !                                    implicit vertical diffusion.
@@ -966,13 +966,13 @@
      &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      tl_t(:,:,:,Linp,itrc))
 !
-        CALL self%tl_Vdiff (ng, tile, model, ifield, r3dvar,            &
-     &                      NVsteps(rec,ifield)/ifac,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      IminS, ImaxS, JminS, JmaxS,                 &
-     &                      DTsizeV(rec,ifield),                        &
-     &                      MIXING(ng) % Kv,                            &
-     &                      tl_t(:,:,:,Linp,itrc))
+        CALL self%tl_Vdiff_r3d (ng, tile, model, ifield,                &
+     &                          NVsteps(rec,ifield)/ifac,               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          DTsizeV(rec,ifield),                    &
+     &                          MIXING(ng) % Kv,                        &
+     &                          tl_t(:,:,:,Linp,itrc))
       END DO TRACER_LOOP
 #endif
 
@@ -1085,7 +1085,7 @@
         ifield=isTvar(itrc)
         DO ir=1,Nbrec(ng)
           DO ib=1,4
-            IF (.not.Lweak.and.Lobc(ib,is,ng)) THEN
+            IF (.not.Lweak.and.Lobc(ib,ifield,ng)) THEN
               CALL self%tl_CI_b2d (ng, tile, model, ifield, ib,         &
      &                             r3dvar, ns, NiterCI(ns,ng), ifac,    &
      &                             LBij, UBij,                          &
@@ -1120,18 +1120,18 @@
 !  Tangent linear surface momentum stress: CG/CI horizontal convolution.
 !
       IF (.not.Lweak) THEN
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           CALL self%tl_CI_2d (ng, tile, model, isUstr, u2dvar,          &
      &                        ns, NiterCI(ns,ng), ifac, Lweak,          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        tl_ustr(:,:,k,Linp))
+     &                        tl_ustr(:,:,ir,Linp))
 !
           CALL self%tl_CI_2d (ng, tile, model, isVstr, v2dvar,          &
      &                        ns, NiterCI(ns,ng), ifac, Lweak,          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        IminS, ImaxS, JminS, JmaxS,               &
-     &                        tl_vstr(:,:,k,Linp))
+     &                        tl_vstr(:,:,ir,Linp))
         END DO
       END IF
 # endif
@@ -1144,13 +1144,13 @@
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
             ifield=isTsur(itrc)
-            DO k=1,Nfrec(ng)
+            DO ir=1,Nfrec(ng)
               CALL self%tl_CI_2d (ng, tile, model, ifield, r2dvar,      &
      &                            ns, NiterCI(ns,ng), ifac,             &
      &                            Lweak,                                &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            IminS, ImaxS, JminS, JmaxS,           &
-     &                            tl_tflux(:,:,k,Linp,itrc))
+     &                            tl_tflux(:,:,ir,Linp,itrc))
             END DO
           END IF
         END DO
@@ -1519,16 +1519,16 @@
 !  Tangent linear surface momentum stress.
 !
       IF (.not.Lweak) THEN
-        DO k=1,Nfrec(ng)
+        DO ir=1,Nfrec(ng)
           DO j=JstrT,JendT
             DO i=IstrP,IendT
-              tl_ustr(i,j,k,Linp)=tl_ustr(i,j,k,Linp)*HnormSUS(i,j)
+              tl_ustr(i,j,ir,Linp)=HnormSUS(i,j)*tl_ustr(i,j,ir,Linp)
             END DO
           END DO
 !
           DO j=JstrP,JendT
             DO i=IstrT,IendT
-              tl_vstr(i,j,k,Linp)=tl_vstr(i,j,k,Linp)*HnormSVS(i,j)
+              tl_vstr(i,j,ir,Linp)=HnormSVS(i,j)*tl_vstr(i,j,ir,Linp)
             END DO
           END DO
         END DO
@@ -1551,11 +1551,11 @@
       IF (.not.Lweak) THEN
         DO itrc=1,NT(ng)
           IF (Lstflux(itrc,ng)) THEN
-            DO k=1,Nfrec(ng)
+            DO ir=1,Nfrec(ng)
               DO j=JstrT,JendT
                 DO i=IstrT,IendT
-                  tl_tflux(i,j,k,Linp,itrc)=tl_tflux(i,j,k,Linp,itrc)*  &
-     &                                      HnormSTF(i,j,itrc)
+                  tl_tflux(i,j,ir,Linp,itrc)=HnormSTF(i,j,itrc)*        &
+     &                                       tl_tflux(i,j,ir,Linp,itrc)
                 END DO
               END DO
             END DO

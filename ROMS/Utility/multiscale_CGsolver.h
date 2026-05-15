@@ -598,7 +598,8 @@
 !
             deps=SQRT(dotr/dotn(k))
             status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
-     &                              iterCG, NiterCG, 'CG_3d', deps, k)
+     &                              iterCG, NiterCG, 'CG_3d', deps,     &
+     &                              level = k)
 # endif
 !
             DO j=Jmin,Jmax
@@ -967,7 +968,8 @@
 !
           deps=SQRT(dotr/dotn)
           status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,       &
-     &                            iterCG, NiterCG, 'CG_b1d', deps)
+     &                            iterCG, NiterCG, 'CG_b1d', deps,      &
+     &                            boundary = ibry)
 # endif
 !
           SELECT CASE (ibry)
@@ -1375,7 +1377,8 @@
 !
             deps=SQRT(dotr/dotn(k))
             status=multiscale_print(ng, ifield, ms, iterDiff, Mlap,     &
-     &                              iterCG, NiterCG, 'CG_b2d', deps, k)
+     &                              iterCG, NiterCG, 'CG_b2d', deps,    &
+     &                              level = k, boundary = ibry)
 #  endif
 !
             SELECT CASE (ibry)

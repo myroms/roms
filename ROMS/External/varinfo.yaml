@@ -8971,77 +8971,77 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       zeta_bry_eigen                                   # Output
+  - variable:       zeta_obc_eigen                                   # Output
     standard_name:  sea_surface_elevation_anomaly
-    long_name:      free-surface boundary conditions extrema eigenvalues
+    long_name:      free-surface open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          zeta_bry_eigen
+    field:          zeta_obc_eigen
     time:           nulvar
     index_code:     ieZbry
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       ubar_bry_eigen                                   # Output
+  - variable:       ubar_obc_eigen                                   # Output
     standard_name:  barotropic_sea_water_x_velocity
-    long_name:      2D u-momentum boundary conditions extrema eigenvalues
+    long_name:      2D u-momentum open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          ubar_bry_eigen
+    field:          ubar_obc_eigen
     time:           nulvar
     index_code:     ieU2bc
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       vbar_bry_eigen                                   # Output
+  - variable:       vbar_obc_eigen                                   # Output
     standard_name:  barotropic_sea_water_y_velocity
-    long_name:      2D v-momentum boundary conditions extrema eigenvalues
+    long_name:      2D v-momentum open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          vbar_bry_eigen
+    field:          vbar_obc_eigen
     time:           nulvar
     index_code:     ieV2bc
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       u_bry_eigen                                      # Output
+  - variable:       u_obc_eigen                                      # Output
     standard_name:  sea_water_x_velocity
-    long_name:      3D u-momentum boundary conditions extrema eigenvalues
+    long_name:      3D u-momentum open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          u_bry_eigen
+    field:          u_obc_eigen
     time:           nulvar
     index_code:     ieU3bc
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       v_bry_eigen                                      # Output
+  - variable:       v_obc_eigen                                      # Output
     standard_name:  sea_water_y_velocity
-    long_name:      3D v-momentum boundary conditions extrema eigenvalues
+    long_name:      3D v-momentum open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          v_bry_eigen
+    field:          v_obc_eigen
     time:           nulvar
     index_code:     ieV3bc
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       temp_bry_eigen                                   # Output
+  - variable:       temp_obc_eigen                                   # Output
     standard_name:  sea_water_potential_temperature
-    long_name:      temperature boundary conditions extrema eigenvalues
+    long_name:      temperature open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          temp_bry_eigen
+    field:          temp_obc_eigen
     time:           nulvar
     index_code:     ieTbry(itemp)
     type:           nulvar
     add_offset:     0.0d0
     scale:          1.0d0
 
-  - variable:       salt_bry_eigen                                   # Output
+  - variable:       salt_obc_eigen                                   # Output
     standard_name:  sea_water_practical_salinity
-    long_name:      salinity boundary conditions extrema eigenvalues
+    long_name:      salinity open boundary conditions extrema eigenvalues
     units:          nondimensional                                   # [nondimensional]
-    field:          salt_bry_eigen
+    field:          salt_obc_eigen
     time:           nulvar
     index_code:     ieTbry(isalt)
     type:           nulvar
