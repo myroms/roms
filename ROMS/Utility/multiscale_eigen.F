@@ -94,6 +94,7 @@
       implicit none
 !
       PUBLIC  :: multiscale_eigen
+      PUBLIC  :: multiscale_eigen_read
       PUBLIC  :: multiscale_eigen_write
       PRIVATE :: multiscale_eigen_tile
       PRIVATE
@@ -952,6 +953,701 @@
       END SUBROUTINE multiscale_eigen_tile
 !
 !***********************************************************************
+      SUBROUTINE multiscale_eigen_read (self, ng, model)
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      CLASS (multiscale), intent(inout) :: self
+!
+      integer, intent(in) :: ng, model
+!
+!  Local variable declarations.
+!
+      integer :: i, ifld, itrc, nl, ns
+      integer :: omode
+!
+      real (r8) :: Fmin, Fmax
+!
+      character (len=80 ) :: Text
+      character (len=256) :: ncname
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", multiscale_eigen_read"
+!
+      SourceFile=MyFile
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Read in Extrema K-Laplacian eigenvalues for Prior/Model background-
+!  error background error convariance into output Normalization NetCDF
+!  file(s).
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      nl=MAXVAL(self%Mlap)  ! nunber of k-Laplacian applications
+      ns=self%Nscale        ! number of correlation scales
+!
+      FILE_LOOP : DO i=1,NSA
+
+        LREAD_EIGEN : IF (.not.LwrtNRM(i,ng)) THEN
+!
+          ncname=NRM(i,ng)%name
+          IF (i.eq.1) THEN
+            Text='prior B-normalization file:'
+          ELSE IF (i.eq.2) THEN
+            Text='model Q-normalization file:'
+          END IF
+          IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
+!
+!  If appropriate, open input NetCDF file.
+!
+          IF (NRM(i,ng)%IOtype.eq.io_nf90) THEN
+            IF (NRM(i,ng)%ncid.eq.-1) THEN
+              omode=1
+              CALL netcdf_open (ng, model, ncname, omode,               &
+     &                          NRM(i,ng)%ncid)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+            END IF
+# if defined PIO_LIB && defined DISTRIBUTE
+          ELSE IF (NRM(i,ng)%IOtype.eq.io_pio) THEN
+            IF (NRM(i,ng)%pioFile%fh.eq.-1) THEN
+              omode=1
+              CALL pio_netcdf_open (ng, model, ncname, omode,           &
+     &                              NRM(i,ng)%pioFile)
+            END IF
+# endif
+          END IF
+!
+!  Read in minimum and maximum Ritz eigenvalues.
+!
+          SELECT CASE (NRM(i,ng)%IOtype)
+            CASE (io_nf90)
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieFsur),                    &
+     &                              self%zeta_eigen,                    &
+     &                              ncid = NRM(i,ng)%ncid,              &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%zeta_eigen,                            &
+     &                      MASK = self%zeta_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), Fmin, Fmax
+              END IF
+!
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieUbar),                    &
+     &                              self%ubar_eigen,                    &
+     &                              ncid = NRM(i,ng)%ncid,              &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%ubar_eigen,                            &
+     &                      MASK = self%ubar_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), Fmin, Fmax
+              END IF
+!
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieVbar),                    &
+     &                              self%vbar_eigen,                    &
+     &                              ncid = NRM(i,ng)%ncid,              &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%vbar_eigen,                            &
+     &                      MASK = self%vbar_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), Fmin, Fmax
+              END IF
+
+# ifdef SOLVE3D
+!
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieUvel),                    &
+     &                              self%u_eigen,                       &
+     &                              ncid = NRM(i,ng)%ncid,              &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,N(ng),ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%u_eigen,                               &
+     &                      MASK = self%u_eigen > 0.0)
+                Fmax=MAXVAL(self%u_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), Fmin, Fmax
+              END IF
+!
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieVvel),                    &
+     &                              self%v_eigen,                       &
+     &                              ncid = NRM(i,ng)%ncid,              &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,N(ng),ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%v_eigen,                               &
+     &                      MASK = self%v_eigen > 0.0)
+                Fmax=MAXVAL(self%v_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), Fmin, Fmax
+              END IF
+!
+              DO itrc=1,NT(ng)
+                ifld=ieTvar(itrc)
+                CALL netcdf_get_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%t_eigen(:,:,itrc,:,:),       &
+     &                                ncid = NRM(i,ng)%ncid,            &
+     &                                start = (/1,1,1,1/),              &
+     &                                total = (/nl,N(ng),ns,2/))    
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%t_eigen(:,:,itrc,:,:),               &
+     &                        MASK = self%t_eigen(:,:,itrc,:,:) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,itrc,:,:))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END DO
+# endif
+
+# if defined PIO_LIB && defined DISTRIBUTE
+            CASE (io_pio)
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieFsur),                &
+     &                                  self%zeta_eigen,                &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%zeta_eigen,                            &
+     &                      MASK = self%zeta_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), Fmin, Fmax
+              END IF
+!
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieUbar),                &
+     &                                  self%ubar_eigen,                &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%ubar_eigen,                            &
+     &                      MASK = self%ubar_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), Fmin, Fmax
+              END IF
+!
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieVbar),                &
+     &                                  self%vbar_eigen,                &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%vbar_eigen,                            &
+     &                      MASK = self%vbar_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), Fmin, Fmax
+              END IF
+
+#  ifdef SOLVE3D
+!
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieUvel),                &
+     &                                  self%u_eigen,                   &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,N(ng),ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%u_eigen,                               &
+     &                      MASK = self%u_eigen > 0.0)
+                Fmax=MAXVAL(self%u_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), Fmin, Fmax
+              END IF
+!
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieVvel),                &
+     &                                  self%v_eigen,                   &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,N(ng),ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%v_eigen,                               &
+     &                      MASK = self%v_eigen > 0.0)
+                Fmax=MAXVAL(self%v_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), Fmin, Fmax
+              END IF
+!
+              DO itrc=1,NT(ng)
+                ifld=ieTvar(itrc)
+                CALL pio_netcdf_get_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                    self%t_eigen(:,:,itrc,:,:),   &
+     &                                    pioFile = NRM(i,ng)%pioFile,  &
+     &                                    start = (/1,1,1,1/),          &
+     &                                    total = (/nl,N(ng),ns,2/))
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%t_eigen(:,:,itrc,:,:),               &
+     &                        MASK = self%t_eigen(:,:,itrc,:,:) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,itrc,:,:))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END DO
+#  endif
+# endif
+          END SELECT
+!
+        END IF LREAD_EIGEN
+      END DO FILE_LOOP
+
+# ifdef ADJUST_BOUNDARY
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Read Extrema K-Laplacian eigenvalues for open boundaries background-
+!  error background error convariance into output Normalization NetCDF
+!  file.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      BRY_LREAD_EIGEN : IF (.not.LwrtNRM(3,ng)) THEN
+!
+        ncname=NRM(3,ng)%name
+        Text='boundary B-normalization file:'
+        IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
+!
+!  If appropriate, open input NetCDF file.
+!
+        IF (NRM(3,ng)%IOtype.eq.io_nf90) THEN
+          IF (NRM(3,ng)%ncid.eq.-1) THEN
+            omode=1
+            CALL netcdf_open (ng, model, ncname, omode,                 &
+     &                        NRM(3,ng)%ncid)
+            IF (FoundError(exit_flag, NoError,                          &
+     &                      __LINE__, MyFile)) RETURN
+          END IF
+#  if defined PIO_LIB && defined DISTRIBUTE
+        ELSE IF (NRM(3,ng)%IOtype.eq.io_pio) THEN
+          IF (NRM(3,ng)%pioFile%fh.eq.-1) THEN
+            omode=1
+            CALL pio_netcdf_open (ng, model, ncname, omode,             &
+     &                            NRM(3,ng)%pioFile)
+          END IF
+#  endif
+        END IF
+!
+!  Read in minimum and maximum Ritz eigenvalues.
+!
+        SELECT CASE (NRM(3,ng)%IOtype)
+!
+          CASE (io_nf90)
+!
+            IF (ANY(Lobc(:,isFsur,ng))) THEN
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieZbry),                    &
+     &                              self%zeta_obc_eigen,                &
+     &                              ncid = NRM(3,ng)%ncid,              &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%zeta_obc_eigen,                        &
+     &                      MASK = self%zeta_obc_eigen > 0.0)
+                Fmax=MAxVAL(self%zeta_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isUbar,ng))) THEN
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieU2bc),                    &
+     &                              self%ubar_obc_eigen,                &
+     &                              ncid = NRM(3,ng)%ncid,              &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%ubar_obc_eigen,                        &
+     &                      MASK = self%ubar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isVbar,ng))) THEN
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieV2bc),                    &
+     &                              self%vbar_obc_eigen,                &
+     &                              ncid = NRM(3,ng)%ncid,              &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%vbar_obc_eigen,                        &
+     &                      MASK = self%vbar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), Fmin, Fmax
+              END IF
+            END IF
+
+#  ifdef SOLVE3D
+!
+            IF (ANY(Lobc(:,isUvel,ng))) THEN
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieU3bc),                    &
+     &                              self%u_obc_eigen,                   &
+     &                              ncid = NRM(3,ng)%ncid,              &
+     &                              start = (/1,1,1,1,1/),              &
+     &                              total = (/nl,N(ng),4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%u_obc_eigen,                           &
+     &                      MASK = self%u_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%u_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isVvel,ng))) THEN
+              CALL netcdf_get_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieV3bc),                    &
+     &                              self%v_obc_eigen,                   &
+     &                              ncid = NRM(3,ng)%ncid,              &
+     &                              start = (/1,1,1,1,1/),              &
+     &                              total = (/nl,N(ng),4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%v_obc_eigen,                           &
+     &                      MASK = self%v_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%v_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            DO itrc=1,NT(ng)
+              IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+                ifld=ieTbry(itrc)
+                CALL netcdf_get_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                ncid = NRM(3,ng)%ncid,            &
+     &                                start = (/1,1,1,1,1/),            &
+     &                                total = (/nl,N(ng),4,ns,2/))
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,itrc,:,:,:),         &
+     &                    MASK = self%t_obc_eigen(:,:,itrc,:,:,:) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,itrc,:,:,:))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END IF
+            END DO
+#  endif
+
+#  if defined PIO_LIB && defined DISTRIBUTE
+!
+          CASE (io_pio)
+!
+            IF (ANY(Lobc(:,isFsur,ng))) THEN
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieZbry),                &
+     &                                  self%zeta_obc_eigen,            &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%zeta_obc_eigen,                        &
+     &                      MASK = self%zeta_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isUbar,ng))) THEN
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieU2bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%ubar_obc_eigen,                        &
+     &                      MASK = self%ubar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isVbar,ng))) THEN
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieV2bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%vbar_obc_eigen,                        &
+     &                      MASK = self%vbar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), Fmin, Fmax
+              END IF
+            END IF
+
+#   ifdef SOLVE3D
+!
+            IF (ANY(Lobc(:,isUvel,ng))) THEN
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieU3bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1,1/),          &
+     &                                  total = (/nl,N(ng),4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%u_obc_eigen,                           &
+     &                      MASK = self%u_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%u_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            IF (ANY(Lobc(:,isVvel,ng))) THEN
+              CALL pio_netcdf_get_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieV3bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
+     &                                  start = (/1,1,1,1,1/),          &
+     &                                  total = (/nl,N(ng),4,ns,2/))
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+              IF (Master) THEN 
+                Fmin=MINVAL(self%v_obc_eigen,                           &
+     &                      MASK = self%v_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%v_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), Fmin, Fmax
+              END IF
+            END IF
+!
+            DO itrc=1,NT(ng)
+              IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
+                ifld=ieTbry(itrc)
+                CALL pio_netcdf_get_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                    pioFile = NRM(3,ng)%pioFile,  &
+     &                                    start = (/1,1,1,1,1/),        &
+     &                                    total = (/nl,N(ng),4,ns,2/))
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,itrc,:,:,:),         &
+     &                    MASK = self%t_obc_eigen(:,:,itrc,:,:,:) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,itrc,:,:,:))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END IF
+            END DO
+#   endif
+#  endif
+        END SELECT
+!
+      END IF BRY_LREAD_EIGEN
+# endif
+
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  Read Extrema K-Laplacian eigenvalues for open boundaries background-
+!  error background error convariance into output Normalization NetCDF
+!  file.
+!:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+      FRC_LREAD_EIGEN : IF (.not.LwrtNRM(4,ng)) THEN
+!
+        ncname=NRM(4,ng)%name
+        Text='forcing B-normalization file:'
+        IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
+!
+!  If appropriate, open input NetCDF file.
+!
+        IF (NRM(4,ng)%IOtype.eq.io_nf90) THEN
+          IF (NRM(4,ng)%ncid.eq.-1) THEN
+            omode=1
+            CALL netcdf_open (ng, model, ncname, omode,                 &
+     &                        NRM(4,ng)%ncid)
+            IF (FoundError(exit_flag, NoError,                          &
+     &                      __LINE__, MyFile)) RETURN
+          END IF
+#  if defined PIO_LIB && defined DISTRIBUTE
+        ELSE IF (NRM(4,ng)%IOtype.eq.io_pio) THEN
+          IF (NRM(4,ng)%pioFile%fh.eq.-1) THEN
+            omode=1
+            CALL pio_netcdf_open (ng, model, ncname, omode,             &
+     &                            NRM(4,ng)%pioFile)
+          END IF
+#  endif
+        END IF
+!
+!  Read in minimum and maximum Ritz eigenvalues.
+!
+        SELECT CASE (NRM(4,ng)%IOtype)
+!
+          CASE (io_nf90)
+
+#  ifdef ADJUST_WSTRESS
+!
+            CALL netcdf_get_fvar (ng, model, ncname,                    &
+     &                            Vname(1,ieUsms),                      &
+     &                            self%sustr_eigen,                     &
+     &                            ncid = NRM(4,ng)%ncid,                &
+     &                            start = (/1,1,1/),                    &
+     &                            total = (/nl,ns,2/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            IF (Master) THEN 
+              Fmin=MINVAL(self%sustr_eigen,                             &
+     &                    MASK = self%sustr_eigen > 0.0)
+              Fmax=MAXVAL(self%sustr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), Fmin, Fmax
+            END IF
+!
+            CALL netcdf_get_fvar (ng, model, ncname,                    &
+     &                            Vname(1,ieVsms),                      &
+     &                            self%svstr_eigen,                     &
+     &                            ncid = NRM(4,ng)%ncid,                &
+     &                            start = (/1,1,1/),                    &
+     &                            total = (/nl,ns,2/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            IF (Master) THEN 
+              Fmin=MINVAL(self%svstr_eigen,                             &
+     &                    MASK = self%svstr_eigen > 0.0)
+              Fmax=MAXVAL(self%svstr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), Fmin, Fmax
+            END IF
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+!
+            DO itrc=1,NT(ng)
+              IF (Lstflux(itrc,ng)) THEN
+                ifld=ieTsur(itrc)
+                CALL netcdf_get_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%stflux_eigen(:,itrc,:,:),    &
+     &                                ncid = NRM(4,ng)%ncid,            &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/))
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%stflux_eigen(:,itrc,:,:),            &
+     &                    MASK = self%stflux_eigen(:,itrc,:,:) > 0.0)
+                  Fmax=MAXVAL(self%sustr_eigen)
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END IF
+            END DO
+#  endif
+#  if defined PIO_LIB && defined DISTRIBUTE
+!
+          CASE (io_pio)
+
+#   ifdef ADJUST_WSTRESS
+!
+            CALL pio_netcdf_get_fvar (ng, model, ncname,                &
+     &                                Vname(1,ieUsms),                  &
+     &                                self%sustr_eigen,                 &
+     &                                pioFile = NRM(4,ng)%pioFile,      &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            IF (Master) THEN 
+              Fmin=MINVAL(self%sustr_eigen,                             &
+     &                    MASK = self%sustr_eigen > 0.0)
+              Fmax=MAXVAL(self%sustr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), Fmin, Fmax
+            END IF
+!
+            CALL pio_netcdf_get_fvar (ng, model, ncname,                &
+     &                                Vname(1,ieVsms),                  &
+     &                                self%svstr_eigen,                 &
+     &                                pioFile = NRM(4,ng)%pioFile,      &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/))
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+            IF (Master) THEN 
+              Fmin=MINVAL(self%svstr_eigen,                             &
+     &                    MASK = self%svstr_eigen > 0.0)
+              Fmax=MAXVAL(self%svstr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), Fmin, Fmax
+            END IF
+#   endif
+#   if defined ADJUST_STFLUX && defined SOLVE3D
+!
+            DO itrc=1,NT(ng)
+              IF (Lstflux(itrc,ng)) THEN
+                ifld=ieTsur(itrc)
+                CALL pio_netcdf_get_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                    self%stflux_eigen(:,itrc,:,:),&
+     &                                    pioFile = NRM(4,ng)%pioFile,  &
+     &                                    start = (/1,1,1/),            &
+     &                                    total = (/nl,ns,2/))
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
+                IF (Master) THEN 
+                  Fmin=MINVAL(self%stflux_eigen(:,itrc,:,:),            &
+     &                    MASK = self%stflux_eigen(:,itrc,:,:) > 0.0)
+                  Fmax=MAXVAL(self%stflux_eigen(:,itrc,:,:))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
+                END IF
+              END IF
+            END DO
+#   endif
+#  endif
+        END SELECT
+!
+      END IF FRC_LREAD_EIGEN
+# endif
+!
+  10  FORMAT (/,1x,'Reading extrema Ritz eigenvalues from ',a,2x,a/,3x, &
+     &        '(Required by Implicit Chebyshev Iterations, CI, '        &
+     &        'Solver)',/) 
+  20  FORMAT (4x,'- ',a,':',t35,'Min = ',1p,e15.8,',  Max = ',1p,e15.8)
+!
+      RETURN
+      END SUBROUTINE multiscale_eigen_read
+!
+!***********************************************************************
       SUBROUTINE multiscale_eigen_write (self, ng, model)
 !***********************************************************************
 !
@@ -988,42 +1684,42 @@
 !
           ncname=NRM(i,ng)%name
 !
-          SELECT CASE (NRM(i,ng)%IOTYPE)
+          SELECT CASE (NRM(i,ng)%IOtype)
             CASE (io_nf90)
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieFsur),                     &
-     &                              self%zeta_eigen,                     &
-     &                              start = (/1,1,1/),                   &
-     &                              total = (/nl,ns,2/),                 &
-     &                              ncid = NRM(i,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieFsur),                    &
+     &                              self%zeta_eigen,                    &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/),                &
+     &                              ncid = NRM(i,ng)%ncid,              &
      &                              varid = NRM(i,ng)%Vid(ieFsur))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieFsur)), TRIM(ncname)
               END IF
 !
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieUbar),                     &
-     &                              self%ubar_eigen,                     &
-     &                              start = (/1,1,1/),                   &
-     &                              total = (/nl,ns,2/),                 &
-     &                              ncid = NRM(i,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieUbar),                    &
+     &                              self%ubar_eigen,                    &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/),                &
+     &                              ncid = NRM(i,ng)%ncid,              &
      &                              varid = NRM(i,ng)%Vid(ieUbar))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieUbar)), TRIM(ncname)
               END IF
 !
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieVbar),                     &
-     &                              self%vbar_eigen,                     &
-     &                              start = (/1,1,1/),                   &
-     &                              total = (/nl,ns,2/),                 &
-     &                              ncid = NRM(i,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieVbar),                    &
+     &                              self%vbar_eigen,                    &
+     &                              start = (/1,1,1/),                  &
+     &                              total = (/nl,ns,2/),                &
+     &                              ncid = NRM(i,ng)%ncid,              &
      &                              varid = NRM(i,ng)%Vid(ieVbar))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieVbar)), TRIM(ncname)
@@ -1031,27 +1727,27 @@
 
 # ifdef SOLVE3D
 !
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieUvel),                     &
-     &                              self%u_eigen,                        &
-     &                              start = (/1,1,1,1/),                 &
-     &                              total = (/nl,N(ng),ns,2/),           &
-     &                              ncid = NRM(i,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieUvel),                    &
+     &                              self%u_eigen,                       &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,N(ng),ns,2/),          &
+     &                              ncid = NRM(i,ng)%ncid,              &
      &                              varid = NRM(i,ng)%Vid(ieUvel))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieUvel)), TRIM(ncname)
               END IF
 !
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieVvel),                     &
-     &                              self%v_eigen,                        &
-     &                              start = (/1,1,1,1/),                 &
-     &                              total = (/nl,N(ng),ns,2/),           &
-     &                              ncid = NRM(i,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieVvel),                    &
+     &                              self%v_eigen,                       &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,N(ng),ns,2/),          &
+     &                              ncid = NRM(i,ng)%ncid,              &
      &                              varid = NRM(i,ng)%Vid(ieVvel))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieVvel)), TRIM(ncname)
@@ -1059,14 +1755,14 @@
 !
               DO itrc=1,NT(ng)
                 ifld=ieTvar(itrc)
-                CALL netcdf_put_fvar (ng, model, ncname,                 &
-     &                                Vname(1,ifld),                     &
-     &                                self%t_eigen(:,:,itrc,:,:),        &
-     &                                start = (/1,1,1,1/),               &
-     &                                total = (/nl,N(ng),ns,2/),         &
-     &                                ncid = NRM(i,ng)%ncid,             &
+                CALL netcdf_put_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%t_eigen(:,:,itrc,:,:),       &
+     &                                start = (/1,1,1,1/),              &
+     &                                total = (/nl,N(ng),ns,2/),        &
+     &                                ncid = NRM(i,ng)%ncid,            &
      &                                varid = NRM(i,ng)%Vid(ifld))
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
@@ -1076,40 +1772,40 @@
 
 # if defined PIO_LIB && defined DISTRIBUTE
             CASE (io_pio)
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieFsur),                 &
-     &                                  self%zeta_eigen,                 &
-     &                                  start = (/1,1,1/),               &
-     &                                  total = (/nl,ns,2/),             &
-     &                                  pioFile = NRM(i,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieFsur),                &
+     &                                  self%zeta_eigen,                &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/),            &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
      &                             pioVar = NRM(i,ng)%pioVar(ieFsur)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieFsur)), TRIM(ncname)
               END IF
 !
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieUbar),                 &
-     &                                  self%ubar_eigen,                 &
-     &                                  start = (/1,1,1/),               &
-     &                                  total = (/nl,ns,2/),             &
-     &                                  pioFile = NRM(i,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieUbar),                &
+     &                                  self%ubar_eigen,                &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/),            &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
      &                             pioVar = NRM(i,ng)%pioVar(ieUbar)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieUbar)), TRIM(ncname)
               END IF
 !
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieVbar),                 &
-     &                                  self%vbar_eigen,                 &
-     &                                  start = (/1,1,1/),               &
-     &                                  total = (/nl,ns,2/),             &
-     &                                  pioFile = NRM(i,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieVbar),                &
+     &                                  self%vbar_eigen,                &
+     &                                  start = (/1,1,1/),              &
+     &                                  total = (/nl,ns,2/),            &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
      &                             pioVar = NRM(i,ng)%pioVar(ieVbar)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieVbar)), TRIM(ncname)
@@ -1117,27 +1813,27 @@
 
 #  ifdef SOLVE3D
 !
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieUvel),                 &
-     &                                  self%u_eigen,                    &
-     &                                  start = (/1,1,1,1/),             &
-     &                                  total = (/nl,N(ng),ns,2/),       &
-     &                                  pioFile = NRM(i,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieUvel),                &
+     &                                  self%u_eigen,                   &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,N(ng),ns,2/),      &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
      &                             pioVar = NRM(i,ng)%pioVar(ieUvel)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieUvel)), TRIM(ncname)
               END IF
 !
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieVvel),                 &
-     &                                  self%v_eigen,                    &
-     &                                  start = (/1,1,1,1/),             &
-     &                                  total = (/nl,N(ng),ns,2/),       &
-     &                                  pioFile = NRM(i,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieVvel),                &
+     &                                  self%v_eigen,                   &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,N(ng),ns,2/),      &
+     &                                  pioFile = NRM(i,ng)%pioFile,    &
      &                             pioVar = NRM(i,ng)%pioVar(ieVvel)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieVvel)), TRIM(ncname)
@@ -1145,14 +1841,14 @@
 !
               DO itrc=1,NT(ng)
                 ifld=ieTvar(itrc)
-                CALL pio_netcdf_put_fvar (ng, model, ncname,             &
-     &                                    Vname(1,ifld),                 &
-     &                                    self%t_eigen(:,:,itrc,:,:),    &
-     &                                    start = (/1,1,1,1/),           &
-     &                                    total = (/nl,N(ng),ns,2/),     &
-     &                                    pioFile = NRM(i,ng)%pioFile,   &
+                CALL pio_netcdf_put_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                    self%t_eigen(:,:,itrc,:,:),   &
+     &                                    start = (/1,1,1,1/),          &
+     &                                    total = (/nl,N(ng),ns,2/),    &
+     &                                    pioFile = NRM(i,ng)%pioFile,  &
      &                             pioVar = NRM(i,ng)%pioVar(ifld)%vd)
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
@@ -1177,19 +1873,19 @@
 !
         ncname=NRM(3,ng)%name
 !
-        SELECT CASE (NRM(3,ng)%IOTYPE)
+        SELECT CASE (NRM(3,ng)%IOtype)
 !
           CASE (io_nf90)
 !
             IF (ANY(Lobc(:,isFsur,ng))) THEN
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieZbry),                     &
-     &                              self%zeta_obc_eigen,                 &
-     &                              start = (/1,1,1,1/),                 &
-     &                              total = (/nl,4,ns,2/),               &
-     &                              ncid = NRM(3,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieZbry),                    &
+     &                              self%zeta_obc_eigen,                &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/),              &
+     &                              ncid = NRM(3,ng)%ncid,              &
      &                              varid = NRM(3,ng)%Vid(ieZbry))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieZbry)), TRIM(ncname)
@@ -1197,14 +1893,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isUbar,ng))) THEN
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieU2bc),                     &
-     &                              self%ubar_obc_eigen,                 &
-     &                              start = (/1,1,1,1/),                 &
-     &                              total = (/nl,4,ns,2/),               &
-     &                              ncid = NRM(3,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieU2bc),                    &
+     &                              self%ubar_obc_eigen,                &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/),              &
+     &                              ncid = NRM(3,ng)%ncid,              &
      &                              varid = NRM(3,ng)%Vid(ieU2bc))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), TRIM(ncname)
@@ -1212,14 +1908,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isVbar,ng))) THEN
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieV2bc),                     &
-     &                              self%vbar_obc_eigen,                 &
-     &                              start = (/1,1,1,1/),                 &
-     &                              total = (/nl,4,ns,2/),               &
-     &                              ncid = NRM(3,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieV2bc),                    &
+     &                              self%vbar_obc_eigen,                &
+     &                              start = (/1,1,1,1/),                &
+     &                              total = (/nl,4,ns,2/),              &
+     &                              ncid = NRM(3,ng)%ncid,              &
      &                              varid = NRM(3,ng)%Vid(ieV2bc))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), TRIM(ncname)
@@ -1229,14 +1925,14 @@
 #  ifdef SOLVE3D
 !
             IF (ANY(Lobc(:,isUvel,ng))) THEN
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieU3bc),                     &
-     &                              self%u_obc_eigen,                    &
-     &                              start = (/1,1,1,1,1/),               &
-     &                              total = (/nl,N(ng),4,ns,2/),         &
-     &                              ncid = NRM(3,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieU3bc),                    &
+     &                              self%u_obc_eigen,                   &
+     &                              start = (/1,1,1,1,1/),              &
+     &                              total = (/nl,N(ng),4,ns,2/),        &
+     &                              ncid = NRM(3,ng)%ncid,              &
      &                              varid = NRM(3,ng)%Vid(ieU3bc))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), TRIM(ncname)
@@ -1244,14 +1940,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isVvel,ng))) THEN
-              CALL netcdf_put_fvar (ng, model, ncname,                   &
-     &                              Vname(1,ieV3bc),                     &
-     &                              self%v_obc_eigen,                    &
-     &                              start = (/1,1,1,1,1/),               &
-     &                              total = (/nl,N(ng),4,ns,2/),         &
-     &                              ncid = NRM(3,ng)%ncid,               &
+              CALL netcdf_put_fvar (ng, model, ncname,                  &
+     &                              Vname(1,ieV3bc),                    &
+     &                              self%v_obc_eigen,                   &
+     &                              start = (/1,1,1,1,1/),              &
+     &                              total = (/nl,N(ng),4,ns,2/),        &
+     &                              ncid = NRM(3,ng)%ncid,              &
      &                              varid = NRM(3,ng)%Vid(ieV3bc))
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), TRIM(ncname)
@@ -1261,14 +1957,14 @@
             DO itrc=1,NT(ng)
               IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
                 ifld=ieTbry(itrc)
-                CALL netcdf_put_fvar (ng, model, ncname,                 &
-     &                                Vname(1,ifld),                     &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:),  &
-     &                                start = (/1,1,1,1,1/),             &
-     &                                total = (/nl,N(ng),4,ns,2/),       &
-     &                                ncid = NRM(3,ng)%ncid,             &
+                CALL netcdf_put_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                start = (/1,1,1,1,1/),            &
+     &                                total = (/nl,N(ng),4,ns,2/),      &
+     &                                ncid = NRM(3,ng)%ncid,            &
      &                                varid = NRM(3,ng)%Vid(ifld))
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
@@ -1282,14 +1978,14 @@
           CASE (io_pio)
 !
             IF (ANY(Lobc(:,isFsur,ng))) THEN
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieZbry),                 &
-     &                                  self%zeta_obc_eigen,             &
-     &                                  start = (/1,1,1,1/),             &
-     &                                  total = (/nl,4,ns,2/),           &
-     &                                  pioFile = NRM(3,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieZbry),                &
+     &                                  self%zeta_obc_eigen,            &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/),          &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                             pioVar = NRM(3,ng)%pioVar(ieZbry)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieZbry)), TRIM(ncname)
@@ -1297,14 +1993,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isUbar,ng))) THEN
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieU2bc),                 &
-     &                                  self%ubar_obc_eigen,             &
-     &                                  start = (/1,1,1,1/),             &
-     &                                  total = (/nl,4,ns,2/),           &
-     &                                  pioFile = NRM(3,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieU2bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/),          &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                             pioVar = NRM(3,ng)%pioVar(ieU2bc)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), TRIM(ncname)
@@ -1312,14 +2008,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isVbar,ng))) THEN
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieV2bc),                 &
-     &                                  self%ubar_obc_eigen,             &
-     &                                  start = (/1,1,1,1/),             &
-     &                                  total = (/nl,4,ns,2/),           &
-     &                                  pioFile = NRM(3,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieV2bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  start = (/1,1,1,1/),            &
+     &                                  total = (/nl,4,ns,2/),          &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                             pioVar = NRM(3,ng)%pioVar(ieV2bc)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), TRIM(ncname)
@@ -1329,14 +2025,14 @@
 #   ifdef SOLVE3D
 !
             IF (ANY(Lobc(:,isUvel,ng))) THEN
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieU3bc),                 &
-     &                                  self%ubar_obc_eigen,             &
-     &                                  start = (/1,1,1,1,1/),           &
-     &                                  total = (/nl,N(ng),4,ns,2/),     &
-     &                                  pioFile = NRM(3,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieU3bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  start = (/1,1,1,1,1/),          &
+     &                                  total = (/nl,N(ng),4,ns,2/),    &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                             pioVar = NRM(3,ng)%pioVar(ieU3bc)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), TRIM(ncname)
@@ -1344,14 +2040,14 @@
             END IF
 !
             IF (ANY(Lobc(:,isVvel,ng))) THEN
-              CALL pio_netcdf_put_fvar (ng, model, ncname,               &
-     &                                  Vname(1,ieV3bc),                 &
-     &                                  self%ubar_obc_eigen,             &
-     &                                  start = (/1,1,1,1,1/),           &
-     &                                  total = (/nl,N(ng),4,ns,2/),     &
-     &                                  pioFile = NRM(3,ng)%pioFile,     &
+              CALL pio_netcdf_put_fvar (ng, model, ncname,              &
+     &                                  Vname(1,ieV3bc),                &
+     &                                  self%ubar_obc_eigen,            &
+     &                                  start = (/1,1,1,1,1/),          &
+     &                                  total = (/nl,N(ng),4,ns,2/),    &
+     &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                             pioVar = NRM(3,ng)%pioVar(ieV3bc)%vd)
-              IF (FoundError(exit_flag, NoError,                         &
+              IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
                 WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), TRIM(ncname)
@@ -1361,14 +2057,14 @@
             DO itrc=1,NT(ng)
               IF (ANY(Lobc(:,isTvar(itrc),ng))) THEN
                 ifld=ieTbry(itrc)
-                CALL pio_netcdf_put_fvar (ng, model, ncname,             &
-     &                                    Vname(1,ifld),                 &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:),  &
-     &                                    start = (/1,1,1,1,1/),         &
-     &                                    total = (/nl,N(ng),4,ns,2/),   &
-     &                                    pioFile = NRM(3,ng)%pioFile,   &
+                CALL pio_netcdf_put_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                    start = (/1,1,1,1,1/),        &
+     &                                    total = (/nl,N(ng),4,ns,2/),  &
+     &                                    pioFile = NRM(3,ng)%pioFile,  &
      &                               pioVar = NRM(3,ng)%pioVar(ifld)%vd)
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
@@ -1394,30 +2090,30 @@
 !
         ncname=NRM(4,ng)%name
 !
-        SELECT CASE (NRM(4,ng)%IOTYPE)
+        SELECT CASE (NRM(4,ng)%IOtype)
 !
           CASE (io_nf90)
 
 #  ifdef ADJUST_WSTRESS
 !
-            CALL netcdf_put_fvar (ng, model, ncname,                     &
-     &                            Vname(1,ieUsms),                       &
-     &                            self%sustr_eigen,                      &
-     &                            start = (/1,1,1/),                     &
-     &                            total = (/nl,ns,2/),                   &
-     &                            ncid = NRM(4,ng)%ncid,                 &
+            CALL netcdf_put_fvar (ng, model, ncname,                    &
+     &                            Vname(1,ieUsms),                      &
+     &                            self%sustr_eigen,                     &
+     &                            start = (/1,1,1/),                    &
+     &                            total = (/nl,ns,2/),                  &
+     &                            ncid = NRM(4,ng)%ncid,                &
      &                            varid = NRM(4,ng)%Vid(ieUsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
               WRITE (stdout,20) TRIM(Vname(1,ieUsms)), TRIM(ncname)
             END IF
 !
-            CALL netcdf_put_fvar (ng, model, ncname,                     &
-     &                            Vname(1,ieVsms),                       &
-     &                            self%svstr_eigen,                      &
-     &                            start = (/1,1,1/),                     &
-     &                            total = (/nl,ns,2/),                   &
-     &                            ncid = NRM(4,ng)%ncid,                 &
+            CALL netcdf_put_fvar (ng, model, ncname,                    &
+     &                            Vname(1,ieVsms),                      &
+     &                            self%svstr_eigen,                     &
+     &                            start = (/1,1,1/),                    &
+     &                            total = (/nl,ns,2/),                  &
+     &                            ncid = NRM(4,ng)%ncid,                &
      &                            varid = NRM(4,ng)%Vid(ieVsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
@@ -1429,14 +2125,14 @@
             DO itrc=1,NT(ng)
               IF (Lstflux(itrc,ng)) THEN
                 ifld=ieTsur(itrc)
-                CALL netcdf_put_fvar (ng, model, ncname,                 &
-     &                                Vname(1,ifld),                     &
-     &                                self%stflux_eigen(:,itrc,:,:),     &
-     &                                start = (/1,1,1/),                 &
-     &                                total = (/nl,ns,2/),               &
-     &                                ncid = NRM(4,ng)%ncid,             &
+                CALL netcdf_put_fvar (ng, model, ncname,                &
+     &                                Vname(1,ifld),                    &
+     &                                self%stflux_eigen(:,itrc,:,:),    &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/),              &
+     &                                ncid = NRM(4,ng)%ncid,            &
      &                                varid = NRM(4,ng)%Vid(ifld))
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
@@ -1450,24 +2146,24 @@
 
 #   ifdef ADJUST_WSTRESS
 !
-            CALL pio_netcdf_put_fvar (ng, model, ncname,                 &
-     &                                Vname(1,ieUsms),                   &
-     &                                self%sustr_eigen,                  &
-     &                                start = (/1,1,1/),                 &
-     &                                total = (/nl,ns,2/),               &
-     &                                pioFile = NRM(4,ng)%pioFile,       &
+            CALL pio_netcdf_put_fvar (ng, model, ncname,                &
+     &                                Vname(1,ieUsms),                  &
+     &                                self%sustr_eigen,                 &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/),              &
+     &                                pioFile = NRM(4,ng)%pioFile,      &
      &                           pioVar = NRM(4,ng)%pioVar(ieUsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
               WRITE (stdout,20) TRIM(Vname(1,ieUsms)), TRIM(ncname)
             END IF
 !
-            CALL pio_netcdf_put_fvar (ng, model, ncname,                 &
-     &                                Vname(1,ieVsms),                   &
-     &                                self%svstr_eigen,                  &
-     &                                start = (/1,1,1/),                 &
-     &                                total = (/nl,ns,2/),               &
-     &                                pioFile = NRM(4,ng)%pioFile,       &
+            CALL pio_netcdf_put_fvar (ng, model, ncname,                &
+     &                                Vname(1,ieVsms),                  &
+     &                                self%svstr_eigen,                 &
+     &                                start = (/1,1,1/),                &
+     &                                total = (/nl,ns,2/),              &
+     &                                pioFile = NRM(4,ng)%pioFile,      &
      &                           pioVar = NRM(4,ng)%pioVar(ieVsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
@@ -1479,14 +2175,14 @@
             DO itrc=1,NT(ng)
               IF (Lstflux(itrc,ng)) THEN
                 ifld=ieTsur(itrc)
-                CALL pio_netcdf_put_fvar (ng, model, ncname,             &
-     &                                    Vname(1,ifld),                 &
-     &                                    self%stflux_eigen(:,itrc,:,:), &
-     &                                    start = (/1,1,1/),             &
-     &                                    total = (/nl,ns,2/),           &
-     &                                    pioFile = NRM(4,ng)%pioFile,   &
+                CALL pio_netcdf_put_fvar (ng, model, ncname,            &
+     &                                    Vname(1,ifld),                &
+     &                                    self%stflux_eigen(:,itrc,:,:),&
+     &                                    start = (/1,1,1/),            &
+     &                                    total = (/nl,ns,2/),          &
+     &                                    pioFile = NRM(4,ng)%pioFile,  &
      &                               pioVar = NRM(4,ng)%pioVar(ifld)%vd)
-                IF (FoundError(exit_flag, NoError,                       &
+                IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)

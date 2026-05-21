@@ -63,6 +63,7 @@
       USE inp_par_mod,          ONLY : inp_par
 #ifdef MULTI_SCALE_B
       USE multiscale_eigen_mod, ONLY : multiscale_eigen,                &
+     &                                 multiscale_eigen_read,           &
      &                                 multiscale_eigen_write
 #endif
       USE normalization_mod,    ONLY : normalization
@@ -317,9 +318,6 @@
 # ifdef NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales.
-
-so the spatial convolution is only done for half of the
-!  pseudo-diffusion steps.
 !
 # endif
 !
@@ -378,6 +376,14 @@ so the spatial convolution is only done for half of the
 !
           CALL get_state (ng, 17, 17, NRM(4,ng), NRMrec, 1)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#ifdef MULTI_SCALE_B
+!
+!  Read in extrema Ritz eigenvalues frot the normalization file, which
+!  are required by the Implicit Chebyshev Iterations (CI) solver.
+!
+          CALL multiscale_eigen_read (MSB(ng), ng, iTLM)
 #endif
         END IF GET_NORMALIZATION 
       END DO NESTED_LOOP

@@ -327,7 +327,7 @@
       KperAD=INT(user(8))
 #endif
       IF (Master) THEN
-        WRITE (stdout,'(1x,a,/)') 'Dirac Delta Function Perturbations:'
+        WRITE (stdout,'(/,a,/)') ' Dirac Delta Function Perturbations:'
         IF (TLmodel) THEN
           IF (ivarTL.eq.isUbar) THEN
             WRITE (stdout,10) 'tl_ubar perturbed at (i,j) = ',          &
