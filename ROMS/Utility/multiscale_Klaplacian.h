@@ -92,6 +92,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -120,8 +127,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
         END DO
       END DO
@@ -308,11 +315,12 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -342,8 +350,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
         END DO
       END DO
@@ -538,6 +546,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -558,8 +573,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
         END DO
@@ -742,11 +757,12 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -768,8 +784,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
         END DO
@@ -959,6 +975,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -979,8 +1002,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
         END DO
@@ -1164,11 +1187,12 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj)=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      Khy(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -1190,8 +1214,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
         END DO
@@ -1392,6 +1416,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -1412,8 +1443,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
         END DO
       END DO
@@ -1845,15 +1876,18 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
 # ifdef GEOPOTENTIAL_HCONV
-      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_FZ=0.0_r8
+      ad_dAdz=0.0_r8
+      ad_dAdx=0.0_r8
+      ad_dAde=0.0_r8
 # endif
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -1875,8 +1909,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=GRID(ng)%pm(i,j)*GRID(ng)%pn(i,j)
         END DO
       END DO
@@ -2411,6 +2445,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -2425,8 +2466,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
         END DO
@@ -2885,15 +2926,18 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
 # ifdef GEOPOTENTIAL_HCONV
-      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_FZ=0.0_r8
+      ad_dAdz=0.0_r8
+      ad_dAdx=0.0_r8
+      ad_dAde=0.0_r8
 # endif
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -2909,8 +2953,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=IstrU-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i-1,j)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i-1,j)+GRID(ng)%pn(i,j))
         END DO
@@ -3464,6 +3508,13 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -3478,8 +3529,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
         END DO
@@ -3932,15 +3983,18 @@
         rec=1                        ! strong constraint correlations
       END IF
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng))=0.0_r8
-      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
 # ifdef GEOPOTENTIAL_HCONV
-      ad_FZ(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
-      ad_dAde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_FZ=0.0_r8
+      ad_dAdz=0.0_r8
+      ad_dAdx=0.0_r8
+      ad_dAde=0.0_r8
 # endif
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -3956,8 +4010,8 @@
 !
 !  Compute metrics factor.
 !
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
+      DO j=JstrV-1,Jend+1
+        DO i=Istr-1,Iend+1
           Hfac(i,j)=0.25_r8*(GRID(ng)%pm(i,j-1)+GRID(ng)%pm(i,j))*      &
      &                      (GRID(ng)%pn(i,j-1)+GRID(ng)%pn(i,j))
         END DO
@@ -4512,6 +4566,13 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
+!
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
 !
@@ -4922,11 +4983,14 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
-!  Initizlize private adjoint variables.
+!  Initialize private adjoint variables.
 !
-      ad_Awrk(LBij:UBij)=0.0_r8
-      ad_FE(JminS:JmaxS)=0.0_r8
-      ad_FX(IminS:ImaxS)=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8     
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -5360,6 +5424,13 @@
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_FE=0.0_r8
+      tl_FX=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -5802,6 +5873,15 @@
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
+!
+!  Initialize private adjoint variables.
+!
+      ad_Awrk=0.0_r8
+      ad_FE=0.0_r8
+      ad_FX=0.0_r8
+      Hfac=0.0_r8
+      Khx=0.0_r8
+      Khy=0.0_r8     
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.

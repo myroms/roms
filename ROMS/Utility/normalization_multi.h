@@ -6502,14 +6502,15 @@
       CALL netcdf_sync (ng, model, ncname, ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
+      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex,      &
+     &                              TRIM(ncname)
       FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM2D_NF90 - error while writing variable: ',a,  &
      &        /,19x 'into normalization NetCDF file for time record: ', &
      &        i0)
   20  FORMAT (7x,'wrote  ',a, t21,'normalization factors into record ', &
-     &        i0)
+     &        i0,', file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_norm2d_nf90
@@ -6595,14 +6596,15 @@
       CALL pio_netcdf_sync (ng, model, ncname, pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
+      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex,      &
+     &                              TRIM(ncname)
       FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM2D_PIO - error while writing variable: ',a,   &
      &        /,18x 'into normalization NetCDF file for time record: ', &
      &        i0)
   20  FORMAT (7x,'wrote  ',a, t21,'normalization factors into record ', &
-     &        i0)
+     &        i0,', file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_norm2d_pio
@@ -6693,14 +6695,15 @@
       CALL netcdf_sync (ng, model, ncname, ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
+      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex,      &
+     &                              TRIM(ncname)
       FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM3D_NF90 - error while writing variable: ',a,  &
      &        /,19x,'into normalization NetCDF file for time record: ', &
      &        i0)
   20  FORMAT (7x,'wrote  ',a, t21,'normalization factors into record ', &
-     &        i0)
+     &        i0,', file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_norm3d_nf90
@@ -6786,14 +6789,15 @@
       CALL pio_netcdf_sync (ng, model, ncname, pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex
+      IF (Master) WRITE (stdout,20) TRIM(Vname(1,ifield)), tindex,      &
+     &                              TRIM(ncname)
       FLUSH (stdout)
 !
   10  FORMAT (/,' WRT_NORM3D_PIO - error while writing variable: ',a,   &
      &        /,18x,'into normalization NetCDF file for time record: ', &
      &        i0)
   20  FORMAT (7x,'wrote  ',a, t21,'normalization factors into record ', &
-     &        i0)
+     &        i0,', file: ',a)
 !
       RETURN
       END SUBROUTINE wrt_norm3d_pio

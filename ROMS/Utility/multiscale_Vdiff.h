@@ -70,11 +70,15 @@
       Nold=1
       Nnew=2
 !
+      FC=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_DC=0.0_r8
+!
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
 #ifdef SPLINES_VCONV
           DO k=1,N(ng)
             oHz(i,j,k)=1.0_r8/GRID(ng)%Hz(i,j,k)
@@ -92,9 +96,23 @@
 !
 !  Set operator initial conditions.
 !
+#ifdef DISTRIBUTE
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghostpoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+!
+#endif
       DO k=1,N(ng)
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
+        DO j=Jstr-1,Jend+1
+          DO i=Istr-1,Iend+1
 !^          Awrk(i,j,k,Nold)=A(i,j,k)
 !^
             tl_Awrk(i,j,k,Nold)=tl_A(i,j,k)
@@ -356,14 +374,15 @@
       Nold=1
       Nnew=2
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng),1:2)=0.0_r8
-      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_DC=0.0_r8
+      FC=0.0_r8
 !
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
+      DO j=Jstr-1,Jend+1
+        DO i=Istr-1,Iend+1
 #ifdef SPLINES_VCONV
           DO k=1,N(ng)
             oHz(i,j,k)=1.0_r8/GRID(ng)%Hz(i,j,k)
@@ -637,6 +656,21 @@
           END DO
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    ad_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghostpoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Vdiff_r3d_ad
@@ -693,6 +727,10 @@
       Nold=1
       Nnew=2
 !
+      FC=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_DC=0.0_r8
+!
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
 !
@@ -717,9 +755,23 @@
 !
 !  Set operator initial conditions.
 !
+#ifdef DISTRIBUTE
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghostpoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+!
+#endif
       DO k=1,N(ng)
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
+        DO j=Jstr-1,Jend+1
+          DO i=IstrU-1,Iend+1
 !^          Awrk(i,j,k,Nold)=A(i,j,k)
 !^
             tl_Awrk(i,j,k,Nold)=tl_A(i,j,k)
@@ -985,8 +1037,9 @@
       Nold=1
       Nnew=2
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng),1:2)=0.0_r8
-      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_DC=0.0_r8
+      FC=0.0_r8
 !
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
@@ -1262,8 +1315,8 @@
 !  Adjoint of set operator initial conditions.
 !
       DO k=1,N(ng)
-        DO j=Jstr,Jend
-          DO i=IstrU,Iend
+        DO j=Jstr-1,Jend+1
+          DO i=IstrU-1,Iend+1
 !^          tl_Awrk(i,j,k,Nold)=tl_A(i,j,k)
 !^
             ad_A(i,j,k)=ad_A(i,j,k)+ad_Awrk(i,j,k,Nold)
@@ -1271,6 +1324,21 @@
           END DO
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghostpoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Vdiff_u3d_ad
@@ -1327,6 +1395,10 @@
       Nold=1
       Nnew=2
 !
+      FC=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_DC=0.0_r8
+!
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
 !
@@ -1351,9 +1423,23 @@
 !
 !  Set operator initial conditions.
 !
+#ifdef DISTRIBUTE
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    A)
+!^
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    Nghostpoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    tl_A)
+!
+#endif
       DO k=1,N(ng)
-        DO j=JstrV,Jend
-          DO i=Istr,Iend
+        DO j=JstrV-1,Jend+1
+          DO i=Istr-1,Iend+1
 !^          Awrk(i,j,k,Nold)=A(i,j,k)
 !^
             tl_Awrk(i,j,k,Nold)=tl_A(i,j,k)
@@ -1622,8 +1708,9 @@
       Nold=1
       Nnew=2
 !
-      ad_Awrk(LBi:UBi,LBj:UBj,N(ng),1:2)=0.0_r8
-      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_DC=0.0_r8
+      FC=0.0_r8
 !
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
@@ -1907,6 +1994,21 @@
           END DO
         END DO
       END DO
+
+#ifdef DISTRIBUTE
+!
+!^    CALL mp_exchange3d (ng, tile, model, 1,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    Nghostpoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_A)
+!^
+      CALL ad_mp_exchange3d (ng, tile, model, 1,                        &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       Nghostpoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_A)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Vdiff_v3d_ad
@@ -2002,6 +2104,10 @@
 !
       Nold=1
       Nnew=2
+!
+      FC=0.0_r8
+      tl_Awrk=0.0_r8
+      tl_DC=0.0_r8
 !
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.
@@ -2518,8 +2624,9 @@
       Nold=1
       Nnew=2
 !
-      ad_Awrk(LBij:UBij,N(ng),2)=0.0_r8
-      ad_DC(LBij:UBij,0:N(ng))=0.0_r8
+      ad_Awrk=0.0_r8
+      ad_DC=0.0_r8
+      FC=0.0_r8
 !
 !  Compute vertical metric factor.  Notice that "z_r" and "Hz" are
 !  assumed to be time invariant in the vertical diffusion operator.

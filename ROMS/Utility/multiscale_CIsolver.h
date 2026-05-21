@@ -98,10 +98,13 @@
           Jmin=JstrV
       END SELECT
 !
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ci2d_r=0.0_r8
       self%ci2d_p=0.0_r8
       self%ci2d_q=0.0_r8
       self%ci2d_x=0.0_r8
+      tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
@@ -224,8 +227,8 @@
 !
         KLAP_ITER : DO iterCI=0,NiterCI                 ! steps 12 to 17
 !
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               tl_A(i,j)=tl_A(i,j)/tl_scale(i,j)
             END DO
           END DO
@@ -380,6 +383,9 @@
           Jmin=JstrV
       END SELECT
 !
+      ad_scale=0.0_r8
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ci2d_r=0.0_r8
       self%ci2d_p=0.0_r8
       self%ci2d_q=0.0_r8
@@ -468,14 +474,14 @@
         ci_alpham1=1.0_r8                               ! step 3
         ci_beta(0)=0.0_r8                               ! step 4
 !
-        DO j=Jmin,Jmax
-          DO i=Imin,Imax
-            self%ci2d_p(i,j)=0.0_r8
-            self%ci2d_r(i,j)=0.0_r8
-            self%ci2d_q(i,j)=0.0_r8
-            self%ci2d_x(i,j)=0.0_r8
-          END DO
-        END DO
+!        DO j=Jmin,Jmax
+!          DO i=Imin,Imax
+!            self%ci2d_p(i,j)=0.0_r8
+!            self%ci2d_r(i,j)=0.0_r8
+!            self%ci2d_q(i,j)=0.0_r8
+!            self%ci2d_x(i,j)=0.0_r8
+!          END DO
+!        END DO
 !
 !  Adjoint of invert the implicit diffusion equation using Chebyshev
 !  Iterations.
@@ -602,16 +608,20 @@
 !
         DO j=Jmin,Jmax
           DO i=Imin,Imax
-!^          self%cg2d_p(i,j)=tl_A(i,j)                    ! step 3
+!^          self%cg2d_p(i,j)=tl_A(i,j)                    ! step 11
 !^
             ad_A(i,j)=ad_A(i,j)+self%ci2d_p(i,j)
             self%ci2d_p(i,j)=0.0_r8
-!^          self%cg2d_r(i,j)=-tl_A(i,j)                   ! step 2
+!^          self%cg2d_r(i,j)=-tl_A(i,j)                   ! step 10
 !^
-            ad_A(i,j)=ad_A(i,j)-self%ci2d_r(i,j)!
-!^          self%cg2d_x(i,j)=0.0_r8                       ! step 1
-!^
+            ad_A(i,j)=ad_A(i,j)-self%ci2d_r(i,j)
             self%ci2d_r(i,j)=0.0_r8
+!^          self%cg2d_x(i,j)=0.0_r8                       ! step 9
+!^
+            self%ci2d_x(i,j)=0.0_r8
+!^          tl_A(i,j)=tl_scale(i,j)*tl_A(i,j)
+!^
+            ad_A(i,j)=ad_scale(i,j)*ad_A(i,j)
           END DO
         END DO
 
@@ -695,10 +705,13 @@
           Jmin=JstrV
       END SELECT
 !
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ci3d_r=0.0_r8
       self%ci3d_p=0.0_r8
       self%ci3d_q=0.0_r8
       self%ci3d_x=0.0_r8
+      tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
@@ -809,8 +822,8 @@
         KLAP_ITER : DO iterCI=0,NiterCI                 ! steps 12 to 17
 !
           LEVEL_LOOP2 : DO k=1,N(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
                 tl_A(i,j,k)=tl_A(i,j,k)/tl_scale(i,j)
               END DO
             END DO
@@ -976,6 +989,9 @@
           Jmin=JstrV
       END SELECT
 !
+      ad_scale=0.0_r8
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ci3d_r=0.0_r8
       self%ci3d_p=0.0_r8
       self%ci3d_q=0.0_r8
@@ -1051,6 +1067,15 @@
      &                     eigMin(iterDiff,k))          ! step 2
           ci_alpham1=1.0_r8                             ! step 3
           ci_beta(0,k)=0.0_r8                           ! step 4
+!
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              self%ci3d_r(i,j,k)=0.0_r8
+              self%ci3d_p(i,j,k)=0.0_r8
+              self%ci3d_q(i,j,k)=0.0_r8
+              self%ci3d_x(i,j,k)=0.0_r8
+            END DO
+          END DO
 !
           DO iterCI=0,NiterCI                           ! steps 5 to 8
             IF (iterCI.eq.0) THEN
@@ -1173,8 +1198,8 @@
           END SELECT
 !
           LEVEL_LOOP2 : DO k=1,N(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
+            DO j=Jmin,Jmax
+              DO i=Imin,Imax
 !^              tl_A(i,j,k)=tl_A(i,j,k)/tl_scale(i,j)
 !^
                 ad_A(i,j,k)=ad_A(i,j,k)/ad_scale(i,j)
@@ -1293,10 +1318,13 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ciB1d_r=0.0_r8
       self%ciB1d_p=0.0_r8
       self%ciB1d_q=0.0_r8
       self%ciB1d_x=0.0_r8
+      tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
@@ -1612,6 +1640,9 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+      ad_scale=0.0_r8
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ciB1d_r=0.0_r8
       self%ciB1d_p=0.0_r8
       self%ciB1d_q=0.0_r8
@@ -2013,10 +2044,13 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ciB2d_r=0.0_r8
       self%ciB2d_p=0.0_r8
       self%ciB2d_q=0.0_r8
       self%ciB2d_x=0.0_r8
+      tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
 !  for requested variable in the 2D state/control vector and 
@@ -2354,6 +2388,9 @@
       Lboundary(isouth)=DOMAIN(ng)%Southern_Edge(tile)
       Lboundary(inorth)=DOMAIN(ng)%Northern_Edge(tile)
 !
+      ad_scale=0.0_r8
+      ci_alpha=0.0_r8
+      ci_beta=0.0_r8
       self%ciB2d_r=0.0_r8
       self%ciB2d_p=0.0_r8
       self%ciB2d_q=0.0_r8

@@ -33,7 +33,7 @@
 #include "tile.h"
 !
       IF (Master) THEN
-        WRITE (stdout,10) model
+        WRITE (stdout,10) KernelString(model)
       END IF
 !
       IF (model.eq.iNLM) THEN
@@ -101,7 +101,7 @@
         ANANAME(10)=MyFile
       END IF
 !
- 10   FORMAT (/,1x,'Analytical Initial Conditions, kernel = ',i0,/)
+ 10   FORMAT (/,1x,'Analytical Initial Conditions, kernel = ',a,/)
 !
       RETURN
       END SUBROUTINE ana_initial

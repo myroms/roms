@@ -106,7 +106,7 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: NRMrec, STDrec, Tindex
+      integer :: NRMrec, STDrec, Tindex, ifac
       integer :: chunk_size, ng, thread, tile
 #ifdef _OPENMP
       integer :: my_threadnum
@@ -317,6 +317,9 @@
 # ifdef NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales.
+
+so the spatial convolution is only done for half of the
+!  pseudo-diffusion steps.
 !
 # endif
 !
@@ -340,10 +343,13 @@
           CALL multiscale_eigen_write (MSB(ng), ng, iTLM)
 #endif
 !
-!  Compute normalization factors.
+!  Compute normalization factors. The ifac=2 indicates the squared-root
+!  operator, so the spatial convolution is applied for only half of the
+!  pseudo-diffusion steps.
 !
+          ifac=2
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL normalization (ng, tile, 2)
+            CALL normalization (ng, tile, ifac)
           END DO
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           LdefNRM(1:4,ng)=.FALSE.
