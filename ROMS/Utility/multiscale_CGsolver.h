@@ -149,12 +149,12 @@
 #if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux')                        ! surface net heat flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,itemp,ms,1)
-          eigMax => self%stflux_eigen(:,itemp,ms,2)
+          eigMin => self%stflux_eigen(:,ms,1,itemp)
+          eigMax => self%stflux_eigen(:,ms,2,itemp)
         CASE ('ssflux')                        ! surface net salt flux
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,isalt,ms,1)
-          eigMax => self%stflux_eigen(:,isalt,ms,2)
+          eigMin => self%stflux_eigen(:,ms,1,isalt)
+          eigMax => self%stflux_eigen(:,ms,2,isalt)
 #endif
       END SELECT
 !
@@ -466,12 +466,12 @@
           eigMax => self%v_eigen(:,:,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,itemp,ms,1)
-          eigMax => self%t_eigen(:,:,itemp,ms,2)
+          eigMin => self%t_eigen(:,:,ms,1,itemp)
+          eigMax => self%t_eigen(:,:,ms,2,itemp)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,isalt,ms,1)
-          eigMax => self%t_eigen(:,:,isalt,ms,2)
+          eigMin => self%t_eigen(:,:,ms,1,isalt)
+          eigMax => self%t_eigen(:,:,ms,2,isalt)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -1210,12 +1210,12 @@
           eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
         CASE ('temp')                          ! temperature
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,itemp,ibry,ms,1)
-          eigMax => self%t_obc_eigen(:,:,itemp,ibry,ms,2)
+          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,itemp)
+          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,itemp)
         CASE ('salt')                          ! salinity
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,isalt,ibry,ms,1)
-          eigMax => self%t_obc_eigen(:,:,isalt,ibry,ms,2)
+          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,isalt)
+          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,isalt)
       END SELECT
 !
 !  Set control variable squared root area scale.

@@ -459,6 +459,19 @@
       integer  :: id3dRV        ! 3D relative vorticity
 
 #ifdef MULTI_SCALE_B
+# ifdef NONUNIFORM_SCALES
+!
+!  Input identification indices for spatially-varying horizontal
+!  decorrelation length scales.
+!
+      integer  :: icFsur        ! Free-surface scales
+      integer  :: icUbar        ! 2D U-velocity scales
+      integer  :: icUsms        ! surface U-momentum stress scales
+      integer  :: icUvel        ! 3D U-velocity scales
+      integer  :: icVbar        ! 2D V-velocity scales
+      integer  :: icVsms        ! surface V-momentum stress scales
+      integer  :: icVvel        ! 3D V-velocity scales
+# endif
 !
 !  Input/output identification indices for multiscale background-error
 !  covariance solvers: extrema eigenvalues and dot products.
@@ -480,8 +493,10 @@
       integer, allocatable :: ieTbry(:)   ! tracers boundary eigenvalues
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
+      integer, allocatable :: icTsur(:)   ! tracers flux length scales
       integer, allocatable :: ieTsur(:)   ! tracers flux eigenvalues
 # endif
+      integer, allocatable :: icTvar(:)   ! tracers length scales
       integer, allocatable :: ieTvar(:)   ! tracers eigenvalues
 #endif
 !
@@ -568,6 +583,9 @@
       integer, allocatable :: isTsur(:)     ! surface tracer flux
       integer, allocatable :: isTvar(:)     ! tracers
       integer, allocatable :: idBvar(:)     ! LBC variables indices
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      integer, allocatable :: icSvar(:)     ! state B-scales indices
+#endif
       integer, allocatable :: idSvar(:)     ! state vector indices
       integer, allocatable :: idSbry(:)     ! state boundaries indices
 !
@@ -939,6 +957,13 @@
         idBvar=0
         Dmem(1)=Dmem(1)+REAL(nLBCvar,r8)
       END IF
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (.not.allocated(icSvar)) THEN
+        allocate ( icSvar(MAXVAL(NSV)) )
+        icSvar=0
+        Dmem(1)=Dmem(1)+REAL(MAXVAL(NSV),r8)
+      END IF
+#endif
       IF (.not.allocated(idSvar)) THEN
         allocate ( idSvar(MAXVAL(NSV)) )
         idSvar=0
@@ -1028,8 +1053,20 @@
       END IF
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
+#  ifdef NONUNIFORM_SCALES
+      IF (.not.allocated(icTsur)) THEN
+        allocate ( icTsur(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+#  endif
       IF (.not.allocated(ieTsur)) THEN
         allocate ( ieTsur(MT) )
+        Dmem(1)=Dmem(1)+REAL(MT,r8)
+      END IF
+# endif
+# ifdef NONUNIFORM_SCALES
+      IF (.not.allocated(icTvar)) THEN
+        allocate ( icTvar(MT) )
         Dmem(1)=Dmem(1)+REAL(MT,r8)
       END IF
 # endif
@@ -1173,6 +1210,9 @@
       IF (allocated(isTsur))      deallocate ( isTsur )
       IF (allocated(isTvar))      deallocate ( isTvar )
       IF (allocated(idBvar))      deallocate ( idBvar )
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (allocated(icSvar))      deallocate ( icSvar )
+#endif
       IF (allocated(idSvar))      deallocate ( idSvar )
       IF (allocated(idSbry))      deallocate ( idSbry )
 !
@@ -2024,6 +2064,40 @@
           CASE ('idSSTc')
             idSSTc=varid
 #ifdef MULTI_SCALE_B
+# ifdef NONUNIFORM_SCALES
+          CASE ('icFsur')
+            icFsur=varid
+          CASE ('icUbar')
+            icUbar=varid
+          CASE ('icVbar')
+            icVbar=varid
+#  ifdef SOLVE3D
+          CASE ('icUvel')
+            icUvel=varid
+          CASE ('icVvel')
+            icVvel=varid
+          CASE ('icTvar(itemp)')
+            icTvar(itemp)=varid
+#   ifdef SALINITY
+          CASE ('icTvar(isalt)')
+            icTvar(isalt)=varid
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+          CASE ('icUsms')
+            icUsms=varid
+          CASE ('icVsms')
+            icVsms=varid
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+          CASE ('icTsur(itemp)')
+            icTsur(itemp)=varid
+#   ifdef SALINITY
+          CASE ('icTsur(isalt)')
+            icTsur(isalt)=varid
+#   endif
+#  endif
+# endif
           CASE ('ieFsur')
             ieFsur=varid
           CASE ('ieUbar')
@@ -3473,6 +3547,56 @@
       StateVarName(isMtke)=TRIM(Vname(1,idSvar(isMtke)))
 # endif
       StateVarName(isWvel)=TRIM(Vname(1,idSvar(isWvel)))
+#endif
+
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+!
+!-----------------------------------------------------------------------
+!  Set model state variables correlation length scales metadata indices
+!  and names.
+!-----------------------------------------------------------------------
+!
+      icSvar(isFsur)=icFsur
+      icSvar(isUbar)=icUbar
+      icSvar(isVbar)=icVbar
+# ifdef SOLVE3D
+      icSvar(isUvel)=icUvel
+      icSvar(isVvel)=icVvel
+      DO i=1,MT
+        icSvar(isTvar(i))=icTvar(i)
+      END DO
+# endif
+# if defined ADJUST_WSTRESS
+      icSvar(isUstr)=icUsms
+      icSvar(isVstr)=icVsms
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+      DO i=1,MT
+        icSvar(isTsur(i))=icTsur(i)
+      END DO
+# endif
+!
+!  State lentgth scale variable names.
+!
+      BscaleVarName(isFsur)=TRIM(Vname(1,icSvar(isFsur)))
+      BscaleVarName(isUbar)=TRIM(Vname(1,icSvar(isUbar)))
+      BscaleVarName(isVbar)=TRIM(Vname(1,icSvar(isVbar)))
+# ifdef SOLVE3D
+      BscaleVarName(isUvel)=TRIM(Vname(1,icSvar(isUvel)))
+      BscaleVarName(isVvel)=TRIM(Vname(1,icSvar(isVvel)))
+      DO i=1,MT
+        BscaleVarName(isTvar(i))=TRIM(Vname(1,icSvar(isTvar(i))))
+      END DO
+# endif
+# ifdef ADJUST_WSTRESS
+      BscaleVarName(isUstr)=TRIM(Vname(1,icSvar(isUstr)))
+      BscaleVarName(isVstr)=TRIM(Vname(1,icSvar(isVstr)))
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+      DO i=1,MT
+        BscaleVarName(isTsur(i))=TRIM(Vname(1,icSvar(isTsur(i))))
+      END DO
+# endif
 #endif
 !
 !-----------------------------------------------------------------------

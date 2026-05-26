@@ -144,6 +144,7 @@
 !
       logical :: Lweak, add
 !
+      integer, parameter :: ifac = 2             ! squared-root operator
       integer :: IniRec
       integer :: ng, tile, ns
 !
@@ -176,10 +177,11 @@
 !  with error covariance standard deviations. Next, convolve resulting
 !  vector with the squared-root adjoint diffusion operator. Notice
 !  that the spatial convolution is only done for half of the diffusion
-!  steps (squared-root filter).
+!  steps (squared-root filter, ifac=2).
 !
       Lweak=.FALSE.
       add=.FALSE.
+!
       NESTED_GRID_LOOP : DO ng=1,Ngrids
         MULTISCALE_LOOP : DO ns=1,Nscale(ng)
 #ifdef PROFILE
@@ -193,7 +195,7 @@
 #ifndef DIRAC
             CALL ad_variability (ng, tile, Rold(ng), Lweak)
 #endif
-            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, ifac)
           END DO
 #ifdef PROFILE
           CALL wclock_off (ng, iADM, 82, __LINE__, MyFile)
@@ -201,7 +203,7 @@
 !
 !  Since we wish to preserve what is in tl_var(Rold), load resulting
 !  filtered solution from above, ad_var(Rold), into tl_var(Rnew).
-!  Then, convolve with the squared-root (half of steps) tangent
+!  Then, convolve with the squared-root (half of steps, ifac=2) tangent
 !  linear diffusion operator. Next, scale results with error
 !  covariance standard deviations. Apply balance operator, if
 !  activated.
@@ -212,7 +214,7 @@
 #endif
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
-            CALL tl_convolution (ng, tile, ns, Rnew(ng), Lweak, 2)
+            CALL tl_convolution (ng, tile, ns, Rnew(ng), Lweak, ifac)
 #ifndef DIRAC
             CALL tl_variability (ng, tile, Rnew(ng), Lweak)
 #endif
@@ -271,6 +273,7 @@
 !
       logical :: Lweak, add
 !
+      integer, parameter :: ifac = 2             ! squared-root operator
       integer :: ADrec, BckRec, Fcount, IniRec
       integer :: i, irec, ng, tile, ns
 #ifdef RPCG
@@ -352,13 +355,15 @@
 !  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator to impose apriori error
 !  hypothesis. Notice that the spatial convolution are only done
-!  for half of the diffusion steps (squared-root filter). Clear
-!  tangent linear state arrays when done.
+!  for half of the diffusion steps (squared-root filter, ifac=2).
+!  Clear tangent linear state arrays when done.
 !
           Lweak=.FALSE.
           add=.FALSE.
+!
 #ifdef PROFILE
           CALL wclock_on (ng, model, 82, __LINE__, MyFile)
+!
 #endif
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL load_TLtoAD (ng, tile, Rold(ng), Rold(ng), add)
@@ -366,7 +371,7 @@
             CALL ad_balance (ng, tile, Rini, Rold(ng))
 #endif
             CALL ad_variability (ng, tile, Rold(ng), Lweak)
-            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, ifac)
             CALL initialize_ocean (ng, tile, iTLM)
             CALL initialize_forces (ng, tile, iTLM)
 #ifdef ADJUST_BOUNDARY
@@ -374,24 +379,27 @@
 #endif
           END DO
 #ifdef PROFILE
+!
           CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 #endif
 !
 !  To insure symmetry, convolve resulting filtered adjoint solution
-!  from above with the squared-root (half of steps) tangent linear
+!  from above with the squared-root (half of steps, ifac=2) tangent
 !  diffusion operator. Then, multiply result with its corresponding
-!  error covariance standard deviations. Since the convolved solution
-!  is in the adjoint state arrays, first copy to tangent linear state
-!  arrays including the ghosts points.
+!  linear error covariance standard deviations. Since the convolved
+!  solution is in the adjoint state arrays, first copy to tangent
+!  linear state arrays including the ghosts points.
 !
           Lweak=.FALSE.
           add=.FALSE.
+!
 #ifdef PROFILE
           CALL wclock_on (ng, model, 82, __LINE__, MyFile)
+!
 #endif
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL load_ADtoTL (ng, tile, Rold(ng), Rold(ng), add)
-            CALL tl_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+            CALL tl_convolution (ng, tile, ns, Rold(ng), Lweak, ifac)
             CALL tl_variability (ng, tile, Rold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
             CALL tl_balance (ng, tile, Rini, Rold(ng))
@@ -422,6 +430,7 @@
           END DO
 #endif
 #ifdef PROFILE
+!
           CALL wclock_off (ng, model, 82, __LINE__, MyFile)
 #endif
 
@@ -671,8 +680,8 @@
 !  deviations. Next, convolve resulting adjoint solution with the
 !  squared-root adjoint diffusion operator which impose the model-error
 !  spatial correlations. Notice that the spatial convolution is only
-!  done for half of the diffusion steps (squared-root filter). Clear
-!  tangent linear state arrays when done.
+!  done for half of the diffusion steps (squared-root filter, ifac=2).
+!  Clear tangent linear state arrays when done.
 !
             Lweak=.TRUE.
             add=.FALSE.
@@ -682,7 +691,7 @@
               CALL ad_balance (ng, tile, Rini, Rold(ng))
 # endif
               CALL ad_variability (ng, tile, Rold(ng), Lweak)
-              CALL ad_convolution (ng, tile, Rold(ng), Lweak, 2)
+              CALL ad_convolution (ng, tile, Rold(ng), Lweak, ifac)
               CALL initialize_ocean (ng, tile, iTLM)
               CALL initialize_forces (ng, tile, iTLM)
 # ifdef ADJUST_BOUNDARY
@@ -745,7 +754,7 @@
             Lweak=.TRUE.
             add=.FALSE.
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL tl_convolution (ng, tile, Rold(ng), Lweak, 2)
+              CALL tl_convolution (ng, tile, Rold(ng), Lweak, ifac)
               CALL tl_variability (ng, tile, Rold(ng), Lweak)
 # ifdef BALANCE_OPERATOR
               CALL tl_balance (ng, tile, Rini, Rold(ng))
@@ -802,7 +811,8 @@
 !
               ADrec=irec
               CALL get_state (ng, iTLM, 4, ADM(ng), ADrec, Rold(ng))
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays.
 !  Then, multiply adjoint solution by the background-error standard
@@ -820,7 +830,7 @@
                 CALL ad_balance (ng, tile, Rini, Rold(ng))
 # endif
                 CALL ad_variability (ng, tile, Rold(ng), Lweak)
-                CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+                CALL ad_convolution (ng, tile, ns, Rold(ng),Lweak, ifac)
                 CALL initialize_ocean (ng, tile, iTLM)
                 CALL initialize_forces (ng, tile, iTLM)
 # ifdef ADJUST_BOUNDARY
@@ -840,7 +850,7 @@
               add=.FALSE.
               DO tile=first_tile(ng),last_tile(ng),+1
                 CALL load_ADtoTL (ng, tile, Rold(ng), Rold(ng), add)
-                CALL tl_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+                CALL tl_convolution (ng, tile, ns, Rold(ng),Lweak, ifac)
                 CALL tl_variability (ng, tile, Rold(ng), Lweak)
 # ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, tile, Rini, Rold(ng))
@@ -907,6 +917,7 @@
 !
       logical :: Lweak, add
 !
+      integer, parameter :: ifac = 2             ! squared-root operator
       integer :: IniRec
       integer :: ng, tile, ns
 !
@@ -939,11 +950,11 @@
 !  with error covariance standard deviations. Next, convolve resulting
 !  vector with the squared-root adjoint diffusion operator. Notice
 !  that the spatial convolution is only done for half of the diffusion
-!  steps (squared-root filter).
+!  steps (squared-root filter, ifac=2).
 !
       Lweak=Lselect
       add=.FALSE.
-
+!
       NESTED_GRID_LOOP : DO ng=1,Ngrids
         MULTISCALE_LOOP : DO ns=1,Nscale(ng)
 
@@ -956,7 +967,7 @@
             CALL ad_balance (ng, tile, Rini, Rold(ng))
 # endif
             CALL ad_variability (ng, tile, Rold(ng), Lweak)
-            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, 2)
+            CALL ad_convolution (ng, tile, ns, Rold(ng), Lweak, ifac)
             CALL initialize_ocean (ng, tile, iTLM)       ! AMM important
             CALL initialize_forces (ng, tile, iTLM)      ! AMM important
           END DO
@@ -966,7 +977,7 @@
 !
 !  Since we wish to preserve what is in tl_var(Rold), load resulting
 !  filtered solution from above, ad_var(Rold), into tl_var(Rnew).
-!  Then, convolve with the squared-root (half of steps) tangent
+!  Then, convolve with the squared-root (half of steps, ifac=2) tangent
 !  linear diffusion operator. Next, scale results with error
 !  covariance standard deviations. Apply balance operator, if
 !  activated.
@@ -977,7 +988,7 @@
 # endif
           DO tile=first_tile(ng),last_tile(ng),+1
             CALL load_ADtoTL (ng, tile, Rold(ng), Rnew(ng), add)
-            CALL tl_convolution (ng, tile, ns, Rnew(ng), Lweak, 2)
+            CALL tl_convolution (ng, tile, ns, Rnew(ng), Lweak, ifac)
             CALL tl_variability (ng, tile, Rnew(ng), Lweak)
 # ifdef BALANCE_OPERATOR
             CALL tl_balance (ng, tile, Rini, Rnew(ng))

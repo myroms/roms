@@ -1277,6 +1277,9 @@
 !
 !  State variable names.
 !
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+        character (len=40), allocatable :: BscaleVarName(:)
+# endif
         character (len=40), allocatable :: StateVarName(:)
 !
 !  Logical switch to compute initial conditions, model and surface
@@ -1558,7 +1561,7 @@
         real(r8), allocatable :: blk_ZT(:)        ! (m)
         real(r8), allocatable :: blk_ZW(:)        ! (m)
 #endif
-# if defined SG_BBL || defined SSW_BBL
+#if defined SG_BBL || defined SSW_BBL
 !
 !-----------------------------------------------------------------------
 !  Closure parameters associated with Styles and Glenn (1999) bottom
@@ -1601,7 +1604,7 @@
         real(dp) :: sg_znotdef                 ! (m)
 
         complex(c8) :: sg_mp
-# endif
+#endif
 #if defined LMD_SKPP || defined SOLAR_SOURCE
 !
 !-----------------------------------------------------------------------
@@ -3236,9 +3239,16 @@
 #endif
 
 #if defined FOUR_DVAR || defined VERIFICATION
+
       IF (.not.allocated(StateVarName)) THEN
         allocate ( StateVarName(MstateVar) )
       END IF
+
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (.not.allocated(BscaleVarName)) THEN
+        allocate ( BscaleVarName(MstateVar) )
+      END IF
+# endif
 
       IF (.not.allocated(Cnorm)) THEN
         allocate ( Cnorm(2,MstateVar) )

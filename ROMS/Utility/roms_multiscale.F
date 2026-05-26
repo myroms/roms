@@ -55,70 +55,74 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netCDF
       USE mod_scalars
 !
-      USE ad_bc_2d_mod,     ONLY : ad_dabc_r2d_tile,                    &
-     &                             ad_dabc_u2d_tile,                    &
-     &                             ad_dabc_v2d_tile
+      USE ad_bc_2d_mod,        ONLY : ad_dabc_r2d_tile,                 &
+     &                                ad_dabc_u2d_tile,                 &
+     &                                ad_dabc_v2d_tile
 # ifdef ADJUST_BOUNDARY
-      USE ad_bc_bry2d_mod,  ONLY : ad_bc_r2d_bry_tile,                  &
-     &                             ad_bc_u2d_bry_tile,                  &
-     &                             ad_bc_v2d_bry_tile
+      USE ad_bc_bry2d_mod,     ONLY : ad_bc_r2d_bry_tile,               &
+     &                                ad_bc_u2d_bry_tile,               &
+     &                                ad_bc_v2d_bry_tile
 # endif
 # ifdef SOLVE3D
-      USE ad_bc_3d_mod,     ONLY : ad_dabc_r3d_tile,                    &
-     &                             ad_dabc_u3d_tile,                    &
-     &                             ad_dabc_v3d_tile
+      USE ad_bc_3d_mod,        ONLY : ad_dabc_r3d_tile,                 &
+     &                                ad_dabc_u3d_tile,                 &
+     &                                ad_dabc_v3d_tile
 #  ifdef ADJUST_BOUNDARY
-      USE ad_bc_bry3d_mod,  ONLY : ad_bc_r3d_bry_tile,                  &
-     &                             ad_bc_u3d_bry_tile,                  &
-     &                             ad_bc_v3d_bry_tile
+      USE ad_bc_bry3d_mod,     ONLY : ad_bc_r3d_bry_tile,               &
+     &                                ad_bc_u3d_bry_tile,               &
+     &                                ad_bc_v3d_bry_tile
 #  endif
 # endif
-      USE bc_2d_mod,        ONLY : dabc_r2d_tile,                       &
-     &                             dabc_u2d_tile,                       &
-     &                             dabc_v2d_tile
+      USE bc_2d_mod,           ONLY : dabc_r2d_tile,                    &
+     &                                dabc_u2d_tile,                    &
+     &                                dabc_v2d_tile
 # ifdef ADJUST_BOUNDARY
-      USE bc_bry2d_mod,     ONLY : bc_r2d_bry_tile,                     &
-     &                             bc_u2d_bry_tile,                     &
-     &                             bc_v2d_bry_tile
+      USE bc_bry2d_mod,        ONLY : bc_r2d_bry_tile,                  &
+     &                                bc_u2d_bry_tile,                  &
+     &                                bc_v2d_bry_tile
 # endif
 # ifdef SOLVE3D
-      USE bc_3d_mod,        ONLY : dabc_r3d_tile,                       &
-     &                             dabc_u3d_tile,                       &
-     &                             dabc_v3d_tile
+      USE bc_3d_mod,           ONLY : dabc_r3d_tile,                    &
+     &                                dabc_u3d_tile,                    &
+     &                                dabc_v3d_tile
 #  ifdef ADJUST_BOUNDARY
-      USE bc_bry3d_mod,     ONLY : bc_r3d_bry_tile,                     &
-     &                             bc_u3d_bry_tile,                     &
-     &                             bc_v3d_bry_tile
+      USE bc_bry3d_mod,        ONLY : bc_r3d_bry_tile,                  &
+     &                                bc_u3d_bry_tile,                  &
+     &                                bc_v3d_bry_tile
 #  endif
 # endif
-      USE lapack_mod,       ONLY : DSTEQR
+      USE lapack_mod,          ONLY : DSTEQR
 # ifdef DISTRIBUTE
-      USE mp_exchange_mod,  ONLY : ad_mp_exchange2d
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange2d
 #  ifdef ADJUST_BOUNDARY
-      USE mp_exchange_mod,  ONLY : ad_mp_exchange2d_bry
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange2d_bry
 #  endif
 #  ifdef SOLVE3D
-      USE mp_exchange_mod,  ONLY : ad_mp_exchange3d
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange3d
 #   ifdef ADJUST_BOUNDARY
-      USE mp_exchange_mod,  ONLY : ad_mp_exchange3d_bry
+      USE mp_exchange_mod,     ONLY : ad_mp_exchange3d_bry
 #   endif
 
 #  endif
-      USE mp_exchange_mod,  ONLY : mp_exchange2d
+      USE mp_exchange_mod,     ONLY : mp_exchange2d
 #  ifdef ADJUST_BOUNDARY
-      USE mp_exchange_mod,  ONLY : mp_exchange2d_bry
+      USE mp_exchange_mod,     ONLY : mp_exchange2d_bry
 #  endif
 #  ifdef SOLVE3D
-      USE mp_exchange_mod,  ONLY : mp_exchange3d
+      USE mp_exchange_mod,     ONLY : mp_exchange3d
 #   ifdef ADJUST_BOUNDARY
-      USE mp_exchange_mod,  ONLY : mp_exchange3d_bry
+      USE mp_exchange_mod,     ONLY : mp_exchange3d_bry
 #   endif
 #  endif
-      USE distribute_mod,   ONLY : mp_reduce
+      USE distribute_mod,      ONLY : mp_reduce
 # endif
-      USE strings_mod,      ONLY : FoundError
+      USE nf_fread3d_mod,      ONLY : nf90_fread3d
+      USE strings_mod,         ONLY : FoundError,                       &
+     &                                find_string
+      USE tracer_metadata_mod, ONLY : tracer_index
 !
       implicit none
 !
@@ -175,7 +179,7 @@
 !  The extrema eigenvalues of the K-Laplacian for each 3D  variable in
 !  the control vector as functions of both the number of iterations,
 !  number of vertical level, and the specified correlation scales,
-!  [Mlap,N,Nscale,range] and [Mlap,N,NT,Nscale,range]. The range
+!  [Mlap,N,Nscale,range] and [Mlap,N,Nscale,range,NT]. The range
 !  dimension has a value of 2, where 1 corresponds to the minimum and
 !  2 to the maximum eigenvalues.
 !
@@ -208,7 +212,7 @@
 !  lateral boundary adjustment in the control vector as functions of
 !  number of iterations, vertical levels, boundary index, and the
 !  specified correlation scales, [Mlap,4,Nscale,range] and
-!  [Mlap,N,NT,4,Nscale,range]. The range dimension has a value
+!  [Mlap,N,4,Nscale,range,NT]. The range dimension has a value
 !  of 2, where 1 corresponds to the minimum and 2 to the maximum
 !  eigenvalues.
 !
@@ -320,9 +324,10 @@
 !
 !  At present, these correlation scales are structured as
 !    (lon, lat, axis, Nscale)      for regular variables and
-!    (lon, lat, axis, NT, Nscale)  for tracer-type variables.
-!  The axis dimension has a value of 2, where 1 corresponds to the
-!  x-axis and 2 to the y-axis of the anisotropic correlation.
+!    (lon, lat, axis, Nscale, NT)  for tracer-type variables.
+!  The "axis" dimension has a value of 2, where 1 corresponds to the
+!  x-axis (abscissa) and 2 to the y-axis (ordinate) of the anisotropic
+!  correlation.
 !
         real(r8), pointer :: zeta_Bcorr(:,:,:,:)      ! free surface
         real(r8), pointer :: ubar_Bcorr(:,:,:,:)      ! 2D U-momentum
@@ -421,6 +426,13 @@
         PROCEDURE :: tl_Klap_b2d   => multiscale_Klap_b2d_tl
         PROCEDURE :: ad_Klap_b2d   => multiscale_Klap_b2d_ad
 #  endif
+# endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Process spatially-varying horizontal decorrelation length scales.
+!
+        PROCEDURE :: get_scales    => multiscale_get_scales
 # endif
 !
       END TYPE multiscale
@@ -522,7 +534,7 @@
       self%LBi=LBi
       self%UBi=UBi
       self%LBj=LBj
-      self%UBj=LBj
+      self%UBj=UBj
 # ifdef ADJUST_BOUNDARY
       self%LBij=LBij
       self%UBij=UBij
@@ -616,16 +628,16 @@
       END IF
 !
       IF (.not.associated(self % t_eigen)) THEN
-        allocate ( self % t_eigen(Mlap,N(ng),NT(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*NT(ng)*Nscale(ng)*2,r8)
+        allocate ( self % t_eigen(Mlap,N(ng),Nscale(ng),2,NT(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2*NT(ng),r8)
         self % t_eigen = IniVal
       END IF
 
 #  ifdef ADJUST_STFLUX
 !
       IF (.not.associated(self % stflux_eigen)) THEN
-        allocate ( self % stflux_eigen(Mlap,NT(ng),Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Mlap*NT(ng)*Nscale(ng)*2,r8)
+        allocate ( self % stflux_eigen(Mlap,Nscale(ng),2,NT(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2*NT(ng),r8)
         self % stflux_eigen = IniVal
       END IF
 #  endif
@@ -666,9 +678,9 @@
       END IF
 !
       IF (.not.associated(self % t_obc_eigen)) THEN
-        allocate ( self % t_obc_eigen(Mlap,N(ng),NT(ng),4,              &
-     &                                Nscale(ng),2) )
-        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*NT(ng)*4*Nscale(ng)*2,r8)
+        allocate ( self % t_obc_eigen(Mlap,N(ng),4,Nscale(ng),2,        &
+     &                                NT(ng)) )
+        Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*4*Nscale(ng)*2*NT(ng),r8)
         self % t_obc_eigen = IniVal
       END IF
 #  endif
@@ -918,18 +930,18 @@
       END IF
 !
       IF (.not.associated(self % t_Bcorr)) THEN
-        allocate ( self % t_Bcorr(LBi:UBi,LBj:UBj,2,NT(ng),             &
-     &                            Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(2*NT(ng)*Nscale(ng),r8)
+        allocate ( self % t_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng),         &
+     &                            NT(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng)*NT(ng),r8)
         self % t_Bcorr = IniVal
       END IF
 
 #   ifdef ADJUST_STFLUX
 !
       IF (.not.associated(self % stflux_Bcorr)) THEN
-        allocate ( self % stflux_Bcorr(LBi:UBi,LBj:UBj,2,NT(ng),        &
-     &                                 Nscale(ng)) )
-        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
+        allocate ( self % stflux_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng),    &
+     &                                 NT(ng)) )
+        Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng)*NT(ng),r8)
         self % stflux_Bcorr = IniVal
       END IF
 #   endif
@@ -961,6 +973,251 @@
 ! <><><> CLASS MULTISCALE:  K-Laplacian Operators <><><><><><><><><><><>
 !
 # include "multiscale_Klaplacian.h"
+
+# ifdef NONUNIFORM_SCALES
+!
+! <><><> CLASS MULTISCALE:  Process Correlation Scales  <><><><><><><><>
+!
+!  Read and load spatially-varying, background-error correlation 
+!  horizontal length scales (Daley, 1992) from input NetCDF file.
+!
+!  Currently, there is not depth dependency for the horizontal length
+!  scales, so their values are replicated for each veritcal level
+!  in the implicit pseudo-diffusion solvers.
+!
+      SUBROUTINE multiscale_get_scales (self, ng, tile, model)
+!
+      CLASS (multiscale), intent(inout) :: self      ! multiscale object
+      integer,            intent(in   ) :: ng        ! nested grid
+      integer,            intent(in   ) :: tile      ! domain partition
+      integer,            intent(in   ) :: model     ! kernel ID
+!
+      logical                           :: foundit
+!                            
+      integer                           :: LBi, UBi, LBj, UBj
+      integer                           :: is, ie, js, je
+      integer                           :: IDmeta, Nscale, Vsize(4)
+      integer                           :: gtype, i, itrc, ns
+      integer                           :: ncid, status, varid
+!
+      real (r8), pointer                :: Bscale(:,:,:) => NULL()
+#  ifdef MASKING
+      real (r8), pointer                :: mask(:,:) => NULL()
+#  endif
+      real (r8)                         :: Fmin, Fmax, Fscl
+      real (r8), dimension(4)           :: Fvalue
+!
+#  ifdef DISTRIBUTE
+      character (len=3), dimension(4)   :: op_handle
+#  endif
+      character (len=40 )               :: Cname
+      character (len=256)               :: ncname
+      character (len=*), parameter      :: MyFile =                     &
+     &  __FILE__//", multiscale_get_scales"
+!
+      SourceFile=MyFile
+!
+!  Initialize.
+!
+      LBi=self%LBi
+      UBi=self%UBi
+      LBj=self%LBj
+      UBj=self%UBj
+!
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
+      Nscale=self%Nscale
+      Vsize=0
+      Fscl=1.0_r8
+
+#  ifdef DISTRIBUTE
+!
+      op_handle(1)='MIN'
+      op_handle(2)='MAX'
+      op_handle(3)='MIN'
+      op_handle(4)='MAX'
+#  endif
+!
+!  Open input NetCDF file.
+!
+      ncname=TRIM(SVC(ng)%name)
+!
+      CALL netcdf_open (ng, model, ncname, 1, SVC(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
+        IF (Master) WRITE (stdout,10) TRIM(ncname)
+        RETURN
+      END IF
+!
+!  Inquire about the dimensions and check for consistency.
+!
+      CALL netcdf_check_dim (ng, model, ncname,                         &
+     &                       ncid = SVC(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Inquire about the variables.
+!
+      CALL netcdf_inq_var (ng, model, ncname,                           &
+     &                     ncid = SVC(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Read in horizontal correlation scales (lon, lat, axis, Nscale).
+!  (Note: by default the pointer sections remap bounds begins at
+!         index 1, so we need to specify the all bounds)
+!
+      IF (Master) THEN
+        WRITE (stdout,20) 'Reading horizontal correlation length '//    &
+                          'scales file: ', ng, TRIM(ncname)
+      END IF
+!
+      CONTROL_VAR : DO i=1,MstateVar
+        IF (icSvar(i).gt.0) THEN
+          IDmeta=icSvar(i)
+          Cname=TRIM(BscaleVarName(i))
+          foundit=find_string(var_name, n_var, Cname, varid)
+!
+          MS_LOOP : DO ns=1,Nscale
+            LREAD_CORRELATION : IF (foundit) THEN
+              SELECT CASE (TRIM(Cname))
+                CASE ('zeta_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%zeta_Bcorr(is:ie,     &
+     &                                                       js:je,     &
+     &                                                       1:2,ns)
+#  ifdef MASKING
+                  mask => GRID(ng)%rmask
+#  endif
+                CASE ('ubar_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%ubar_Bcorr(is:ie,     &
+     &                                                       js:je,     &
+     &                                                       1:2,ns)
+#  ifdef MASKING
+                  mask => GRID(ng)%umask
+#  endif
+                CASE ('vbar_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%vbar_Bcorr(is:ie,     &
+     &                                                       js:je,     &
+     &                                                       1:2,ns)
+#  ifdef MASKING
+                  mask => GRID(ng)%vmask
+#  endif
+#  ifdef ADJUST_WSTRESS
+                CASE ('sustr_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%sustr_Bcorr(is:ie,    &
+     &                                                        js:je,    &
+     &                                                        1:2,ns)
+#   ifdef MASKING
+                  mask => GRID(ng)%umask
+#   endif
+                CASE ('svstr_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%svstr_Bcorr(is:ie,    &
+     &                                                        js:je,    &
+     &                                                        1:2,ns)
+#   ifdef MASKING
+                  mask => GRID(ng)%vmask
+#   endif
+#  endif
+#  ifdef SOLVE3D
+                CASE ('u_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%u_Bcorr(is:ie,        &
+     &                                                    js:je,        &
+     &                                                    1:2,ns)
+#   ifdef MASKING
+                  mask => GRID(ng)%umask
+#   endif
+                CASE ('v_Bcorr')
+                  Bscale(is:ie,js:je,1:2) => self%v_Bcorr(is:ie,        &
+     &                                                    js:je,        &
+     &                                                    1:2,ns)
+#   ifdef MASKING
+                  mask => GRID(ng)%vmask
+#   endif
+                CASE ('temp_Bcorr', 'salt_Bcorr')
+                  itrc = tracer_index(TRIM(Cname))
+                  Bscale(is:ie,js:je,1:2) => self%t_Bcorr(is:ie,        &
+     &                                                    js:je,        &
+     &                                                    1:2,ns,       &
+     &                                                    itrc)
+#   ifdef MASKING
+                  mask => GRID(ng)%rmask
+#   endif
+#   ifdef ADJUST_STFLUX
+                CASE ('shflux_Bcorr', 'ssflux_Bcorr')
+                  itrc = tracer_index(TRIM(Cname))
+                  Bscale(is:ie,js:je,1:2) => self%stflux_Bcorr(is:ie,   &
+     &                                                         js:je,   &
+     &                                                         1:2,ns,  &
+     &                                                         itrc)
+#    ifdef MASKING
+                  mask => GRID(ng)%rmask
+#    endif
+#   endif
+#  endif
+              END SELECT
+!
+              gtype=Iinfo(1,IDmeta,ng)
+              status=nf90_fread3d(ng, model, ncname, SVC(ng)%ncid,      &
+     &                            Cname, varid,                         &
+     &                            1, gtype, Vsize,                      &
+     &                            LBi, UBi, LBj, UBj, 1, 2,             &
+     &                            Fscl, Fmin, Fmax,                     &
+#  ifdef MASKING
+     &                            mask,                                 &
+#  endif
+     &                            Bscale)
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) THEN
+                  WRITE (stdout,30) TRIM(Vname(1,IDmeta)), TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN              
+              END IF
+!
+              Fvalue(1)=MINVAL(Bscale(:,:,1),                           &
+     &                         MASK = Bscale(:,:,1) > 0.0_r8)
+              Fvalue(2)=MAXVAL(Bscale(:,:,1))
+              Fvalue(3)=MINVAL(Bscale(:,:,2),                           &
+     &                         MASK = Bscale(:,:,2) > 0.0_r8)
+              Fvalue(4)=MAXVAL(Bscale(:,:,2))
+#  ifdef DISTRIBUTE
+              CALL mp_reduce (ng, model, 4, Fvalue, op_handle)
+#  endif
+              IF (Master) THEN
+                WRITE (stdout,40) TRIM(Vname(2,IDmeta)), ns,            &
+     &                            Fvalue(1), Fvalue(2),                 &
+     &                            Fvalue(3), Fvalue(4)
+              END IF
+
+#  ifdef DISTRIBUTE
+!
+!  Exchange boundary data.
+
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj, 1, 2,                     &
+     &                    NghostPoints,                                 &
+     &                    EWperiodic(ng), NSperiodic(ng),               &
+     &                    Bscale)
+#  endif
+            END IF LREAD_CORRELATION
+          END DO MS_LOOP
+        END IF
+      END DO CONTROL_VAR        
+!
+  10  FORMAT (/,2x,'MULTISCALE_GET_SCALES - Unable to open input',      &
+     &        ' NetCDF file: ',a)
+  20  FORMAT (/,1x,'MULTISCALE_GET_SCALES - SVC: ',a,/,26x,             &
+     &        '(Grid ',i2.2,', File: ',a,')')
+  30  FORMAT (/,2x,'MULTISCALE_GET_SCALES - Error while reading',       &
+     &        ' variable: ',2x,a,/,26x,'in input NetCDF file: 'a)
+  40  FORMAT (23x,'- ',a,/,26x,'(Bscale = ', i2.2,                      &
+     &            ', Xmin = ',1p,e15.8, ', Xmax = ',1p,e15.8,/, 38x,    &
+     &            '  Ymin = ',1p,e15.8, ', Ymax = ',1p,e15.8,')')
+!
+      RETURN
+      END SUBROUTINE multiscale_get_scales
+# endif
 
 !
 !::::::: PRIVATE FUNCTIONS :::::::::::::::::::::::::::::::::::::::::::::

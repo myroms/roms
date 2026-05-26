@@ -1102,16 +1102,16 @@
                 ifld=ieTvar(itrc)
                 CALL netcdf_get_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%t_eigen(:,:,itrc,:,:),       &
+     &                                self%t_eigen(:,:,:,:,itrc),       &
      &                                ncid = NRM(i,ng)%ncid,            &
      &                                start = (/1,1,1,1/),              &
      &                                total = (/nl,N(ng),ns,2/))    
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%t_eigen(:,:,itrc,:,:),               &
-     &                        MASK = self%t_eigen(:,:,itrc,:,:) > 0.0)
-                  Fmax=MAXVAL(self%t_eigen(:,:,itrc,:,:))
+                  Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
+     &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END DO
@@ -1200,16 +1200,16 @@
                 ifld=ieTvar(itrc)
                 CALL pio_netcdf_get_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                    self%t_eigen(:,:,itrc,:,:),   &
+     &                                    self%t_eigen(:,:,:,:,itrc),   &
      &                                    pioFile = NRM(i,ng)%pioFile,  &
      &                                    start = (/1,1,1,1/),          &
      &                                    total = (/nl,N(ng),ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%t_eigen(:,:,itrc,:,:),               &
-     &                        MASK = self%t_eigen(:,:,itrc,:,:) > 0.0)
-                  Fmax=MAXVAL(self%t_eigen(:,:,itrc,:,:))
+                  Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
+     &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END DO
@@ -1352,16 +1352,16 @@
                 ifld=ieTbry(itrc)
                 CALL netcdf_get_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                self%t_obc_eigen(:,:,:,:,:,itrc), &
      &                                ncid = NRM(3,ng)%ncid,            &
      &                                start = (/1,1,1,1,1/),            &
      &                                total = (/nl,N(ng),4,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%t_obc_eigen(:,:,itrc,:,:,:),         &
-     &                    MASK = self%t_obc_eigen(:,:,itrc,:,:,:) > 0.0)
-                  Fmax=MAXVAL(self%t_obc_eigen(:,:,itrc,:,:,:))
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
+     &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
@@ -1464,16 +1464,17 @@
                 ifld=ieTbry(itrc)
                 CALL pio_netcdf_get_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                    self%t_obc_eigen(:,:,:,:,:,   &
+     &                                                     itrc),       &
      &                                    pioFile = NRM(3,ng)%pioFile,  &
      &                                    start = (/1,1,1,1,1/),        &
      &                                    total = (/nl,N(ng),4,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%t_obc_eigen(:,:,itrc,:,:,:),         &
-     &                    MASK = self%t_obc_eigen(:,:,itrc,:,:,:) > 0.0)
-                  Fmax=MAXVAL(self%t_obc_eigen(:,:,itrc,:,:,:))
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
+     &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
@@ -1562,16 +1563,16 @@
                 ifld=ieTsur(itrc)
                 CALL netcdf_get_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%stflux_eigen(:,itrc,:,:),    &
+     &                                self%stflux_eigen(:,:,:,itrc),    &
      &                                ncid = NRM(4,ng)%ncid,            &
      &                                start = (/1,1,1/),                &
      &                                total = (/nl,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%stflux_eigen(:,itrc,:,:),            &
-     &                    MASK = self%stflux_eigen(:,itrc,:,:) > 0.0)
-                  Fmax=MAXVAL(self%sustr_eigen)
+                  Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
+     &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
@@ -1618,16 +1619,16 @@
                 ifld=ieTsur(itrc)
                 CALL pio_netcdf_get_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                    self%stflux_eigen(:,itrc,:,:),&
+     &                                    self%stflux_eigen(:,:,:,itrc),&
      &                                    pioFile = NRM(4,ng)%pioFile,  &
      &                                    start = (/1,1,1/),            &
      &                                    total = (/nl,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  Fmin=MINVAL(self%stflux_eigen(:,itrc,:,:),            &
-     &                    MASK = self%stflux_eigen(:,itrc,:,:) > 0.0)
-                  Fmax=MAXVAL(self%stflux_eigen(:,itrc,:,:))
+                  Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
+     &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
                   WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
@@ -1661,6 +1662,9 @@
 !
       integer :: i, ifld, itrc, nl, ns
 !
+      real (r8) :: Fmin, Fmax
+!
+      character (len=80 ) :: Text
       character (len=256) :: ncname
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", multiscale_eigen_write"
@@ -1676,13 +1680,17 @@
       nl=MAXVAL(self%Mlap)  ! nunber of k-Laplacian applications
       ns=self%Nscale        ! number of correlation scales
 !
-      IF (Master) WRITE (stdout,10)
-!
       FILE_LOOP : DO i=1,NSA
 
         LWRITE_EIGEN : IF (LwrtNRM(i,ng)) THEN
 !
           ncname=NRM(i,ng)%name
+          IF (i.eq.1) THEN
+            Text='prior B-normalization file:'
+          ELSE IF (i.eq.2) THEN
+            Text='model Q-normalization file:'
+          END IF
+          IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
 !
           SELECT CASE (NRM(i,ng)%IOtype)
             CASE (io_nf90)
@@ -1696,7 +1704,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), TRIM(ncname)
+                Fmin=MINVAL(self%zeta_eigen,                            &
+     &                      MASK = self%zeta_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), Fmin, Fmax
               END IF
 !
               CALL netcdf_put_fvar (ng, model, ncname,                  &
@@ -1709,7 +1720,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), TRIM(ncname)
+                Fmin=MINVAL(self%ubar_eigen,                            &
+     &                      MASK = self%ubar_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), Fmin, Fmax
               END IF
 !
               CALL netcdf_put_fvar (ng, model, ncname,                  &
@@ -1722,7 +1736,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), TRIM(ncname)
+                Fmin=MINVAL(self%vbar_eigen,                            &
+     &                      MASK = self%vbar_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), Fmin, Fmax
               END IF
 
 # ifdef SOLVE3D
@@ -1737,7 +1754,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), TRIM(ncname)
+                Fmin=MINVAL(self%u_eigen,                               &
+     &                      MASK = self%u_eigen > 0.0)
+                Fmax=MAXVAL(self%u_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), Fmin, Fmax
               END IF
 !
               CALL netcdf_put_fvar (ng, model, ncname,                  &
@@ -1750,14 +1770,17 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), TRIM(ncname)
+                Fmin=MINVAL(self%v_eigen,                               &
+     &                      MASK = self%v_eigen > 0.0)
+                Fmax=MAXVAL(self%v_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), Fmin, Fmax
               END IF
 !
               DO itrc=1,NT(ng)
                 ifld=ieTvar(itrc)
                 CALL netcdf_put_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%t_eigen(:,:,itrc,:,:),       &
+     &                                self%t_eigen(:,:,:,:,itrc),       &
      &                                start = (/1,1,1,1/),              &
      &                                total = (/nl,N(ng),ns,2/),        &
      &                                ncid = NRM(i,ng)%ncid,            &
@@ -1765,7 +1788,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
+     &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END DO
 # endif
@@ -1782,7 +1808,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), TRIM(ncname)
+                Fmin=MINVAL(self%zeta_eigen,                            &
+     &                      MASK = self%zeta_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieFsur)), Fmin, Fmax
               END IF
 !
               CALL pio_netcdf_put_fvar (ng, model, ncname,              &
@@ -1795,7 +1824,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), TRIM(ncname)
+                Fmin=MINVAL(self%ubar_eigen,                            &
+     &                      MASK = self%ubar_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUbar)), Fmin, Fmax
               END IF
 !
               CALL pio_netcdf_put_fvar (ng, model, ncname,              &
@@ -1808,7 +1840,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), TRIM(ncname)
+                Fmin=MINVAL(self%vbar_eigen,                            &
+     &                      MASK = self%vbar_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVbar)), Fmin, Fmax
               END IF
 
 #  ifdef SOLVE3D
@@ -1823,7 +1858,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), TRIM(ncname)
+                Fmin=MINVAL(self%u_eigen,                               &
+     &                      MASK = self%u_eigen > 0.0)
+                Fmax=MAXVAL(self%u_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieUvel)), Fmin, Fmax
               END IF
 !
               CALL pio_netcdf_put_fvar (ng, model, ncname,              &
@@ -1836,14 +1874,17 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), TRIM(ncname)
+                Fmin=MINVAL(self%v_eigen,                               &
+     &                      MASK = self%v_eigen > 0.0)
+                Fmax=MAXVAL(self%v_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieVvel)), Fmin, Fmax
               END IF
 !
               DO itrc=1,NT(ng)
                 ifld=ieTvar(itrc)
                 CALL pio_netcdf_put_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                    self%t_eigen(:,:,itrc,:,:),   &
+     &                                    self%t_eigen(:,:,:,:,itrc),   &
      &                                    start = (/1,1,1,1/),          &
      &                                    total = (/nl,N(ng),ns,2/),    &
      &                                    pioFile = NRM(i,ng)%pioFile,  &
@@ -1851,7 +1892,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
+     &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END DO
 #  endif
@@ -1872,6 +1916,8 @@
       BRY_LWRITE_EIGEN : IF (LwrtNRM(3,ng)) THEN
 !
         ncname=NRM(3,ng)%name
+        Text='boundary B-normalization file:'
+        IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
 !
         SELECT CASE (NRM(3,ng)%IOtype)
 !
@@ -1888,7 +1934,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), TRIM(ncname)
+                Fmin=MINVAL(self%zeta_obc_eigen,                        &
+     &                      MASK = self%zeta_obc_eigen > 0.0)
+                Fmax=MAxVAL(self%zeta_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), Fmin, Fmax
               END IF
             END IF
 !
@@ -1903,7 +1952,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), TRIM(ncname)
+                Fmin=MINVAL(self%ubar_obc_eigen,                        &
+     &                      MASK = self%ubar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -1918,7 +1970,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), TRIM(ncname)
+                Fmin=MINVAL(self%vbar_obc_eigen,                        &
+     &                      MASK = self%vbar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), Fmin, Fmax
               END IF
             END IF
 
@@ -1935,7 +1990,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), TRIM(ncname)
+                Fmin=MINVAL(self%u_obc_eigen,                           &
+     &                      MASK = self%u_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%u_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -1950,7 +2008,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), TRIM(ncname)
+                Fmin=MINVAL(self%v_obc_eigen,                           &
+     &                      MASK = self%v_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%v_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -1959,7 +2020,7 @@
                 ifld=ieTbry(itrc)
                 CALL netcdf_put_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                self%t_obc_eigen(:,:,:,:,:,itrc), &
      &                                start = (/1,1,1,1,1/),            &
      &                                total = (/nl,N(ng),4,ns,2/),      &
      &                                ncid = NRM(3,ng)%ncid,            &
@@ -1967,7 +2028,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
+     &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
             END DO
@@ -1988,7 +2052,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), TRIM(ncname)
+                Fmin=MINVAL(self%zeta_obc_eigen,                        &
+     &                      MASK = self%zeta_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%zeta_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieZbry)), Fmin, Fmax
               END IF
             END IF
 !
@@ -2003,7 +2070,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), TRIM(ncname)
+                Fmin=MINVAL(self%ubar_obc_eigen,                        &
+     &                      MASK = self%ubar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%ubar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU2bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -2018,7 +2088,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), TRIM(ncname)
+                Fmin=MINVAL(self%vbar_obc_eigen,                        &
+     &                      MASK = self%vbar_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%vbar_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV2bc)), Fmin, Fmax
               END IF
             END IF
 
@@ -2035,7 +2108,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), TRIM(ncname)
+                Fmin=MINVAL(self%u_obc_eigen,                           &
+     &                      MASK = self%u_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%u_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieU3bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -2050,7 +2126,10 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
               IF (Master) THEN 
-                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), TRIM(ncname)
+                Fmin=MINVAL(self%v_obc_eigen,                           &
+     &                      MASK = self%v_obc_eigen > 0.0)
+                Fmax=MAXVAL(self%v_obc_eigen)
+                WRITE (stdout,20) TRIM(Vname(1,ieV3bc)), Fmin, Fmax
               END IF
             END IF
 !
@@ -2059,7 +2138,8 @@
                 ifld=ieTbry(itrc)
                 CALL pio_netcdf_put_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                self%t_obc_eigen(:,:,itrc,:,:,:), &
+     &                                    self%t_obc_eigen(:,:,:,:,:,   &
+     &                                                     itrc),       &
      &                                    start = (/1,1,1,1,1/),        &
      &                                    total = (/nl,N(ng),4,ns,2/),  &
      &                                    pioFile = NRM(3,ng)%pioFile,  &
@@ -2067,7 +2147,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
+     &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
             END DO
@@ -2089,6 +2172,8 @@
       FRC_LWRITE_EIGEN : IF (LwrtNRM(4,ng)) THEN
 !
         ncname=NRM(4,ng)%name
+        Text='forcing B-normalization file:'
+        IF (Master) WRITE (stdout,10) TRIM(Text), TRIM(ncname)
 !
         SELECT CASE (NRM(4,ng)%IOtype)
 !
@@ -2105,7 +2190,10 @@
      &                            varid = NRM(4,ng)%Vid(ieUsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
-              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), TRIM(ncname)
+              Fmin=MINVAL(self%sustr_eigen,                             &
+     &                    MASK = self%sustr_eigen > 0.0)
+              Fmax=MAXVAL(self%sustr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), Fmin, Fmax
             END IF
 !
             CALL netcdf_put_fvar (ng, model, ncname,                    &
@@ -2117,7 +2205,10 @@
      &                            varid = NRM(4,ng)%Vid(ieVsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
-              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), TRIM(ncname)
+              Fmin=MINVAL(self%svstr_eigen,                             &
+     &                    MASK = self%svstr_eigen > 0.0)
+              Fmax=MAXVAL(self%svstr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), Fmin, Fmax
             END IF
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -2127,7 +2218,7 @@
                 ifld=ieTsur(itrc)
                 CALL netcdf_put_fvar (ng, model, ncname,                &
      &                                Vname(1,ifld),                    &
-     &                                self%stflux_eigen(:,itrc,:,:),    &
+     &                                self%stflux_eigen(:,:,:,itrc),    &
      &                                start = (/1,1,1/),                &
      &                                total = (/nl,ns,2/),              &
      &                                ncid = NRM(4,ng)%ncid,            &
@@ -2135,7 +2226,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
+     &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
             END DO
@@ -2155,7 +2249,10 @@
      &                           pioVar = NRM(4,ng)%pioVar(ieUsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
-              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), TRIM(ncname)
+              Fmin=MINVAL(self%sustr_eigen,                             &
+     &                    MASK = self%sustr_eigen > 0.0)
+              Fmax=MAXVAL(self%sustr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieUsms)), Fmin, Fmax
             END IF
 !
             CALL pio_netcdf_put_fvar (ng, model, ncname,                &
@@ -2167,7 +2264,10 @@
      &                           pioVar = NRM(4,ng)%pioVar(ieVsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
             IF (Master) THEN 
-              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), TRIM(ncname)
+              Fmin=MINVAL(self%svstr_eigen,                             &
+     &                    MASK = self%svstr_eigen > 0.0)
+              Fmax=MAXVAL(self%svstr_eigen)
+              WRITE (stdout,20) TRIM(Vname(1,ieVsms)), Fmin, Fmax
             END IF
 #   endif
 #   if defined ADJUST_STFLUX && defined SOLVE3D
@@ -2177,7 +2277,7 @@
                 ifld=ieTsur(itrc)
                 CALL pio_netcdf_put_fvar (ng, model, ncname,            &
      &                                    Vname(1,ifld),                &
-     &                                    self%stflux_eigen(:,itrc,:,:),&
+     &                                    self%stflux_eigen(:,:,:,itrc),&
      &                                    start = (/1,1,1/),            &
      &                                    total = (/nl,ns,2/),          &
      &                                    pioFile = NRM(4,ng)%pioFile,  &
@@ -2185,7 +2285,10 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
                 IF (Master) THEN 
-                  WRITE (stdout,20) TRIM(Vname(1,ifld)), TRIM(ncname)
+                  Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
+     &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
+                  Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
+                  WRITE (stdout,20) TRIM(Vname(1,ifld)), Fmin, Fmax
                 END IF
               END IF
             END DO
@@ -2196,9 +2299,10 @@
       END IF FRC_LWRITE_EIGEN
 # endif
 !
-  10  FORMAT (/,' Writing Ritz Extrema Eigenvalues Required by ',       &
-     &        'Implicit Chebyshev Iterations (CI) Solver:',/) 
-  20  FORMAT (4x,'Wrote eigenspectum in: ',a,t44,', File: ',a)
+  10  FORMAT (/,1x,'Writing extrema Ritz eigenvalues into ',a,2x,a/,3x, &
+     &        '(Required by Implicit Chebyshev Iterations, CI, '        &
+     &        'Solver)',/) 
+  20  FORMAT (4x,'- ',a,':',t35,'Min = ',1p,e15.8,',  Max = ',1p,e15.8)
 !
       RETURN
       END SUBROUTINE multiscale_eigen_write

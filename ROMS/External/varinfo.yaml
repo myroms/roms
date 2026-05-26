@@ -8846,6 +8846,131 @@ metadata:
     add_offset:     0.0d0
     scale:          1.0d0
 
+  ######################################################################
+  ###  Spatially-varying Background-error Correlation Length Scales  ###
+  ######################################################################
+
+  - variable:       zeta_Bcorr                                       # Input
+    standard_name:  sea_surface_height_above_geopotential_datum
+    long_name:      free-surface horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          zeta_Bcorr
+    time:           nulvar
+    index_code:     icFsur
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ubar_Bcorr                                       # Input
+    standard_name:  barotropic_sea_water_x_velocity
+    long_name:      u-barotropic horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          ubar_Bcorr
+    time:           nulvar
+    index_code:     icUbar
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       vbar_Bcorr                                       # Input
+    standard_name:  barotropic_sea_water_y_velocity
+    long_name:      u-barotropic horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          vbar_Bcorr
+    time:           nulvar
+    index_code:     icVbar
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       u_Bcorr                                          # Input
+    standard_name:  sea_water_x_velocity
+    long_name:      u-velocity horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          u_Bcorr
+    time:           nulvar
+    index_code:     icUvel
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       v_Bcorr                                          # Input
+    standard_name:  sea_water_y_velocity
+    long_name:      v-velocity horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          v_Bcorr
+    time:           nulvar
+    index_code:     icVvel
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       temp_Bcorr                                       # Input
+    standard_name:  sea_water_potential_temperature
+    long_name:      potential temperature horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          temp_Bcorr
+    time:           nulvar
+    index_code:     icTvar(itemp)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       salt_Bcorr                                       # Input
+    standard_name:  sea_water_practical_salinity
+    long_name:      salinity horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          salt_Bcorr
+    time:           nulvar
+    index_code:     icTvar(isalt)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       sustr_Bcorr                                      # Input
+    standard_name:  surface_downward_x_stress
+    long_name:      surface u-stress horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          sustr_Bcorr
+    time:           nulvar
+    index_code:     icUsms
+    type:           u2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       svstr_Bcorr                                      # Input
+    standard_name:  surface_downward_y_stress
+    long_name:      surface v-stress horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          svstr_Bcorr
+    time:           nulvar
+    index_code:     icVsms
+    type:           v2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       shflux_Bcorr                                     # Input
+    standard_name:  surface_downward_heat_flux_in_sea_water
+    long_name:      surface heat flux horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          shflux_Bcorr
+    time:           nulvar
+    index_code:     icTsur(itemp)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
+  - variable:       ssflux_Bcorr                                     # Input
+    standard_name:  salt_flux_into_sea_water
+    long_name:      surface salt flux horizontal background-error decorrelation length scales
+    units:          meter                                            # [m]
+    field:          ssflux_Bcorr
+    time:           nulvar
+    index_code:     icTsur(isalt)
+    type:           r2dvar
+    add_offset:     0.0d0
+    scale:          1.0d0
+
   ####################################################################
   ###  Multiscale Background-error Covariance Extrema Eigenvalues  ###
   ####################################################################

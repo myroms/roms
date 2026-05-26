@@ -63,6 +63,9 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+      integer                           :: itrc
+!
       real (r8)                         :: cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -86,6 +89,11 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -105,21 +113,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%zeta_Bcorr(:,:,1,ms)
-          BscaleY => self%zeta_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
-#ifdef SOLVE3D
-        CASE ('shflux')
+#if defined ADJUST_STFLUX && defined SOLVE3D
+        CASE ('shflux', 'ssflux')
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
-          BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
-# endif
-          Mlap=self%Mlap(ifield,ms)
-        CASE ('ssflux')
-# ifdef NONUNIFORM_SCALES
-          BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
-          BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
+          BscaleX(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,1,ms,   &
+     &                                              itrc)
+          BscaleY(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,2,ms,   &
+     &                                              itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -286,6 +291,9 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+      integer                           :: itrc
+!
       real (r8)                         :: adfac, cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -309,6 +317,11 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -328,21 +341,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%zeta_Bcorr(:,:,1,ms)
-          BscaleY => self%zeta_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
-#ifdef SOLVE3D
-        CASE ('shflux')
+#if defined ADJUST_STFLUX && defined SOLVE3D
+        CASE ('shflux', 'ssflux')
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%stflux_Bcorr(:,:,1,itemp,ms)
-          BscaleY => self%stflux_Bcorr(:,:,2,itemp,ms)
-# endif
-          Mlap=self%Mlap(ifield,ms)
-        CASE ('ssflux')
-# ifdef NONUNIFORM_SCALES
-          BscaleX => self%stflux_Bcorr(:,:,1,isalt,ms)
-          BscaleY => self%stflux_Bcorr(:,:,2,isalt,ms)
+          BscaleX(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,1,ms,   &
+     &                                              itrc)
+          BscaleY(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,2,ms,   &
+     &                                              itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -517,6 +527,8 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: IstrU, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -540,6 +552,11 @@
       Jstr =BOUNDS(ng)%Jstr (tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -559,16 +576,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%ubar_Bcorr(:,:,1,ms)
-          BscaleY => self%ubar_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
+#ifdef ADJUST_WSTRESS
         CASE ('sustr')
-#ifdef NONUNIFORM_SCALES
-          BscaleX => self%sustr_Bcorr(:,:,1,ms)
-          BscaleY => self%sustr_Bcorr(:,:,2,ms)
-#endif
+# ifdef NONUNIFORM_SCALES
+          BscaleX(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,2,ms)
+# endif
           Mlap=self%Mlap(ifield,ms)
+#endif
       END SELECT
 !
 !  Compute metrics factor.
@@ -728,6 +747,8 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: IstrU, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: adfac, cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -751,6 +772,11 @@
       Jstr =BOUNDS(ng)%Jstr (tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -770,16 +796,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%ubar_Bcorr(:,:,1,ms)
-          BscaleY => self%ubar_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
+#ifdef ADJUST_WSTRESS
         CASE ('sustr')
-#ifdef NONUNIFORM_SCALES
-          BscaleX => self%sustr_Bcorr(:,:,1,ms)
-          BscaleY => self%sustr_Bcorr(:,:,2,ms)
-#endif
+# ifdef NONUNIFORM_SCALES
+          BscaleX(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,2,ms)
+# endif
           Mlap=self%Mlap(ifield,ms)
+#endif
       END SELECT
 !
 !  Compute metrics factor.
@@ -946,6 +974,8 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, JstrV, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -969,6 +999,11 @@
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -988,16 +1023,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%vbar_Bcorr(:,:,1,ms)
-          BscaleY => self%vbar_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
+#ifdef ADJUST_WSTRESS
         CASE ('svstr')
-#ifdef NONUNIFORM_SCALES
-          BscaleX => self%svstr_Bcorr(:,:,1,ms)
-          BscaleY => self%svstr_Bcorr(:,:,2,ms)
-#endif
+# ifdef NONUNIFORM_SCALES
+          BscaleX(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,2,ms)
+# endif
           Mlap=self%Mlap(ifield,ms)
+#endif
       END SELECT
 !
 !  Compute metrics factor.
@@ -1158,6 +1195,8 @@
 !
       integer                           :: Mlap, i, j, rec
       integer                           :: Istr, Iend, JstrV, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: adfac, cffx, cffy
 
 #ifdef NONUNIFORM_SCALES
@@ -1181,6 +1220,11 @@
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -1200,16 +1244,18 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX => self%vbar_Bcorr(:,:,1,ms)
-          BscaleY => self%vbar_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
+#ifdef ADJUST_WSTRESS
         CASE ('svstr')
-#ifdef NONUNIFORM_SCALES
-          BscaleX => self%svstr_Bcorr(:,:,1,ms)
-          BscaleY => self%svstr_Bcorr(:,:,2,ms)
-#endif
+# ifdef NONUNIFORM_SCALES
+          BscaleX(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,2,ms)
+# endif
           Mlap=self%Mlap(ifield,ms)
+#endif
       END SELECT
 !
 !  Compute metrics factor.
@@ -1378,6 +1424,9 @@
 !
       integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+      integer                           :: itrc
+!
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
@@ -1410,6 +1459,11 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -1427,16 +1481,11 @@
 !  scales.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-        CASE ('temp')
+        CASE ('temp', 'salt')
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
-          BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
-# endif
-          Mlap=self%Mlap(ifield,ms)
-        CASE ('salt')
-# ifdef NONUNIFORM_SCALES
-          BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
-          BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
+          BscaleX(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -1472,7 +1521,7 @@
 !
 !^    CALL dabc_r3d_tile (ng, tile,                                     &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!^   &                    A)
+!^   &                    A)4
 !^
       CALL dabc_r3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
@@ -1837,6 +1886,9 @@
       integer                           :: Mlap, i, j, k, rec
       integer                           :: kk, kt, k1, k1b, k2, k2b
       integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+      integer                           :: itrc
+!
       real (r8)                         :: adfac, adfac1, adfac2
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
@@ -1870,6 +1922,11 @@
       Jstr=BOUNDS(ng)%Jstr(tile)
       Jend=BOUNDS(ng)%Jend(tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -1893,16 +1950,11 @@
 !  scales.
 !
       SELECT CASE (TRIM(StateVarName(ifield)))
-        CASE ('temp')
+        CASE ('temp', 'salt')
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%t_Bcorr(:,:,1,itemp,ms)
-          BscaleY => self%t_Bcorr(:,:,2,itemp,ms)
-# endif
-          Mlap=self%Mlap(ifield,ms)
-        CASE ('salt')
-# ifdef NONUNIFORM_SCALES
-          BscaleX => self%t_Bcorr(:,:,1,isalt,ms)
-          BscaleY => self%t_Bcorr(:,:,2,isalt,ms)
+          BscaleX(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -2405,6 +2457,8 @@
 !
       integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: IstrU, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
@@ -2439,6 +2493,11 @@
       Jstr =BOUNDS(ng)%Jstr (tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -2458,8 +2517,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%u_Bcorr(:,:,1,ms)
-          BscaleY => self%u_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -2887,6 +2946,8 @@
       integer                           :: Mlap, i, j, k, rec
       integer                           :: kk, kt, k1, k1b, k2, k2b
       integer                           :: IstrU, Iend, Jstr, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: adfac, adfac1, adfac2
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
@@ -2920,6 +2981,11 @@
       Jstr =BOUNDS(ng)%Jstr (tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -2945,8 +3011,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%u_Bcorr(:,:,1,ms)
-          BscaleY => self%u_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -3468,6 +3534,8 @@
 !
       integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, JstrV, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: cffx, cffy
 
@@ -3502,6 +3570,11 @@
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -3521,8 +3594,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%v_Bcorr(:,:,1,ms)
-          BscaleY => self%v_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -3943,6 +4016,8 @@
 !
       integer                           :: Mlap, i, j, k, k1, k2, rec
       integer                           :: Istr, Iend, JstrV, Jend
+      integer                           :: is, ie, js, je
+!
       real (r8)                         :: cff, cff1, cff2, cff3, cff4
       real (r8)                         :: adfac, cffx, cffy
 
@@ -3977,6 +4052,11 @@
       JstrV=BOUNDS(ng)%JstrV(tile)
       Jend =BOUNDS(ng)%Jend (tile)
 !
+      is=LBi
+      ie=UBi
+      js=LBj
+      je=UBj
+!
       IF (Lweak) THEN
         rec=2                        ! weak constraint correlations
       ELSE
@@ -4002,8 +4082,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX => self%v_Bcorr(:,:,1,ms)
-          BscaleY => self%v_Bcorr(:,:,2,ms)
+          BscaleX(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT

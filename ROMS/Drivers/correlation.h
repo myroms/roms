@@ -68,7 +68,8 @@
 #endif
       USE normalization_mod,    ONLY : normalization
 #ifdef MULTI_SCALE_B
-      USE roms_multiscale_mod,  ONLY : MSB
+      USE roms_multiscale_mod,  ONLY : MSB,                             &
+     &                                 multiscale_get_scales
 #endif
       USE stdout_mod,           ONLY : Set_StdOutUnit,                  &
      &                                 stdout_unit
@@ -283,6 +284,16 @@
 !-----------------------------------------------------------------------
 !
       NESTED_LOOP : DO ng=1,Ngrids
+
+#if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+!
+!  Read in horizontal, spatially-varying correlation length scales.
+!
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL multiscale_get_scales (MSB(ng), ng, tile, iTLM)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END DO
+#endif
 !
 !  Process normalization coefficients.
 !
@@ -313,13 +324,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
-
 #ifdef MULTI_SCALE_B
-# ifdef NONUNIFORM_SCALES
-!
-!  Read in horizontal, spatially-varying correlation length scales.
-!
-# endif
 !
 !  Compute the extrema eigenvalues of the K-Laplacian operator required
 !  by the Chebyshev Iterations (CI) solver, which is applied to implicit
@@ -331,8 +336,9 @@
 !  estimates can be precomputed via the Lanczos formulation of the
 !  Conjugate Gradient (CG) method, initialized with random vectors.
 !
+          ifac=1
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL multiscale_eigen (ng, tile, Lnew(ng), 1)
+            CALL multiscale_eigen (ng, tile, Lnew(ng), ifac)
           END DO
 !
 !  Write out extrema eigenvalues into output normalizations NetCDF

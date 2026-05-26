@@ -178,6 +178,7 @@ list( APPEND _files
       ROMS/Utility/tile_indices.F
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
+      ROMS/Utility/tracer_metadata.F
       ROMS/Utility/uv_rotate.F
       ROMS/Utility/uv_var_change.F
       ROMS/Utility/vorticity.F
