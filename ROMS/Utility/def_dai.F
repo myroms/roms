@@ -234,11 +234,23 @@
      &                 4, DimIDs(14))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#ifdef FOUR_DVAR
+# ifdef FOUR_DVAR
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nstate',        &
      &                 NstateVar(ng), DimIDs(29))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#endif
+# endif
+
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'Nscale',        &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname, 'obc_adjust',    &
+     &                 Nbrec(ng), DimIDs(31))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
         status=def_dim(ng, iNLM, DAI(ng)%ncid, ncname,                  &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
@@ -880,6 +892,18 @@
 #  ifdef FOUR_DVAR
         status=def_dim(ng, iNLM, DAI(ng)%pioFile, ncname, 'Nstate',     &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef MULTI_SCALE_B
+        status=def_dim(ng, iNLM, DAI(ng)%pioFile, ncname, 'Nscale',     &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef ADJUST_BOUNDARY
+        status=def_dim(ng, iNLM, DAI(ng)%pioFile, ncname, 'obc_adjust', &
+     &                 Nbrec(ng), DimIDs(31))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 

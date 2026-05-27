@@ -35,6 +35,10 @@
 !  fG_state  19    1,2     impulse forcing snapshots                   !
 !  fS_state  N/A   1,2     time convolutions snapshots (not used here) !
 !                                                                      !
+!  By default, the pointer sections remap bounds begin at index 1.     !
+!  Therefore, it is necessary to explicitly specify all bounds,        !
+!  especially for tiled array dimensions.                              !
+!                                                                      !
 !=======================================================================
 !
       USE mod_param
@@ -63,30 +67,61 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !     
 !***********************************************************************
-      SUBROUTINE state_assign (ng, Istate, TimeIndex)
+      SUBROUTINE state_assign (ng, tile, Istate, TimeIndex)
 !***********************************************************************
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Istate, TimeIndex
+      integer, intent(in) :: ng, tile, Istate, TimeIndex
+!
+!  Local variable declarations.
+!
+      integer :: is, ie, js, je, ks, ke, ls, le
 !
 !-----------------------------------------------------------------------
 !  Assign temporarily work state variables to requested ROMS state
 !  vector.
 !-----------------------------------------------------------------------
 !
+!  Initialize.
+!
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
+      ls=1
+      le=NT(ng)
+!
 !  Associate to required state vector variables.
 !
       SELECT CASE (Istate)
         CASE (iNLM)
           IF (associated(OCEAN(ng)%zeta)) THEN
-            my_zeta => OCEAN(ng) % zeta(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % ubar(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % vbar(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % zeta(is:ie,             &
+     &                                               js:je,             &
+     &                                               TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % ubar(is:ie,             &
+     &                                               js:je,             &
+     &                                               TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % vbar(is:ie,             &
+     &                                               js:je,             &
+     &                                               TimeIndex)
 #ifdef SOLVE3D
-            my_t    => OCEAN(ng) % t(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % u(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % v(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % t(is:ie,       &
+     &                                                     js:je,       &
+     &                                                     ks:ke,       &
+     &                                                     TimeIndex,   &
+     &                                                     ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % u(is:ie,             &
+     &                                               js:je,             &
+     &                                               ks:ke,             &
+     &                                               TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % v(is:ie,            &
+     &                                                js:je,            &
+     &                                                ks:ke,            &
+     &                                                TimeIndex)
 #endif
             IF (Master) WRITE (stdout,10) 'Nonlinear', TimeIndex
           ELSE
@@ -96,13 +131,29 @@
 #if defined TANGENT || defined TL_IOMS
         CASE (iTLM, iRPM)
           IF (associated(OCEAN(ng)%tl_zeta)) THEN
-            my_zeta => OCEAN(ng) % tl_zeta(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % tl_ubar(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % tl_vbar(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % tl_zeta(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % tl_ubar(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % tl_vbar(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
 # ifdef SOLVE3D
-            my_t    => OCEAN(ng) % tl_t(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % tl_u(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % tl_v(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % tl_t(is:ie,    &
+     &                                                        js:je,    &
+     &                                                        ks:ke,    &
+     &                                                        TimeIndex,&
+     &                                                        ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % tl_u(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  ks:ke,          &
+     &                                                  TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % tl_v(is:ie,         &
+     &                                                   js:je,         &
+     &                                                   ks:ke,         &
+     &                                                   TimeIndex)
 # endif
             IF (Master) WRITE (stdout,10) 'Tangent Linear', TimeIndex
           ELSE
@@ -113,13 +164,29 @@
 #if defined ADJOINT
         CASE (iADM)
           IF (associated(OCEAN(ng)%ad_zeta)) THEN
-            my_zeta => OCEAN(ng) % ad_zeta(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % ad_ubar(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % ad_vbar(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % ad_zeta(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % ad_ubar(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % ad_vbar(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
 # ifdef SOLVE3D
-            my_t    => OCEAN(ng) % ad_t(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % ad_u(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % ad_v(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % ad_t(is:ie,    &
+     &                                                        js:je,    &
+     &                                                        ks:ke,    &
+     &                                                        TimeIndex,&
+     &                                                        ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % ad_u(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  ks:ke,          &
+     &                                                  TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % ad_v(is:ie,         &
+     &                                                   js:je,         &
+     &                                                   ks:ke,         &
+     &                                                   TimeIndex)
 # endif
             IF (Master) WRITE (stdout,10) 'Adjoint', TimeIndex
           ELSE
@@ -131,13 +198,29 @@
    (defined HESSIAN_SV && defined BNORM)
         CASE (14, 15)
           IF (associated(OCEAN(ng)%b_zeta)) THEN
-            my_zeta => OCEAN(ng) % b_zeta(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % b_ubar(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % b_vbar(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % b_zeta(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % b_ubar(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % b_vbar(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
 # ifdef SOLVE3D
-            my_t    => OCEAN(ng) % b_t(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % b_u(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % b_v(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % b_t(is:ie,     &
+     &                                                       js:je,     &
+     &                                                       ks:ke,     &
+     &                                                       TimeIndex, &
+     &                                                       ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % b_u(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 ks:ke,           &
+     &                                                 TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % b_v(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  ks:ke,          &
+     &                                                  TimeIndex)
 # endif
             IF (Master) WRITE (stdout,10) 'b_state', TimeIndex
           ELSE
@@ -167,13 +250,29 @@
    (defined HESSIAN_SV && defined BNORM)
         CASE (10, 11)
           IF (associated(OCEAN(ng)%e_zeta)) THEN
-            my_zeta => OCEAN(ng) % e_zeta(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % e_ubar(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % e_vbar(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % e_zeta(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % e_ubar(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % e_vbar(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 TimeIndex)
 # ifdef SOLVE3D
-            my_t    => OCEAN(ng) % e_t(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % e_u(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % e_v(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % e_t(is:ie,     &
+     &                                                       js:je,     &
+     &                                                       ks:ke,     &
+     &                                                       TimeIndex, &
+     &                                                       ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % e_u(is:ie,           &
+     &                                                 js:je,           &
+     &                                                 ks:ke,           &
+     &                                                 TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % e_v(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  ks:ke,          &
+     &                                                  TimeIndex)
 # endif
             IF (Master) WRITE (stdout,10) 'e_state', TimeIndex
           ELSE
@@ -203,13 +302,29 @@
     defined FORCING_SV      || defined HESSIAN_FSV
         CASE (19)
           IF (associated(OCEAN(ng)%f_zetaG)) THEN
-            my_zeta => OCEAN(ng) % f_zetaG(:,:,TimeIndex)
-            my_ubar => OCEAN(ng) % f_ubarG(:,:,TimeIndex)
-            my_vbar => OCEAN(ng) % f_vbarG(:,:,TimeIndex)
+            my_zeta(is:ie,js:je) => OCEAN(ng) % f_zetaG(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_ubar(is:ie,js:je) => OCEAN(ng) % f_ubarG(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
+            my_vbar(is:ie,js:je) => OCEAN(ng) % f_vbarG(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  TimeIndex)
 # ifdef SOLVE3D
-            my_t    => OCEAN(ng) % f_tG(:,:,:,TimeIndex,:)
-            my_u    => OCEAN(ng) % f_uG(:,:,:,TimeIndex)
-            my_v    => OCEAN(ng) % f_vG(:,:,:,TimeIndex)
+            my_t(is:ie,js:je,ks:ke,ls:le) => OCEAN(ng) % f_tG(is:ie,    &
+     &                                                        js:je,    &
+     &                                                        ks:ke,    &
+     &                                                        TimeIndex,&
+     &                                                        ls:le)
+            my_u(is:ie,js:je,ks:ke) => OCEAN(ng) % f_uG(is:ie,          &
+     &                                                  js:je,          &
+     &                                                  ks:ke,          &
+     &                                                  TimeIndex)
+            my_v(is:ie,js:je,ks:ke)  => OCEAN(ng) % f_vG(is:ie,         &
+     &                                                   js:je,         &
+     &                                                   ks:ke,         &
+     &                                                   TimeIndex)
 # endif
             IF (Master) WRITE (stdout,10) 'fG_state', TimeIndex
           ELSE

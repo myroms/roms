@@ -273,6 +273,12 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, iTLM, ITL(ng)%ncid, ncname, 'Nscale',        &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         status=def_dim(ng, iTLM, ITL(ng)%ncid, ncname, 'frc_adjust',    &
      &                 Nfrec(ng), DimIDs(30))
@@ -1237,6 +1243,12 @@
 # ifdef FOUR_DVAR
         status=def_dim(ng, iTLM, ITL(ng)%pioFile, ncname, 'Nstate',     &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, iTLM, ITL(ng)%pioFile, ncname, 'Nscale',     &
+     &                 Nscale(ng), DimIDs(36))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 

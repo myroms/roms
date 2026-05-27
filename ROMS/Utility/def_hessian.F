@@ -331,6 +331,12 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'Nscale',        &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
         status=def_dim(ng, iADM, HSS(ng)%ncid, ncname, 'Nposterior',    &
      &                 NpostI+1, NpostDim)
@@ -1379,6 +1385,12 @@
      &                 NstateVar(ng), DimIDs(29))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+#  ifdef MULTI_SCALE_B
+        status=def_dim(ng, iADM, HSS(ng)%pioFile, ncname, 'Nscale',     &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 # if defined POSTERIOR_EOFS && defined WEAK_CONSTRAINT
         status=def_dim(ng, iADM, HSS(ng)%pioFile, ncname, 'Nposterior', &

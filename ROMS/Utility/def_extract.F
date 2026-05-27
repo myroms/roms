@@ -341,6 +341,12 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, XTR(ng)%ncid, ncname, 'Nscale',       &
+     &                 Nscale(ng), DimIDs(36))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
 # ifdef ADJUST_BOUNDARY
         status=def_dim(ng, model, XTR(ng)%ncid, ncname, 'obc_adjust',   &
      &                 Nbrec(ng), DimIDs(31))
@@ -2990,6 +2996,12 @@
 #  ifdef FOUR_DVAR
         status=def_dim(ng, model, XTR(ng)%pioFile, ncname, 'Nstate',    &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, XTR(ng)%pioFile, ncname, 'Nscale',    &
+     &                 Nscale(ng), DimIDs(36))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 

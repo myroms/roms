@@ -1339,6 +1339,10 @@
             Imax=Lm(ng)
             Jmin=1
             Jmax=Mm(ng)
+
+# ifdef NONUNIFORM_SCALES
+            Ldiffer=.TRUE.
+# else
             DO itrc=2,NT(ng)
               IF ((HdecayX(ifile,isTvar(itrc  ),ns,ng).ne.              &
      &             HdecayX(ifile,isTvar(itrc-1),ns,ng)).or.             &
@@ -1349,11 +1353,12 @@
                 Ldiffer=.TRUE.
               END IF
             END DO
+# endif
             IF (.not.Ldiffer) THEN
               Lsame=.TRUE.
               UBt=1
             ELSE
-            Lsame=.FALSE.
+              Lsame=.FALSE.
               UBt=NT(ng)
             END IF
           END DO
@@ -3124,6 +3129,10 @@
           Imax=Lm(ng)
           Jmin=1
           Jmax=Mm(ng)
+
+# ifdef NONUNIFORM_SCALES
+          Ldiffer=.TRUE.
+# else
           DO itrc=2,NT(ng)
             IF ((HdecayX(rec,isTsur(itrc  ),ns,ng).ne.                  &
      &           HdecayX(rec,isTsur(itrc-1),ns,ng)).or.                 &
@@ -3132,6 +3141,7 @@
               Ldiffer=.TRUE.
             END IF
           END DO
+# endif
           IF (.not.Ldiffer) THEN
             Lsame=.TRUE.
             UBt=1
@@ -4277,6 +4287,10 @@
 !
           Ldiffer=.FALSE.
           DO ns=1,Nscale(ng)
+
+# ifdef NONUNIFORM_SCALES
+            Ldiffer=.TRUE.
+# else
             DO itrc=2,NT(ng)
               IF ((HdecayX(ifile,isTvar(itrc  ),ns,ng).ne.              &
      &             HdecayX(ifile,isTvar(itrc-1),ns,ng)).or.             &
@@ -4287,6 +4301,7 @@
                 Ldiffer=.TRUE.
               END IF
             END DO
+# endif
             IF (.not.Ldiffer) THEN
               Lsame=.TRUE.
               UBt=1
@@ -6040,6 +6055,10 @@
 !
         Ldiffer=.FALSE.
         DO ns=1,Nscale(ng)
+
+# ifdef NONUNIFORM_SCALES
+          Ldiffer=.TRUE.
+# else
           DO itrc=2,NT(ng)
             IF ((HdecayX(rec,isTsur(itrc  ),ns,ng).ne.                  &
      &           HdecayX(rec,isTsur(itrc-1),ns,ng)).or.                 &
@@ -6048,6 +6067,7 @@
               Ldiffer=.TRUE.
             END IF
           END DO
+# endif
           IF (.not.Ldiffer) THEN
             Lsame=.TRUE.
             UBt=1

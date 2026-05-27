@@ -60,6 +60,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j
+      integer                           :: itrc
 #ifdef MULTI_SCALE_DEBUG
       integer                           :: status
 #endif
@@ -142,14 +143,11 @@
           eigMax => self%svstr_eigen(:,ms,2)
 #endif
 #if defined ADJUST_STFLUX && defined SOLVE3D
-        CASE ('shflux')                        ! surface net heat flux
+        CASE ('shflux', 'ssflux')              ! surface trace flux
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,1,itemp)
-          eigMax => self%stflux_eigen(:,ms,2,itemp)
-        CASE ('ssflux')                        ! surface net salt flux
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,1,isalt)
-          eigMax => self%stflux_eigen(:,ms,2,isalt)
+          eigMin => self%stflux_eigen(:,ms,1,itrc)
+          eigMax => self%stflux_eigen(:,ms,2,itrc)
 #endif
       END SELECT
 !
@@ -348,6 +346,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j
+      integer                           :: itrc
 !
       real (r8)                         :: dotn, dotr, deps
       real (r8)                         :: cff, ci_alpham1, ci_delta
@@ -427,14 +426,11 @@
           eigMax => self%svstr_eigen(:,ms,2)
 #endif
 #if defined ADJUST_STFLUX && defined SOLVE3D
-        CASE ('shflux')                        ! surface net heat flux
+        CASE ('shflux', 'ssflux')              ! surface tracer flux
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,1,itemp)
-          eigMax => self%stflux_eigen(:,ms,2,itemp)
-        CASE ('ssflux')                        ! surface net salt flux
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%stflux_eigen(:,ms,1,isalt)
-          eigMax => self%stflux_eigen(:,ms,2,isalt)
+          eigMin => self%stflux_eigen(:,ms,1,itrc)
+          eigMax => self%stflux_eigen(:,ms,2,itrc)
 #endif
       END SELECT
 !
@@ -666,6 +662,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
+      integer                           :: itrc
 # ifdef MULTI_SCALE_DEBUG
       integer                           :: status
 # endif
@@ -734,14 +731,11 @@
           Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%v_eigen(:,:,ms,1)
           eigMax => self%v_eigen(:,:,ms,2)
-        CASE ('temp')                          ! temperature
+        CASE ('temp', 'salt')                  ! tracers
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,ms,1,itemp)
-          eigMax => self%t_eigen(:,:,ms,2,itemp)
-        CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,ms,1,isalt)
-          eigMax => self%t_eigen(:,:,ms,2,isalt)
+          eigMin => self%t_eigen(:,:,ms,1,itrc)
+          eigMax => self%t_eigen(:,:,ms,2,itrc)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -953,6 +947,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
+      integer                           :: itrc
 !
       real (r8)                         :: dotr, deps
       real (r8), dimension(N(ng))       :: dotn
@@ -1018,14 +1013,11 @@
           Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%v_eigen(:,:,ms,1)
           eigMax => self%v_eigen(:,:,ms,2)
-        CASE ('temp')                          ! temperature
+        CASE ('temp', 'salt')                  ! tracers
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,ms,1,itemp)
-          eigMax => self%t_eigen(:,:,ms,2,itemp)
-        CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_eigen(:,:,ms,1,isalt)
-          eigMax => self%t_eigen(:,:,ms,2,isalt)
+          eigMin => self%t_eigen(:,:,ms,1,itrc)
+          eigMax => self%t_eigen(:,:,ms,2,itrc)
       END SELECT
 !
 !  Set control variable squared root area scale (2D).
@@ -2000,6 +1992,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
+      integer                           :: itrc
 #  ifdef MULTI_SCALE_DEBUG
       integer                           :: status
 #  endif
@@ -2072,14 +2065,11 @@
           Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%v_obc_eigen(:,:,ibry,ms,1)
           eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
-        CASE ('temp')                          ! temperature
+        CASE ('temp', 'salt')                  ! tracers
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,itemp)
-          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,itemp)
-        CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,isalt)
-          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,isalt)
+          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,itrc)
+          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,itrc)
       END SELECT
 !
 !  Set control variable squared root area scale.
@@ -2348,6 +2338,7 @@
       integer                           :: Jstr, JstrV, Jend, Jmin, Jmax
       integer                           :: Mlap, iterCI, iterDiff
       integer                           :: i, j, k
+      integer                           :: itrc
 !
       real (r8)                         :: dotr, deps
       real (r8)                         :: adfac, cff
@@ -2416,14 +2407,11 @@
           Mlap=self%Mlap(ifield,ms)/ifac
           eigMin => self%v_obc_eigen(:,:,ibry,ms,1)
           eigMax => self%v_obc_eigen(:,:,ibry,ms,2)
-        CASE ('temp')                          ! temperature
+        CASE ('temp', 'salt')                  ! tracers
+          itrc = tracer_index(TRIM(StateVarName(ifield)))
           Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,itemp)
-          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,itemp)
-        CASE ('salt')                          ! salinity
-          Mlap=self%Mlap(ifield,ms)/ifac
-          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,isalt)
-          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,isalt)
+          eigMin => self%t_obc_eigen(:,:,ibry,ms,1,itrc)
+          eigMax => self%t_obc_eigen(:,:,ibry,ms,2,itrc)
       END SELECT
 !
 !  Set control variable squared root area scale.

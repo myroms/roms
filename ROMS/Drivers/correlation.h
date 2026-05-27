@@ -310,6 +310,7 @@
             CALL def_norm (ng, iNLM, 2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+
 #ifdef ADJUST_BOUNDARY
 !
           IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
@@ -317,6 +318,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
+
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
 !
           IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
@@ -324,6 +326,7 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
+
 #ifdef MULTI_SCALE_B
 !
 !  Compute the extrema eigenvalues of the K-Laplacian operator required

@@ -2455,6 +2455,7 @@
 # endif
 
 # ifdef MULTI_SCALE_B
+#  ifndef NONUNIFORM_SCALES
       Vinfo( 1)='HdecayX'
       Vinfo( 2)='initial conditions error covariance '//                &
      &          'horizontal decorrelation x-scale'
@@ -2472,6 +2473,7 @@
      &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 # else
       Vinfo( 1)='Hdecay'
       Vinfo( 2)='initial conditions error covariance '//                &
@@ -2496,6 +2498,7 @@
 
       IF (NSA.eq.2) THEN
 # ifdef MULTI_SCALE_B
+#  ifndef NONUNIFORM_SCALES
         Vinfo( 1)='HdecayMX'
         Vinfo( 2)='model error covariance ' //                          &
      &            'horizontal decorrelation x-scale'
@@ -2513,6 +2516,7 @@
      &                 1, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 # else
         Vinfo( 1)='HdecayM'
         Vinfo( 2)='model error covariance ' //                          &
@@ -6049,6 +6053,7 @@
 #  endif
 
 #  ifdef MULTI_SCALE_B
+#   ifndef NONUNIFORM_SCALES
       Vinfo( 1)='HdecayX'
       Vinfo( 2)='initial conditions error covariance '//                &
      &          'horizontal decorrelation x-scale'
@@ -6066,6 +6071,7 @@
      &               2, (/statedim, scaledim/), Aval, Vinfo, ncname,    &
      &               SetParAccess = .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  else
       Vinfo( 1)='Hdecay'
       Vinfo( 2)='initial conditions error covariance '//                &
@@ -6090,6 +6096,7 @@
 
       IF (NSA.eq.2) THEN
 #  ifdef MULTI_SCALE_B
+#   ifndef NONUNIFORM_SCALES
         Vinfo( 1)='HdecayMX'
         Vinfo( 2)='model error covariance ' //                          &
      &            'horizontal decorrelation x-scale'
@@ -6107,6 +6114,7 @@
      &                 2, (/statedim, scaledim/), Aval, Vinfo, ncname,  &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  else
         Vinfo( 1)='HdecayM'
         Vinfo( 2)='model error covariance ' //                          &

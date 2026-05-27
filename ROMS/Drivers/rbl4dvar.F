@@ -90,99 +90,108 @@
       USE mod_stepping
 !
 # ifdef ADJUST_BOUNDARY
-      USE mod_boundary,       ONLY : initialize_boundary
+      USE mod_boundary,         ONLY : initialize_boundary
 # endif
-      USE mod_forces,         ONLY : initialize_forces
+      USE mod_forces,           ONLY : initialize_forces
 
-      USE mod_mixing,         ONLY : initialize_mixing
-      USE mod_ocean,          ONLY : initialize_ocean
+      USE mod_mixing,           ONLY : initialize_mixing
+      USE mod_ocean,            ONLY : initialize_ocean
 !
 # ifdef SPLIT_4DVAR
-      USE ad_def_his_mod,     ONLY : ad_def_his
+      USE ad_def_his_mod,       ONLY : ad_def_his
 # endif
-      USE ad_wrt_his_mod,     ONLY : ad_wrt_his
+      USE ad_wrt_his_mod,       ONLY : ad_wrt_his
 # ifdef STD_MODEL
-      USE background_std_mod, ONLY : background_std
+      USE background_std_mod,   ONLY : background_std
 # endif
 # if defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90 || \
      defined PIO_LIB     && defined DELAYED_SYNC_PIO
-      USE close_io_mod,       ONLY : close_forward
+      USE close_io_mod,         ONLY : close_forward
 # endif
 # ifndef RPCG
-      USE congrad_mod,        ONLY : congrad
+      USE congrad_mod,          ONLY : congrad
 #  ifdef SPLIT_4DVAR
-      USE congrad_mod,        ONLY : cg_read_congrad
+      USE congrad_mod,          ONLY : cg_read_congrad
 #  endif
 # endif
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
      defined POSTERIOR_EOFS
-      USE convolve_mod,       ONLY : convolve
+      USE convolve_mod,         ONLY : convolve
 # endif
-      USE convolve_mod,       ONLY : error_covariance
+      USE convolve_mod,         ONLY : error_covariance
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE def_error_mod,      ONLY : def_error
+      USE def_error_mod,        ONLY : def_error
 # endif
 # if defined POSTERIOR_EOFS    || defined POSTERIOR_ERROR_I || \
      defined POSTERIOR_ERROR_F
-      USE def_hessian_mod,    ONLY : def_hessian
+      USE def_hessian_mod,      ONLY : def_hessian
 # endif
 # ifdef SPLIT_4DVAR
-      USE def_ini_mod,        ONLY : def_ini
+      USE def_ini_mod,          ONLY : def_ini
 # endif
-      USE def_impulse_mod,    ONLY : def_impulse
-      USE def_mod_mod,        ONLY : def_mod
-      USE def_norm_mod,       ONLY : def_norm
+      USE def_impulse_mod,      ONLY : def_impulse
+      USE def_mod_mod,          ONLY : def_mod
+      USE def_norm_mod,         ONLY : def_norm
 # ifdef STD_MODEL
-      USE def_std_mod,        ONLY : def_std
+      USE def_std_mod,          ONLY : def_std
 # endif
 # ifdef RPCG
-      USE frc_iau_mod,        ONLY : frc_iau_ini
+      USE frc_iau_mod,          ONLY : frc_iau_ini
 # endif
-      USE get_state_mod,      ONLY : get_state
+      USE get_state_mod,        ONLY : get_state
 # ifdef POSTERIOR_ERROR_F
-      USE ini_adjust_mod,     ONLY : load_TLtoAD
+      USE ini_adjust_mod,       ONLY : load_TLtoAD
 # endif
-      USE inp_decode_mod,     ONLY : find_file
-      USE normalization_mod,  ONLY : normalization
+      USE inp_decode_mod,       ONLY : find_file
+# ifdef MULTI_SCALE_B
+      USE multiscale_eigen_mod, ONLY : multiscale_eigen,                &
+     &                                 multiscale_eigen_read,           &
+     &                                 multiscale_eigen_write
+# endif
+      USE normalization_mod,    ONLY : normalization
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F || \
      defined POSTERIOR_EOFS
-      USE posterior_mod,      ONLY : posterior
+      USE posterior_mod,        ONLY : posterior
 # endif
 #  if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE posterior_var_mod,  ONLY : posterior_var
+      USE posterior_var_mod,    ONLY : posterior_var
 #  endif
+# ifdef MULTI_SCALE_B
+      USE roms_multiscale_mod,  ONLY : MSB,                             &
+     &                                 multiscale_get_scales
+# endif
 # ifdef RPCG
-      USE rpcg_lanczos_mod,   ONLY : rpcg_lanczos
+      USE rpcg_lanczos_mod,     ONLY : rpcg_lanczos
 #  ifdef SPLIT_4DVAR
-      USE rpcg_lanczos_mod,   ONLY : cg_read_rpcg
+      USE rpcg_lanczos_mod,     ONLY : cg_read_rpcg
 #  endif
 # endif
 # if defined GRID_EXTRACT && defined SPLIT_EXECUTABLE
-      USE state_regrid_mod,   ONLY : state_regrid
+      USE state_regrid_mod,     ONLY : state_regrid
 # endif
-      USE strings_mod,        ONLY : FoundError, find_string
-      USE tl_def_ini_mod,     ONLY : tl_def_ini
-      USE tl_wrt_ini_mod,     ONLY : tl_wrt_ini
+      USE strings_mod,          ONLY : FoundError, find_string
+      USE tl_def_ini_mod,       ONLY : tl_def_ini
+      USE tl_wrt_ini_mod,       ONLY : tl_wrt_ini
 # ifdef RPCG
-      USE wrt_aug_imp_mod,    ONLY : wrt_aug_imp
+      USE wrt_aug_imp_mod,      ONLY : wrt_aug_imp
 # endif
 # if defined POSTERIOR_ERROR_I || defined POSTERIOR_ERROR_F
-      USE wrt_error_mod,      ONLY : wrt_error
+      USE wrt_error_mod,        ONLY : wrt_error
 # endif
 # ifdef POSTERIOR_ERROR_F
-      USE wrt_hessian_mod,    ONLY : wrt_hessian
+      USE wrt_hessian_mod,      ONLY : wrt_hessian
 # endif
-      USE wrt_impulse_mod,    ONLY : wrt_impulse
-      USE wrt_ini_mod,        ONLY : wrt_ini
+      USE wrt_impulse_mod,      ONLY : wrt_impulse
+      USE wrt_ini_mod,          ONLY : wrt_ini
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS || \
      defined ADJUST_BOUNDARY
-      USE wrt_ini_mod,        ONLY : wrt_frc_AD
+      USE wrt_ini_mod,          ONLY : wrt_frc_AD
 # endif
 # ifdef STD_MODEL
-      USE wrt_std_mod,        ONLY : wrt_std
+      USE wrt_std_mod,          ONLY : wrt_std
 # endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-      USE zeta_balance_mod,   ONLY : balance_ref, biconj
+      USE zeta_balance_mod,     ONLY : balance_ref, biconj
 # endif
 !
       implicit none
@@ -2831,17 +2840,13 @@
 !                                                                      !
 !=======================================================================
 !
-      USE def_norm_mod,      ONLY : def_norm
-      USE normalization_mod, ONLY : normalization
-      USE strings_mod,       ONLY : FoundError
-!
 !  Imported variable declarations
 !
       integer, intent(in) :: ng
 !
 !  Local variable declarations.
 !
-      integer :: tile
+      integer :: ifac, tile
       integer :: NRMrec, STDrec, Tindex
 !
       character (len=*), parameter :: MyFile =                          &
@@ -2928,60 +2933,114 @@
 !-----------------------------------------------------------------------
 !  Error covariance normalization coefficients.
 !-----------------------------------------------------------------------
+
+# if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+!
+!  Read in horizontal, spatially-varying correlation length scales
+!  from input NetCDF file (SVCname).
+!
+      DO tile=first_tile(ng),last_tile(ng),+1
+        CALL multiscale_get_scales (MSB(ng), ng, tile, iTLM)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END DO
+# endif
 !
 !  Compute or read in the error covariance normalization factors.
 !  If computing, write out factors to NetCDF. This is an expensive
 !  computation that needs to be computed only once for a particular
 !  application grid and decorrelation scales.
 !
-      IF (ANY(LwrtNRM(:,ng))) THEN
+      GET_NORMALIZATION : IF (ANY(LwrtNRM(:,ng))) THEN
+
         CALL def_norm (ng, iNLM, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+!
         IF (NSA.eq.2) THEN
           CALL def_norm (ng, iNLM, 2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # ifdef ADJUST_BOUNDARY
+!
         CALL def_norm (ng, iNLM, 3)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
         CALL def_norm (ng, iNLM, 4)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
+
+# ifdef MULTI_SCALE_B
 !
+!  Compute the extrema eigenvalues of the K-Laplacian operator required
+!  by the Chebyshev Iterations (CI) solver, which is applied to implicit
+!  diffusion operators in the modeling of the multiscale background-
+!  error covariance for variables in the control vector.
+!
+!  The eigenvalue spectrum of the K-Laplacian operator remains invariant
+!  for a fixed application grid and a given value of K. Consequently,
+!  estimates can be precomputed via the Lanczos formulation of the
+!  Conjugate Gradient (CG) method, initialized with random vectors.
+!
+        ifac=1
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL normalization (ng, tile, 2)
+          CALL multiscale_eigen (ng, tile, Lnew(ng), ifac)
+        END DO
+!
+!  Write out extrema eigenvalues into output normalizations NetCDF
+!  file(s).
+!
+        CALL multiscale_eigen_write (MSB(ng), ng, iTLM)
+# endif
+!
+!  Compute normalization factors. The ifac=2 indicates the squared-root
+!  operator, so the spatial convolution is applied for only half of the
+!  pseudo-diffusion steps.
+!
+        ifac=2
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL normalization (ng, tile, ifac)
         END DO
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         LdefNRM(1:4,ng)=.FALSE.
         LwrtNRM(1:4,ng)=.FALSE.
-
+!
+!  Otherwise, read in normalization coefficients.
+!
       ELSE
 
         NRMrec=1
         CALL get_state (ng, 14, 14, NRM(1,ng), NRMrec, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
+!
         IF (NSA.eq.2) THEN
           CALL get_state (ng, 15, 15, NRM(2,ng), NRMrec, 2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 
 # ifdef ADJUST_BOUNDARY
+!
         CALL get_state (ng, 16, 16, NRM(3,ng), NRMrec, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
 # if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
         CALL get_state (ng, 17, 17, NRM(4,ng), NRMrec, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
-      END IF
+# ifdef MULTI_SCALE_B
+!
+!  Read in extrema Ritz eigenvalues frot the normalization file, which
+!  are required by the Implicit Chebyshev Iterations (CI) solver.
+!
+        CALL multiscale_eigen_read (MSB(ng), ng, iTLM)
+# endif
+
+      END IF GET_NORMALIZATION
 !
       RETURN
       END SUBROUTINE prior_error
