@@ -615,13 +615,37 @@
 # endif
 #endif
 
-#if defined I4DVAR          || defined OPT_OBSERVATIONS || \
-    defined WEAK_CONSTRAINT
+#if defined CORRELATION      || defined I4DVAR          || \
+    defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'nrm_file',            &
      &                        TRIM(NRM(1,ng)%name))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,20) 'nrm_file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#endif
+
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'svc_file',            &
+     &                        TRIM(SVC(ng)%name))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) 'svc_file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#endif
+
+#ifdef FOUR_DVAR
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'std_file',            &
+     &                        TRIM(STD(1,ng)%name))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) 'std_file', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -4231,6 +4255,30 @@
      &                     TRIM(NRM(1,ng)%name))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,20) 'nrm_file', TRIM(ncname)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+# endif
+
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (exit_flag.eq.NoError) THEN
+        status=PIO_put_att(pioFile, PIO_global, 'svc_file',             &
+     &                     TRIM(SVC(ng)%name))
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) 'svc_file', TRIM(ncname)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+# endif
+
+# ifdef FOUR_DVAR
+      IF (exit_flag.eq.NoError) THEN
+        status=PIO_put_att(pioFile, PIO_global, 'std_file',             &
+     &                     TRIM(STD(1,ng)%name))
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) 'std_file', TRIM(ncname)
           exit_flag=3
           ioerror=status
         END IF
