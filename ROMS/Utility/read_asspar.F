@@ -25,8 +25,11 @@
 !
       USE inp_decode_mod
 !
-      USE strings_mod, ONLY : FoundError
-      USE strings_mod, ONLY : uppercase
+# ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
+      USE strings_mod,    ONLY : FoundError
+      USE strings_mod,    ONLY : uppercase
 !
       implicit none
 !
@@ -1504,7 +1507,8 @@
           IF (Nimpact.gt.Nouter) THEN
             IF (Master) THEN
               WRITE (out,240) 'Nimpact', Nimpact,                       &
-     &              'must be less or equal than Nouter'
+     &                        'must be less or equal than Nouter',      &
+     &                        TRIM(aparnam)
             END IF
             exit_flag=5
             RETURN
@@ -1516,7 +1520,8 @@
           IF (Nimpact.gt.Nouter) THEN
             IF (Master) THEN
               WRITE (out,240) 'Nimpact', Nimpact,                       &
-     &              'must be less or equal than Nouter'
+     &                        'must be less or equal than Nouter',      &
+     &                        TRIM(aparnam)
             END IF
             exit_flag=5
             RETURN
@@ -1528,7 +1533,8 @@
           IF (OuterLoop.gt.Nouter) THEN
             IF (Master) THEN
               WRITE (out,240) 'OuterLoop', OuterLoop,                   &
-     &              'must be less or equal than Nouter'
+     &                        'must be less or equal than Nouter',      &
+     &                        TRIM(aparnam)
             END IF
             exit_flag=5
             RETURN
@@ -1680,38 +1686,103 @@
             WRITE (out,90) Nlap(isFsur,ns,ng), 'Mlap(isFsur)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'free-surface.'
+            IF ((Nlap(isFsur,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isFsur,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isFsur)', Nlap(isFsur,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
             WRITE (out,90) Nlap(isUbar,ns,ng), 'Mlap(isUbar)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D U-momentum.'
+            IF ((Nlap(isUbar,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isUbar,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isUbar)', Nlap(isUbar,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
             WRITE (out,90) Nlap(isVbar,ns,ng), 'Mlap(isVbar)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '2D V-momentum.'
+            IF ((Nlap(isVbar,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isVbar,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isVbar)', Nlap(isVbar,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
 #      ifdef SOLVE3D
             WRITE (out,90) Nlap(isUvel,ns,ng), 'Mlap(isUvel)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D U-momentum.'
+            IF ((Nlap(isUvel,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isUvel,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isUvel)', Nlap(isUvel,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
             WRITE (out,90) Nlap(isVvel,ns,ng), 'Mlap(isVvel)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            '3D V-momentum.'
+            IF ((Nlap(isVvel,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isVvel,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isVvel)', Nlap(isVvel,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
             DO itrc=1,NT(ng)
               WRITE (out,90) Nlap(isTvar(itrc),ns,ng), 'Mlap(idTvar)',  &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            TRIM(Vname(1,idTvar(itrc)))
+              IF ((Nlap(isTvar(itrc),ns,ng).lt.2).or.                   &
+     &            (MOD(Nlap(isTvar(itrc),ns,ng),2).ne.0)) THEN
+                WRITE (out,240) 'Mlap(isTvar)',                         &
+     &                          Nlap(isTvar(itrc),ns,ng),               &
+     &                          'Must be greater than 2 and even!',     &
+     &                          TRIM(aparnam)
+                exit_flag=5
+              END IF
             END DO
 #      endif
 #      ifdef ADJUST_WSTRESS
             WRITE (out,90) Nlap(isUstr,ns,ng), 'Mlap(isUstr)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface U-stress.'
+            IF ((Nlap(isUstr,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isUstr,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isUstr)', Nlap(isUstr,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
             WRITE (out,90) Nlap(isVstr,ns,ng), 'Mlap(isVstr)',          &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface V-stress.'
+            IF ((Nlap(isVstr,ns,ng).lt.2).or.                           &
+     &          (MOD(Nlap(isVstr,ns,ng),2).ne.0)) THEN
+              WRITE (out,240) 'Mlap(isVstr)', Nlap(isVstr,ns,ng),       &
+     &                        'Must be greater than 2 and even!',       &
+     &                        TRIM(aparnam)
+              exit_flag=5
+            END IF
 #      endif
 #      if defined ADJUST_STFLUX && defined SOLVE3D
             DO itrc=1,NT(ng)
-              WRITE (out,90) Nlap(isTsur(itrc),ns,ng), 'Mlap(idTvar)',  &
+              WRITE (out,90) Nlap(isTsur(itrc),ns,ng), 'Mlap(idTsur)',  &
      &            'B-scale ', ns, ', smoother applications: '//         &
      &            'Surface flux, '//TRIM(Vname(1,idTvar(itrc)))//'.'
+              IF ((Nlap(isTsur(itrc),ns,ng).lt.2).or.                   &
+     &            (MOD(Nlap(isTsur(itrc),ns,ng),2).ne.0)) THEN
+                WRITE (out,240) 'Mlap(isTsur)',                         &
+     &                          Nlap(isTsur(itrc),ns,ng),               &
+     &                          'Must be greater than 2 and even!',     &
+     &                          TRIM(aparnam)
+                exit_flag=5
+              END IF
             END DO
 #      endif
             WRITE (out,125) Bwgt(isFsur,ns,ng), 'Bwgt(isFsur)',         &
@@ -1750,6 +1821,7 @@
 #     endif
           IF (nADJ(ng).lt.ntimes(ng)) THEN
 #     ifdef MULTI_SCALE_B
+#      ifdef NONUNIFORM_SCALES
             DO ns=1,Nscale(ng)
               WRITE (out,125) HdecayX(2,isFsur,ns,ng),                  &
      &                        'HdecayMX(isFsur)', 'B-scale ', ns,       &
@@ -1769,7 +1841,7 @@
               WRITE (out,125) HdecayY(2,isVbar,ns,ng),                  &
      &                        'HdecayMY(isVbar)', 'B-scale ', ns,       &
      &            ', Model Error Y-decorrelation (m), 2D V-momentum.'
-#      ifdef SOLVE3D
+#       ifdef SOLVE3D
               WRITE (out,125) HdecayX(2,isUvel,ns,ng),                  &
      &                        'HdecayMX(isUvel)', 'B-scale ', ns,       &
      &            ', Model Error X-decorrelation (m), 3D U-momentum.'
@@ -1792,8 +1864,9 @@
      &            'Model Error Y-decorrelation (m), '//                 &
      &            TRIM(Vname(1,idTvar(itrc)))//'.'
               END DO
-#      endif
+#       endif
             END DO
+#      endif
 #     else
             WRITE (out,120) Hdecay(2,isFsur,ng), 'HdecayM(isFsur)',     &
      &        'Model Error decorrelation H-scale (m), free-surface.'
@@ -1851,6 +1924,7 @@
 #     endif
 #    endif
 #    ifdef MULTI_SCALE_B
+#     ifdef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             WRITE (out,125) HdecayX(1,isFsur,ns,ng),                    &
      &                      'HdecayIX(isFsur)', 'B-scale ', ns,         &
@@ -1895,6 +1969,7 @@
             END DO
 #      endif
           END DO
+#     endif
 #    else
           WRITE (out,120) Hdecay(1,isFsur,ng), 'HdecayI(isFsur)',       &
      &            'IC Error decorrelation H-scale (m), free-surface.'
@@ -1929,6 +2004,7 @@
 #    endif
 #    ifdef ADJUST_BOUNDARY
 #     ifdef MULTI_SCALE_B
+#      ifdef NONUNIFORM_SCALES
           DO ib=1,4
             DO ns=1,Nscale(ng)
               IF (ib.eq.iwest) THEN
@@ -1955,7 +2031,7 @@
      &                          'HdecayB(isVbar)', 'B-scale ', ns,      &
      &              Text//' decorrelation H-scale (m), 2D V-momentum.'
               END IF
-#      ifdef SOLVE3D
+#       ifdef SOLVE3D
               IF (Lobc(ib,isUvel,ng)) THEN
                 WRITE (out,125) HdecayB(isUvel,ns,ib,ng),               &
      &                          'HdecayB(isUvel)', 'B-scale ', ns,      &
@@ -1974,9 +2050,10 @@
      &              TRIM(Vname(1,idTvar(i)))//'.'
                 END IF
               END DO
-#      endif
+#       endif
             END DO
           END DO
+#      endif
 #     else
           DO ib=1,4
             IF (ib.eq.iwest) THEN
@@ -2059,6 +2136,7 @@
 #    endif
 #    ifdef ADJUST_WSTRESS
 #     ifdef MULTI_SCALE_B
+#      ifdef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             WRITE (out,125) HdecayX(1,isUstr,ns,ng),                    &
      &                      'HdecayFX(isUstr)', 'B-scale ', ns,         &
@@ -2067,6 +2145,7 @@
      &                      'HdecayFY(isVstr)', 'B-scale ', ns,         &
      &            ', Forcing Error Y-decorrelation (m), V-stress.'
           END DO
+#      endif
 #     else
           WRITE (out,120) Hdecay(1,isUstr,ng), 'HdecayF(isUstr)',       &
      &            'Forcing Error decorrelation H-scale (m), U-stress.'
@@ -2076,6 +2155,7 @@
 #    endif
 #    if defined ADJUST_STFLUX && defined SOLVE3D
 #     ifdef MULTI_SCALE_B
+#      ifdef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             DO itrc=1,NT(ng)
               WRITE (out,125) HdecayX(1,isTsur(itrc),ns,ng),            &
@@ -2088,6 +2168,7 @@
      &              TRIM(Vname(1,idTvar(itrc)))//'.'
             END DO
           END DO
+#      endif
 #     else
           DO itrc=1,NT(ng)
             WRITE (out,130) Hdecay(1,isTsur(itrc),ng),                  &
@@ -2219,6 +2300,10 @@
           END IF
         END DO
       END IF
+
+#  if defined DISTRIBUTE && defined MULTI_SCALE_B
+      CALL mp_bcasti (ng, model, exit_flag)
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
@@ -2512,8 +2597,8 @@
      &        ', could not find input file:  ',a)
  230  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, l1, &
      &        /,15x,a,/,15x,a)
- 240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i2, &
-     &        /,15x,a)
+ 240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i0, &
+     &        /,15x,a,/,15x,'correct input script: ',1x,'''',a,'''',/)
 # endif
 
       RETURN
