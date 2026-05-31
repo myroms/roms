@@ -1494,8 +1494,8 @@
 !  Report input parameters.
 !-----------------------------------------------------------------------
 !
-      IF (Master.and.Lwrite) THEN
-        DO ng=1,Ngrids
+      REPORT_LOOP : DO ng=1,Ngrids
+        IF (Master.and.Lwrite) THEN
 #  if defined FOUR_DVAR || defined VERIFICATION
           WRITE (out,60) ng
 #  endif
@@ -2415,13 +2415,12 @@
 #    endif
 #   endif
 #  endif
+        END IF
 
 #  if defined DISTRIBUTE && defined MULTI_SCALE_B
-!
-          CALL mp_bcasti (ng, model, exit_flag)
+        CALL mp_bcasti (ng, model, exit_flag)
 #  endif
-        END DO
-      END IF
+      END DO REPORT_LOOP
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
