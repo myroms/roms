@@ -454,6 +454,7 @@
 #ifdef SOLVE3D
         nrhs(ng)=Lnew(ng)
 #endif
+        Lfout(ng)=Lnew(ng)
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
         LwrtState2d(ng)=.TRUE.

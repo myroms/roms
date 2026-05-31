@@ -253,6 +253,23 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
          Hgamma =  0.5      0.5      0.5      0.5         ! horizontal operator
          Vgamma =  0.05     0.05     0.05     0.05        ! vertical operator
 
+! Dirac delta function (i,j,k) locations for testing correlations parameters.
+
+  Dirac(isFsur) == 25 20                                   ! free-surface 
+  Dirac(isUbar) == 15 30                                   ! 2D U-momentum
+  Dirac(isVbar) == 15 35                                   ! 2D V-momentum
+
+  Dirac(isUvel) == 15 30 30                                ! 3D U-momentum
+  Dirac(isVvel) == 15 35 30                                ! 3D V-momentum
+  Dirac(isTvar) == 30 20 30 \                              ! temperature
+                   20 40 30                                ! salinity
+
+  Dirac(isTsur) == 20  15   \                              ! surface heat flux
+                   25  20                                  ! surface salt flux
+
+  Dirac(isUstr) == 18  30                                  ! surface U-momentum stress
+  Dirac(isVstr) == 18  35                                  ! surface V-momentum stress
+
 ! The number of horizontal length scales to include in the modeling of
 ! multiscale background error covariance, B. [1:Ngrids].
 
@@ -264,17 +281,17 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 ! Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
 ! approximate a Gaussian correlation functions. [1:Nscale,1:Ngrids].
 
-   Mlap(isFsur) == 20                                      ! free-surface 
-   Mlap(isUbar) == 20                                      ! 2D U-momentum
-   Mlap(isVbar) == 20                                      ! 2D V-momentum
+   Mlap(isFsur) == 10                                      ! free-surface 
+   Mlap(isUbar) == 10                                      ! 2D U-momentum
+   Mlap(isVbar) == 10                                      ! 2D V-momentum
 
-   Mlap(isUvel) == 20                                      ! 3D U-momentum
-   Mlap(isVvel) == 20                                      ! 3D V-momentum
-   Mlap(isTvar) == 20  20                                  ! 1:NT tracers
+   Mlap(isUvel) == 10                                      ! 3D U-momentum
+   Mlap(isVvel) == 10                                      ! 3D V-momentum
+   Mlap(isTvar) == 10  10                                  ! 1:NT tracers
 
-   Mlap(isTsur) == 20  20                                  ! 1:NT surface tracer flux
-   Mlap(isUstr) == 20                                      ! surface U-momentum stress
-   Mlap(isVstr) == 20                                      ! surface V-momentum stress
+   Mlap(isTsur) == 10  10                                  ! 1:NT surface tracer flux
+   Mlap(isUstr) == 10                                      ! surface U-momentum stress
+   Mlap(isVstr) == 10                                      ! surface V-momentum stress
 
 ! Weights for the multiscale background error covariance matrix:
 !
@@ -299,13 +316,13 @@ balance(isVvel) =  T                      ! 3D momentum (u, v)
 ! estimate the eigenvalues of the implicit horizontal diffusion operator for B.
 ! [1:Nscale,1:Ngrids] values are expected.
 
-        NiterCG == 50
+        NiterCG == 20
 
 ! The number of Chebyshev iterations used to invert the implicit horizontal
 ! diffusion operator for B. It MUST be an even value. [1:Nscale,1:Ngrids] values
 ! are expected.
 
-        NiterCI == 50
+        NiterCI == 20
 
 ! Model error covariance: horizontal, isotropic (HdecayM) and
 ! anisotropic (HdecayMX, HdecayMY) decorrelation length scales (m).
@@ -964,6 +981,30 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !                 needed for Vgamma to facilitate the error covariance
 !                 modeling for initial conditions (1), model (2), boundary
 !                 conditions (3), and surface forcing (4).
+!
+!------------------------------------------------------------------------------
+! Dirac delta function locations.
+!------------------------------------------------------------------------------
+!
+! Activating the DIRAC option during normalization coefficient computation
+! allows review of selected application correlation parameters in the
+! "ROMS/Drivers/correlation.h" driver. This process ensures that the
+! background-error covariance model is configured with the appropriate error
+! hypothesis for each variable in the control vector prior to executing the
+! 4D-Var application.
+! 
+!  Dirac(isFsur)  free-surface delta function  (i,j) locations
+!  Dirac(isUbar)  2D U-momentum delta function (i,j) locations
+!  Dirac(isVbar)  2D V-momentum delta function (i,j) locations
+!
+!  Dirac(isUvel)  3D U-momentum delta function    (i,j,k) locations
+!  Dirac(isVvel)  3D V-momentum delta function    (i,j,k) locations
+!  Dirac(isTvar)  tracer variables delta funCtion (i,j,k) locations
+!
+!  Dirac(isTsur)  surface tracer flux delta function (i,j) locations 
+!
+!  Dirac(isUstr)  surface U-momentum stress delta function (i,j) locations
+!  Dirac(isVstr)  surface U-momentum stress delta function (i,j) locations
 !
 !------------------------------------------------------------------------------
 ! Multiscale Background Error Covariance parameters: option MULTI_SCALE_B.

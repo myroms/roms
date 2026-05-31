@@ -316,59 +316,92 @@
 !  Set tangent and adjoint variable and random point to perturb.
 !-----------------------------------------------------------------------
 !
+#ifndef DIRAC
       ivarTL=INT(user(1))
       ivarAD=INT(user(2))
       IperTL=INT(user(3))
       IperAD=INT(user(4))
       JperTL=INT(user(5))
       JperAD=INT(user(6))
-#ifdef SOLVE3D
+# ifdef SOLVE3D
       KperTL=INT(user(7))
       KperAD=INT(user(8))
+# endif
 #endif
       IF (Master) THEN
         WRITE (stdout,'(/,a,/)') ' Dirac Delta Function Perturbations:'
         IF (TLmodel) THEN
+#ifdef DIRAC
+          WRITE (stdout,10) 'tl_ubar perturbed at (i,j) = ',            &
+     &                       Dirac(1:2,isUbar,ng)
+          WRITE (stdout,10) 'tl_vbar perturbed at (i,j) = ',            &
+     &                       Dirac(1:2,isVbar,ng)
+          WRITE (stdout,10) 'tl_zeta perturbed at (i,j) = ',            &
+     &                       Dirac(1:2,isFsur,ng)
+# ifdef ADJUST_WSTRESS
+          WRITE (stdout,20) 'tl_ustr perturbed at (i,j,ir) = ',         &
+     &                       Dirac(1:2,isUstr,ng), 1
+          WRITE (stdout,20) 'tl_vstr perturbed at (i,j,ir) = ',         &
+     &                       Dirac(1:2,isVstr,ng), 1
+# endif
+# ifdef SOLVE3D
+          WRITE (stdout,20) 'tl_u perturbed at (i,j,k) = ',             &
+     &                       Dirac(1:3,isUvel,ng)
+          WRITE (stdout,20) 'tl_v perturbed at (i,j,k) = ',             &
+     &                       Dirac(1:3,isVvel,ng)
+          DO itrc=1,NT(ng)
+            WRITE (stdout,30) 'tl_t perturbed at (i,j,k,itrc) = ',      &
+     &                        Dirac(1:3,isTvar(itrc),ng), itrc
+          END DO
+#  ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            WRITE (stdout,30) 'tl_tflux perturbed at (i,j,ir,itrc) = ', &
+     &                        Dirac(1:2,isTsur(itrc),ng), 1, itrc
+          END DO
+#  endif
+# endif
+
+#else
           IF (ivarTL.eq.isUbar) THEN
-            WRITE (stdout,10) 'tl_ubar perturbed at (i,j) = ',          &
-     &                        IperTL, JperTL
+             WRITE (stdout,10) 'tl_ubar perturbed at (i,j) = ',         &
+     &                         IperTL, JperTL
           ELSE IF (ivarTL.eq.isVbar) THEN
             WRITE (stdout,10) 'tl_vbar perturbed at (i,j) = ',          &
      &                        IperTL, JperTL
           ELSE IF (ivarTL.eq.isFsur) THEN
             WRITE (stdout,10) 'tl_zeta perturbed at (i,j) = ',          &
      &                        IperTL, JperTL
-#ifdef ADJUST_WSTRESS
+# ifdef ADJUST_WSTRESS
           ELSE IF (ivarTL.eq.isUstr) THEN
             WRITE (stdout,10) 'tl_ustr perturbed at (i,j) = ',          &
      &                        IperTL, JperTL
           ELSE IF (ivarTL.eq.isVstr) THEN
             WRITE (stdout,10) 'tl_vstr perturbed at (i,j) = ',          &
      &                        IperTL, JperTL
-#endif
-#ifdef SOLVE3D
+# endif
+# ifdef SOLVE3D
           ELSE IF (ivarTL.eq.isUvel) THEN
             WRITE (stdout,20) 'tl_u perturbed at (i,j,k) = ',           &
      &                        IperTL, JperTL, KperTL
           ELSE IF (ivarTL.eq.isVvel) THEN
             WRITE (stdout,20) 'tl_v perturbed at (i,j,k) = ',           &
      &                        IperTL, JperTL, KperTL
-#endif
+# endif
           END IF
-#ifdef SOLVE3D
+# ifdef SOLVE3D
           DO itrc=1,NT(ng)
             IF (ivarTL.eq.isTvar(itrc)) THEN
               WRITE (stdout,30) 'tl_t perturbed at (i,j,k,itrc) = ',    &
      &                          IperTL, JperTL, KperTL, itrc
-# ifdef ADJUST_STFLUX
+#  ifdef ADJUST_STFLUX
             ELSE IF (ivarTL.eq.isTsur(itrc)) THEN
               WRITE (stdout,20) 'tl_tflux perturbed at (i,j,k,itrc) = ',&
      &                          IperTL, JperTL, KperTL, itrc
-# endif
+#  endif
            END IF
           END DO
-#endif
-#ifdef ADJUST_BOUNDARY
+# endif
+# ifdef ADJUST_BOUNDARY
           IF (ivarTL.eq.isUbar) THEN
             WRITE (stdout,10) 'tl_ubar_obc (S/N) perturbed at (i) = ',  &
      &                         IperTL
@@ -384,7 +417,7 @@
      &                         IperTL
             WRITE (stdout,10) 'tl_zeta_obc (E/W) perturbed at (j) = ',  &
      &                         JperTL
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
           ELSE IF (ivarTL.eq.isUvel) THEN
             WRITE (stdout,10) 'tl_u_obc (S/N) perturbed at (i,k) = ',   &
      &                         IperTL, KperTL
@@ -395,9 +428,9 @@
      &                         IperTL, KperTL
             WRITE (stdout,10) 'tl_u_obc (E/W) perturbed at (j,k) = ',   &
      &                         JperTL, KperTL
-# endif
+#  endif
           END IF
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
           DO itrc=1,NT(ng)
             IF (ivarTL.eq.isTvar(itrc)) THEN
               WRITE (stdout,20) 'tl_t_obc perturbed at (i,k,itrc) = ',  &
@@ -406,9 +439,11 @@
      &                          JperTL, KperTL, itrc
             END IF
           END DO
+#  endif
 # endif
 #endif
         END IF
+!
         IF (ADmodel) THEN
           IF (ivarAD.eq.isUbar) THEN
             WRITE (stdout,40) 'ad_ubar perturbed at (i,j) = ',          &
@@ -498,6 +533,11 @@
 !-----------------------------------------------------------------------
 !
       IF (TLmodel) THEN
+#ifdef DIRAC
+        ivarTL=isUbar
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+#endif
         DO j=JstrT,JendT
           DO i=IstrP,IendT
             IF ((ivarTL.eq.isUbar).and.                                 &
@@ -508,6 +548,12 @@
             END IF
           END DO
         END DO
+!
+#ifdef DIRAC
+        ivarTL=isVbar
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+#endif
         DO j=JstrP,JendT
           DO i=IstrT,IendT
             IF ((ivarTL.eq.isVbar).and.                                 &
@@ -542,6 +588,7 @@
           END DO
         END DO
       END IF
+
 #ifdef ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
@@ -549,7 +596,13 @@
 !-----------------------------------------------------------------------
 !
       IF (TLmodel) THEN
+# ifdef DIRAC
+        ivarTL=isUstr
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+# endif
         DO ir=1,Nfrec(ng)
+          KperTL=ir
           DO j=JstrT,JendT
             DO i=IstrP,IendT
               IF ((ivarTL.eq.isUstr).and.                               &
@@ -561,6 +614,15 @@
               END IF
             END DO
           END DO
+        END DO
+!
+# ifdef DIRAC
+          ivarTL=isVstr
+          IperTL=Dirac(1,ivarTL,ng)
+          JperTL=Dirac(2,ivarTL,ng)
+# endif
+        DO ir=1,Nfrec(ng)
+          KperTL=ir
           DO j=JstrP,JendT
             DO i=IstrT,IendT
               IF ((ivarTL.eq.isVstr).and.                               &
@@ -608,6 +670,11 @@
 !-----------------------------------------------------------------------
 !
       IF (TLmodel) THEN
+#ifdef DIRAC
+        ivarTL=isFsur
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+#endif
         DO j=JstrT,JendT
           DO i=IstrT,IendT
             IF ((ivarTL.eq.isFsur).and.                                 &
@@ -640,6 +707,12 @@
 !-----------------------------------------------------------------------
 !
       IF (TLmodel) THEN
+# ifdef DIRAC
+        ivarTL=isUvel
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+        KperTL=Dirac(3,ivarTL,ng)
+# endif
         DO k=1,N(ng)
           DO j=JstrT,JendT
             DO i=IstrP,IendT
@@ -652,6 +725,15 @@
               END IF
             END DO
           END DO
+        END DO
+!
+# ifdef DIRAC
+        ivarTL=isVvel
+        IperTL=Dirac(1,ivarTL,ng)
+        JperTL=Dirac(2,ivarTL,ng)
+        KperTL=Dirac(3,ivarTL,ng)
+# endif
+        DO k=1,N(ng)
           DO j=JstrP,JendT
             DO i=IstrT,IendT
               IF ((ivarTL.eq.isVvel).and.                               &
@@ -699,6 +781,12 @@
 !
       IF (TLmodel) THEN
         DO itrc=1,NT(ng)
+# ifdef DIRAC
+          ivarTL=isTvar(itrc)
+          IperTL=Dirac(1,ivarTL,ng)
+          JperTL=Dirac(2,ivarTL,ng)
+          KperTL=Dirac(3,ivarTL,ng)
+# endif
           DO k=1,N(ng)
             DO j=JstrT,JendT
               DO i=IstrT,IendT
@@ -732,6 +820,7 @@
           END DO
         END DO
       END IF
+
 # ifdef ADJUST_STFLUX
 !
 !-----------------------------------------------------------------------
@@ -740,7 +829,13 @@
 !
       IF (TLmodel) THEN
         DO itrc=1,NT(ng)
+# ifdef DIRAC
+          ivarTL=isTsur(itrc)
+          IperTL=Dirac(1,ivarTL,ng)
+          JperTL=Dirac(2,ivarTL,ng)
+# endif
           DO ir=1,Nfrec(ng)
+            KperTL=ir
             DO j=JstrT,JendT
               DO i=IstrT,IendT
                 IF ((ivarTL.eq.isTsur(itrc)).and.                       &
@@ -774,6 +869,7 @@
         END DO
       END IF
 # endif
+
 # ifdef ADJUST_BOUNDARY
 !
 !-----------------------------------------------------------------------
@@ -1073,15 +1169,15 @@
 # endif
 #endif
 !
- 10   FORMAT (' ANA_PERTURB - Tangent ', a, 2i4)
+ 10   FORMAT (' ANA_PERTURB - Tangent ', a, t65, 2i4)
 #ifdef SOLVE3D
- 20   FORMAT (' ANA_PERTURB - Tangent ', a, 3i4)
- 30   FORMAT (' ANA_PERTURB - Tangent ', a, 4i4)
+ 20   FORMAT (' ANA_PERTURB - Tangent ', a, t65, 3i4)
+ 30   FORMAT (' ANA_PERTURB - Tangent ', a, t65, 4i4)
 #endif
- 40   FORMAT (' ANA_PERTURB - Adjoint ', a, 2i4)
+ 40   FORMAT (' ANA_PERTURB - Adjoint ', a, t65, 2i4)
 #ifdef SOLVE3D
- 50   FORMAT (' ANA_PERTURB - Adjoint ', a, 3i4)
- 60   FORMAT (' ANA_PERTURB - Adjoint ', a, 4i4)
+ 50   FORMAT (' ANA_PERTURB - Adjoint ', a, t65, 3i4)
+ 60   FORMAT (' ANA_PERTURB - Adjoint ', a, t65, 4i4)
 #endif
 !
       RETURN

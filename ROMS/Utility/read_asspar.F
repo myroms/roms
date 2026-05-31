@@ -50,6 +50,10 @@
       integer :: Ivalue(1)
 !
       integer :: Nfiles(Ngrids)
+      integer :: delta(3,Ngrids)
+# ifdef SOLVE3D
+      integer :: deltaT(3,MT,Ngrids)
+# endif
 # ifdef MULTI_SCALE_B
       integer, allocatable :: Miter(:,:)
 #  ifdef SOLVE3D
@@ -107,6 +111,11 @@
       Cdim=SIZE(Cval,1)
       Clen=LEN(Cval(1))
       Rdim=SIZE(Rval,1)
+      Nval=0
+      delta=0
+# ifdef SOLVE3D
+      deltaT=0
+# endif 
 !
 !  Set NetCDF library to process reading and writing the observation
 !  vectors. Since the input OBS(ng)%name file can be rewritten, we
@@ -390,6 +399,81 @@
             CASE ('Nrandom')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nrandom=Ivalue(1)
+            CASE ('Dirac(isFsur)')
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,2
+                  Dirac(i,isFsur,ng)=delta(i,ng)
+                END DO
+              END DO            
+            CASE ('Dirac(isUbar)')
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta) 
+              DO ng=1,Ngrids
+                DO i=1,2
+                  Dirac(i,isUbar,ng)=delta(i,ng)
+                END DO
+              END DO            
+            CASE ('Dirac(isVbar)')
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,2
+                  Dirac(i,isVbar,ng)=delta(i,ng)
+                END DO
+              END DO            
+#  ifdef SOLVE3D
+            CASE ('Dirac(isUvel)')
+              Npts=load_i(Nval, Rval, 3, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,3
+                  Dirac(i,isUvel,ng)=delta(i,ng)
+                END DO
+              END DO            
+            CASE ('Dirac(isVvel)')
+              Npts=load_i(Nval, Rval, 3, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,3
+                  Dirac(i,isVvel,ng)=delta(i,ng)
+                END DO
+              END DO            
+            CASE ('Dirac(isTvar)')
+              Npts=load_i(Nval, Rval, 3, MT, Ngrids, deltaT)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  k=isTvar(itrc)
+                  DO i=1,3
+                    Dirac(i,k,ng)=deltaT(i,itrc,ng)
+                  END DO
+                END DO
+              END DO
+#  endif
+#  ifdef ADJUST_WSTRESS
+            CASE ('Dirac(isUstr)')
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,2
+                  Dirac(i,isUstr,ng)=delta(i,ng)
+                END DO
+              END DO            
+            CASE ('Dirac(isVstr)')
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              DO ng=1,Ngrids
+                DO i=1,2
+                  Dirac(i,isVstr,ng)=delta(i,ng)
+                END DO
+              END DO            
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+            CASE ('Dirac(isTsur)')
+              Npts=load_i(Nval, Rval, 2, MT, Ngrids, deltaT)
+              DO ng=1,Ngrids
+                DO itrc=1,NT(ng)
+                  k=isTsur(itrc)
+                  DO i=1,2
+                    Dirac(i,k,ng)=deltaT(i,itrc,ng)
+                  END DO
+                END DO
+              END DO
+#  endif
             CASE ('Hgamma')
               Npts=load_r(Nval, Rval, 4, Hgamma)
 #  ifdef SOLVE3D
@@ -2298,12 +2382,46 @@
      &            TRIM(ExtraName(i))
             END DO
           END IF
-        END DO
-      END IF
+
+#  ifdef DIRAC
+          WRITE (out,'(/,a,/)')                                         &
+     &          ' Dirac Delta Functions (i,j,k) Locations:'
+          WRITE (out,205) TRIM(StateVarName(isFsur)),                   &
+     &                    Dirac(1:2,isFsur,ng)
+          WRITE (out,205) TRIM(StateVarName(isUbar)),                   &
+     &                    Dirac(1:2,isUbar,ng)
+          WRITE (out,205) TRIM(StateVarName(isVbar)),                   &
+     &                    Dirac(1:2,isVbar,ng)
+#   ifdef ADJUST_WSTRESS
+          WRITE (out,205) TRIM(StateVarName(isUstr)),                   &
+     &                    Dirac(1:2,isUstr,ng)
+          WRITE (out,205) TRIM(StateVarName(isVstr)),                   &
+     &                    Dirac(1:2,isVstr,ng)
+#   endif
+#   ifdef SOLVE3D
+          WRITE (out,205) TRIM(StateVarName(isUvel)),                   &
+     &                    Dirac(1:3,isUvel,ng)
+          WRITE (out,205) TRIM(StateVarName(isVvel)),                   &
+     &                    Dirac(1:3,isVvel,ng)
+          DO itrc=1,NT(ng)
+            WRITE (out,205) TRIM(StateVarName(isTvar(itrc))),           &
+     &                      Dirac(1:3,isTvar(itrc),ng)
+          END DO
+#    ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            WRITE (out,205) TRIM(StateVarName(isTsur(itrc))),           &
+     &                      Dirac(1:2,isTsur(itrc),ng)
+          END DO
+#    endif
+#   endif
+#  endif
 
 #  if defined DISTRIBUTE && defined MULTI_SCALE_B
-      CALL mp_bcasti (ng, model, exit_flag)
+!
+          CALL mp_bcasti (ng, model, exit_flag)
 #  endif
+        END DO
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
@@ -2592,6 +2710,7 @@
  180  FORMAT (3x,4(1x,l1),2x,a,t32,a,i2.2,':',1x,a)
  190  FORMAT (1p,e11.4,2x,a,t32,a,a,'.')
  200  FORMAT (1p,e11.4,2x,a,'(',i2.2,')',t32,a,':',1x,i6)
+ 205  FORMAT (t14,a,':',t32,3i6)
  210  FORMAT (/,' READ_ASSPAR - variable info not yet loaded, ', a)
  220  FORMAT (/,' READ_ASSPAR - Grid ', i2.2,                           &
      &        ', could not find input file:  ',a)
@@ -2600,7 +2719,7 @@
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i0, &
      &        /,15x,a,/,15x,'correct input script: ',1x,'''',a,'''',/)
 # endif
-
+!
       RETURN
       END SUBROUTINE read_AssPar
 #else

@@ -1341,6 +1341,10 @@
 !
         logical, allocatable :: balance(:)
 !
+!  Dirac delta function (i,j,k) locations.
+!
+        integer, allocatable :: Dirac(:,:,:)
+!
 !  Initial conditions, model and surface forcing error covariance
 !  horizontal decorrelation scales (m).
 !
@@ -3298,6 +3302,11 @@
         Dmem(1)=Dmem(1)+REAL(MstateVar,r8)
       END IF
 
+      IF (.not.allocated(Dirac)) THEN
+        allocate ( Dirac(3,MstateVar,Ngrids) )
+        Dmem(1)=Dmem(1)+3.0_r8*REAL(MstateVar*Ngrids,r8)
+      END IF
+
 # ifndef MULTI_SCALE_B
       IF (.not.allocated(Hdecay)) THEN
         allocate ( Hdecay(2,MstateVar,Ngrids) )
@@ -4174,6 +4183,8 @@
 
       IF (allocated(balance))           deallocate ( balance )
 
+      IF (allocated(Dirac))             deallocate ( Dirac )
+
 # ifdef MULTI_SCALE_B
       IF (allocated(HdecayX))           deallocate ( HdecayX )
 
@@ -4697,6 +4708,7 @@
       balance=.FALSE.
 
       Cnorm=.FALSE.
+      Dirac=0
 # ifndef MULTI_SCALE_B
       Hdecay=IniVal
 # endif
