@@ -326,10 +326,14 @@
 !  Compute fraction of the solar shortwave radiation, "swdk"
 !  (at vertical W-points) penetrating water column.
 !
+#   ifdef BOTTOM_ALBEDO
+      DO k=0,N(ng)-1           ! need downward swrad at seafloor z_w(0)
+#   else
       DO k=1,N(ng)-1
+#   endif
         DO j=Jstr,Jend
           DO i=Istr,Iend
-            FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)
+            FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)  ! distance below surface
           END DO
         END DO
         CALL lmd_swfrac_tile (ng, tile,                                 &
@@ -338,10 +342,52 @@
      &                        -1.0_r8, FX, FE)
         DO j=Jstr,Jend
           DO i=Istr,Iend
-             swdk(i,j,k)=FE(i,j)
+             swdk(i,j,k)=FE(i,j)              ! downward swrad at z_w(k)
           END DO
         END DO
       END DO
+
+#   ifdef BOTTOM_ALBEDO
+!
+!  Nonzero seafloor albedo reflects some light reaching the bottom.
+!  The reflected light is absorbed by Paulson and Simpson scales 
+!  (mu1, mu2) set by WTYPE. The modified net downward swrad changes the
+!  internal heating. When not defined (default) the radiation reaching
+!  the seabed is blocked (btflx=0) and heats the bottom layer.
+!  (J. Wilkin 2026-06-01)
+!
+!  swdk(0) presently holds the value of "swrad" reaching the seafloor.
+!  The k-loop below is reversed so that bot_albedo*swdk(0) sets the
+!  basis of vertical profile of reflected light. At k=N, swdk(N) < 0
+!  is the fraction of light reaching the surface that escapes the ocean.
+!  This is used later in the surface boundary condition. When the loop
+!  reaches k=0, FE=1 and swdk(0) is overwritten with (1-albedo)*swdk(0)
+!  which is the fraction of swrad entering the seabed. This is used
+!  in the bottom boundary condition.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+           swdk(i,j,N(ng))=0.0_r8            !  initialize
+        END DO
+      END DO
+!
+      DO k=N(ng),0,-1 
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+            FX(i,j)=z_w(i,j,k)-z_w(i,j,0)    !  distance above seafloor
+          END DO
+        END DO
+        CALL lmd_swfrac_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        -1.0_r8, FX, FE)                         
+        DO j=Jstr,Jend                                                 
+          DO i=Istr,Iend
+             swdk(i,j,k)=swdk(i,j,k)-bot_albedo(ng)*swdk(i,j,0)*FE(i,j)
+          END DO
+        END DO
+      END DO    
+#   endif
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -910,10 +956,33 @@
 !
 !  Apply bottom and surface tracer flux conditions.
 !
+#  ifdef BOTTOM_ALBEDO
+!
+          IF (itrc.eq.itemp) THEN
+!  Surface net heat flux is reduced by the reflected solar radiation
+!  that reached the sea surface swdk(N) < 0
+!  Bottom heat flux is the external btflux (typically zero) augmented
+!  by the unreflected solar at the seafloor srflx*swdk. Positive FC(0)
+!  is cooling.
+!
+            DO i=Istr,Iend
+              FC(i,N(ng))=dt(ng)*stflx(i,j,itrc)+                       &
+    &                     dt(ng)*srflx(i,j)*swdk(i,j,N(ng)) 
+              FC(i,0)=dt(ng)*btflx(i,j,itrc)+                           &
+    &                 dt(ng)*srflx(i,j)*swdk(i,j,0)
+            END DO
+          ELSE
+            DO i=Istr,Iend
+              FC(i,N(ng))=dt(ng)*stflx(i,j,itrc)
+              FC(i,0)=dt(ng)*btflx(i,j,itrc)
+            END DO
+          END IF
+#  else
           DO i=Istr,Iend
-            FC(i,0)=dt(ng)*btflx(i,j,itrc)
             FC(i,N(ng))=dt(ng)*stflx(i,j,itrc)
+            FC(i,0)=dt(ng)*btflx(i,j,itrc)
           END DO
+#  endif
 !
 !  Compute new tracer field (m Tunits).
 !

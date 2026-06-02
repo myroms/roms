@@ -726,6 +726,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' BODYFORCE,'
 #endif
+#ifdef BOTTOM_ALBEDO
+!
+      IF (Master) WRITE (stdout,20) 'BOTTOM_ALBEDO',                    &
+     &   'Reflection of downward solar radiation due to bottom albedo'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' BOTTOM_ALBEDO,'
+#endif
 #ifdef DISTRIBUTE
 # if defined BOUNDARY_ALLGATHER
 !

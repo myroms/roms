@@ -764,9 +764,17 @@
         real(r8) :: lambda = 1.0_r8
 #endif
 !
-!  Jerlov water type to assign everywhere, range values: 1 - 5.
+!  Jerlov water type to assign everywhere, range values: 1 - 9.
 !
         integer, allocatable :: lmd_Jwt(:)
+!
+!  Bottom albedo coefficient (nondimensional): fraction of downward
+!  solar radiation at the seabed that is reflected. The length scales
+!  of upward absorption follow Jerlov water type. The unreflected
+!  fraction is absorbed by the bed (effectively modifying bottom
+!  tracer flux).
+!
+        real(dp), allocatable :: bot_albedo(:) 
 !
 !  Grid r-factor (non-dimensional).
 !
@@ -2558,6 +2566,11 @@
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
       END IF
 
+      IF (.not.allocated(bot_albedo)) THEN
+        allocate ( bot_albedo(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
       IF (.not.allocated(rx0)) THEN
         allocate ( rx0(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3791,6 +3804,8 @@
 
       IF (allocated(lmd_Jwt))           deallocate ( lmd_Jwt )
 
+      IF (allocated(bot_albedo))        deallocate ( bot_albedo )
+
       IF (allocated(rx0))               deallocate ( rx0 )
 
       IF (allocated(rx1))               deallocate ( rx1 )
@@ -4518,6 +4533,7 @@
         ViscMin(ng)= Large
         ViscMax(ng)=-Large
 #endif
+        bot_albedo(ng)=0.0_r8
         rx0(ng)=-Large
         rx1(ng)=-Large
         CLM_FILE(ng)=.FALSE.
