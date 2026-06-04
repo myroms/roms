@@ -157,8 +157,10 @@
       USE posterior_var_mod,    ONLY : posterior_var
 #  endif
 # ifdef MULTI_SCALE_B
-      USE roms_multiscale_mod,  ONLY : MSB,                             &
-     &                                 multiscale_get_scales
+      USE roms_multiscale_mod,  ONLY : MSB
+#  ifdef NONUNIFORM_SCALES
+      USE roms_multiscale_mod,  ONLY : multiscale_get_scales
+#  endif
 # endif
 # ifdef RPCG
       USE rpcg_lanczos_mod,     ONLY : rpcg_lanczos
@@ -2934,7 +2936,7 @@
 !  Error covariance normalization coefficients.
 !-----------------------------------------------------------------------
 
-# if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales
 !  from input NetCDF file (SVCname).

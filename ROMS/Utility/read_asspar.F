@@ -1905,7 +1905,7 @@
 #     endif
           IF (nADJ(ng).lt.ntimes(ng)) THEN
 #     ifdef MULTI_SCALE_B
-#      ifdef NONUNIFORM_SCALES
+#      ifndef NONUNIFORM_SCALES
             DO ns=1,Nscale(ng)
               WRITE (out,125) HdecayX(2,isFsur,ns,ng),                  &
      &                        'HdecayMX(isFsur)', 'B-scale ', ns,       &
@@ -2008,7 +2008,7 @@
 #     endif
 #    endif
 #    ifdef MULTI_SCALE_B
-#     ifdef NONUNIFORM_SCALES
+#     ifndef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             WRITE (out,125) HdecayX(1,isFsur,ns,ng),                    &
      &                      'HdecayIX(isFsur)', 'B-scale ', ns,         &
@@ -2088,7 +2088,6 @@
 #    endif
 #    ifdef ADJUST_BOUNDARY
 #     ifdef MULTI_SCALE_B
-#      ifdef NONUNIFORM_SCALES
           DO ib=1,4
             DO ns=1,Nscale(ng)
               IF (ib.eq.iwest) THEN
@@ -2115,7 +2114,7 @@
      &                          'HdecayB(isVbar)', 'B-scale ', ns,      &
      &              Text//' decorrelation H-scale (m), 2D V-momentum.'
               END IF
-#       ifdef SOLVE3D
+#      ifdef SOLVE3D
               IF (Lobc(ib,isUvel,ng)) THEN
                 WRITE (out,125) HdecayB(isUvel,ns,ib,ng),               &
      &                          'HdecayB(isUvel)', 'B-scale ', ns,      &
@@ -2134,10 +2133,9 @@
      &              TRIM(Vname(1,idTvar(i)))//'.'
                 END IF
               END DO
-#       endif
+#      endif
             END DO
           END DO
-#      endif
 #     else
           DO ib=1,4
             IF (ib.eq.iwest) THEN
@@ -2220,7 +2218,7 @@
 #    endif
 #    ifdef ADJUST_WSTRESS
 #     ifdef MULTI_SCALE_B
-#      ifdef NONUNIFORM_SCALES
+#      ifndef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             WRITE (out,125) HdecayX(1,isUstr,ns,ng),                    &
      &                      'HdecayFX(isUstr)', 'B-scale ', ns,         &
@@ -2239,7 +2237,7 @@
 #    endif
 #    if defined ADJUST_STFLUX && defined SOLVE3D
 #     ifdef MULTI_SCALE_B
-#      ifdef NONUNIFORM_SCALES
+#      ifndef NONUNIFORM_SCALES
           DO ns=1,Nscale(ng)
             DO itrc=1,NT(ng)
               WRITE (out,125) HdecayX(1,isTsur(itrc),ns,ng),            &

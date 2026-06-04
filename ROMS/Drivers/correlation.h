@@ -68,8 +68,10 @@
 #endif
       USE normalization_mod,    ONLY : normalization
 #ifdef MULTI_SCALE_B
-      USE roms_multiscale_mod,  ONLY : MSB,                             &
-     &                                 multiscale_get_scales
+      USE roms_multiscale_mod,  ONLY : MSB
+# ifdef NONUNIFORM_SCALES
+      USE roms_multiscale_mod,  ONLY : multiscale_get_scales
+# endif
 #endif
       USE stdout_mod,           ONLY : Set_StdOutUnit,                  &
      &                                 stdout_unit
@@ -285,7 +287,7 @@
 !
       NESTED_LOOP : DO ng=1,Ngrids
 
-#if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales.
 !

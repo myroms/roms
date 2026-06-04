@@ -121,8 +121,10 @@
       USE random_ic_mod,        ONLY : random_ic
 # endif
 # ifdef MULTI_SCALE_B
-      USE roms_multiscale_mod,  ONLY : MSB,                             &
-     &                                 multiscale_get_scales
+      USE roms_multiscale_mod,  ONLY : MSB
+#  ifdef NONUNIFORM_SCALES
+      USE roms_multiscale_mod,  ONLY : multiscale_get_scales
+#  endif
 # endif
       USE rp_def_ini_mod,       ONLY : rp_def_ini
       USE strings_mod,          ONLY : FoundError
@@ -1909,7 +1911,7 @@
 !  Error covariance normalization coefficients.
 !-----------------------------------------------------------------------
 
-# if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales
 !  from input NetCDF file (SVCname).

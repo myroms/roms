@@ -131,8 +131,10 @@
 # endif
       USE normalization_mod,    ONLY : normalization
 # ifdef MULTI_SCALE_B
-      USE roms_multiscale_mod,  ONLY : MSB,                             &
-     &                                 multiscale_get_scales
+      USE roms_multiscale_mod,  ONLY : MSB
+#  ifdef NONUNIFORM_SCALES
+      USE roms_multiscale_mod,  ONLY : multiscale_get_scales
+#  endif
 # endif
 # if defined MASKING && defined SPLIT_4DVAR
       USE set_masks_mod,        ONLY : set_masks
@@ -2589,7 +2591,7 @@
 !  Error covariance normalization coefficients.
 !-----------------------------------------------------------------------
 
-# if defined MULTI_SCALE_B && NONUNIFORM_SCALES
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
 !
 !  Read in horizontal, spatially-varying correlation length scales
 !  from input NetCDF file (SVCname).
