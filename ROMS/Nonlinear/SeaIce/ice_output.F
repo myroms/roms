@@ -75,8 +75,6 @@
       logical :: got_var(NV)
       logical :: LdefVar
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, j, nf, nvd3, status, vtype
 
       integer :: icegrd(3)
@@ -606,8 +604,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, j, nf, status
 !
       real(r8) :: Aval(6)
@@ -898,8 +894,6 @@
       logical :: got_var(NV)
       logical :: LdefVar
 !
-      integer, parameter :: Natt = 25
-
       integer :: FileH, i, ifield, j, nf, nvd3, status, vtype
 
       integer :: icegrd(3)

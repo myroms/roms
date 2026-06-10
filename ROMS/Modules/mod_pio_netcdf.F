@@ -58,6 +58,7 @@
         MODULE PROCEDURE pio_netcdf_get_fvar_2d
         MODULE PROCEDURE pio_netcdf_get_fvar_3d
         MODULE PROCEDURE pio_netcdf_get_fvar_4d
+        MODULE PROCEDURE pio_netcdf_get_fvar_5d
       END INTERFACE pio_netcdf_get_fvar
 !
       INTERFACE pio_netcdf_get_ivar              ! reads integer
@@ -100,6 +101,7 @@
         MODULE PROCEDURE pio_netcdf_put_fvar_2d
         MODULE PROCEDURE pio_netcdf_put_fvar_3d
         MODULE PROCEDURE pio_netcdf_put_fvar_4d
+        MODULE PROCEDURE pio_netcdf_put_fvar_5d
       END INTERFACE pio_netcdf_put_fvar
 !
       INTERFACE pio_netcdf_put_ivar              ! writes integer
@@ -1028,7 +1030,7 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
@@ -1283,7 +1285,7 @@
 !  Local variable declarations.
 !
       integer :: IDmod, Npts, i, ib, ic, j, j1, j2, status
-      integer :: IvarS
+      integer :: IvarS, ns
 !
       real(r8), parameter :: RoundOff = 1.0e-7_r8
 
@@ -1621,9 +1623,17 @@
             END IF
 #  endif
 # endif
+# ifdef MULTI_SCALE_B
+          CASE ('HdecayX')
+# else
           CASE ('Hdecay')
+# endif
             IF ((model.eq.5).or.(model.eq.11)) THEN
+# ifdef MULTI_SCALE_B
+              Npts=UBOUND(HdecayX,DIM=2)
+# else
               Npts=UBOUND(Hdecay,DIM=2)
+# endif
               IF (.not.PRESENT(pioFile)) THEN
                 CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
      &                                    var_name(i), FvarV,           &
@@ -1655,7 +1665,22 @@
 # endif
                 j2=Npts                ! last  state variable to check
               END IF
-
+# ifdef MULTI_SCALE_B
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayX(1,j,ns,ng)-FvarV(j)).gt.RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayX(1,j,ns,ng),   &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+# else
               DO j=j1,j2
                 IF (ABS(Hdecay(1,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
@@ -1668,7 +1693,59 @@
                   EXIT
                 END IF
               END DO
+# endif
             END IF
+# ifdef MULTI_SCALE_B
+          CASE ('HdecayY')
+            IF ((model.eq.5).or.(model.eq.11)) THEN
+              Npts=UBOUND(HdecayY,DIM=2)
+              IF (.not.PRESENT(pioFile)) THEN
+                CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
+     &                                    var_name(i), FvarV,           &
+     &                                    start = (/1/),                &
+     &                                    total = (/Npts/))
+              ELSE
+                CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
+     &                                    var_name(i), FvarV,           &
+     &                                    pioFile = pioFile,            &
+     &                                    start = (/1/),                &
+     &                                    total = (/Npts/))
+              END IF
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+
+              IF (model.eq.5) THEN
+                j1=1                   ! first state variable to check
+#  ifdef SOLVE3D
+                j2=isTvar(NT(ng))      ! last  state variable to check
+#  else
+                j2=3                   ! last  state variable to check
+#  endif
+              ELSE IF (model.eq.11) THEN
+#  ifdef SOLVE3D
+                j1=isTvar(NT(ng))+1    ! first state variable to check
+#  else
+                j1=4                   ! first state variable to check
+#  endif
+                j2=Npts                ! last  state variable to check
+              END IF
+
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayY(1,j,ns,ng)-FvarV(j)).gt.RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(1,'//TRIM(Vname(1,idSvar(j)))//')'
+                  IF (Master) WRITE (stdout,20) TRIM(text),             &
+     &                                          FvarV(j),               &
+     &                                          HdecayY(1,j,ns,ng),     &
+     &                                          TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+# endif
 # ifdef SOLVE3D
           CASE ('Vdecay')
             IF ((model.eq.5).or.(model.eq.11)) THEN
@@ -1711,9 +1788,17 @@
             END IF
 # endif
 # ifdef WEAK_CONSTRAINT
+#  ifdef MULTI_SCALE_B
+          CASE ('HdecayMX')
+#  else
           CASE ('HdecayM')
+#  endif
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
+#  ifdef MULTI_SCALE_B
+              Npts=UBOUND(HdecayX,DIM=2)
+#  else
               Npts=UBOUND(Hdecay,DIM=2)
+#  endif
               IF (.not.PRESENT(pioFile)) THEN
                 CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
      &                                    var_name(i), FvarV,           &
@@ -1735,6 +1820,23 @@
 #  else
               j2=3                     ! last  state variable to check
 #  endif
+#  ifdef MULTI_SCALE_B
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayX(NSA,j,ns,ng)-FvarV(j)).gt.            &
+     &                RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayX(NSA,j,ns,ng), &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+#  else
               DO j=j1,j2
                 IF (ABS(Hdecay(NSA,j,ng)-FvarV(j)).gt.RoundOff) THEN
                   text=TRIM(var_name(i))//                              &
@@ -1747,7 +1849,50 @@
                   EXIT
                 END IF
               END DO
+#  endif
             END IF
+#  ifdef MULTI_SCALE_B
+          CASE ('HdecayMY')
+            IF ((model.eq.5).and.(NSA.eq.2)) THEN
+              Npts=UBOUND(HdecayY,DIM=2)
+              IF (.not.PRESENT(pioFile)) THEN
+                CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
+     &                                    var_name(i), FvarV,           &
+     &                                    start = (/1/),                &
+     &                                    total = (/Npts/))
+              ELSE
+                CALL pio_netcdf_get_fvar (ng, IDmod, ncname,            &
+     &                                    var_name(i), FvarV,           &
+     &                                    pioFile = pioFile,            &
+     &                                    start = (/1/),                &
+     &                                    total = (/Npts/))
+              END IF
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+
+              j1=1                     ! first state variable to check
+#   ifdef SOLVE3D
+              j2=isTvar(NT(ng))        ! last  state variable to check
+#   else
+              j2=3                     ! last  state variable to check
+#   endif
+              DO ns=1,Nscale(ng)
+                DO j=j1,j2
+                  IF (ABS(HdecayY(NSA,j,ns,ng)-FvarV(j)).gt.            &
+     &                RoundOff) THEN
+                    text=TRIM(var_name(i))//                            &
+     &                 '(2,'//TRIM(Vname(1,idSvar(j)))//')'
+                    IF (Master) WRITE (stdout,20) TRIM(text),           &
+     &                                            FvarV(j),             &
+     &                                            HdecayY(NSA,j,ns,ng), &
+     &                                            TRIM(ncname)
+                    exit_flag=5
+                    EXIT
+                  END IF
+                END DO
+              END DO
+            END IF
+#  endif
 #  ifdef SOLVE3D
           CASE ('VdecayM')
             IF ((model.eq.5).and.(NSA.eq.2)) THEN
@@ -1812,6 +1957,29 @@
               j1=1                     ! first state variable to check
               j2=Npts                  ! last  state variable to check
 
+#  ifdef MULTI_SCALE_B
+              DO ib=1,4
+                DO ns=1,Nscale(ng)
+                  DO j=j1,j2
+                    ic=ic+1
+                    IF (Lobc(ib,j,ng)) THEN
+                      WRITE (text,"(a,'(',i1,',',a,')')")               &
+     &                          TRIM(var_name(i)), ib,                  &
+     &                          TRIM(Vname(1,idSvar(j)))
+                      IF (ABS(HdecayB(j,ns,ib,ng)-FvarV(ic)).gt.        &
+     &                  RoundOff) THEN
+                        IF (Master) WRITE (stdout,20) TRIM(text),       &
+     &                                                FvarV(ic),        &
+     &                                             HdecayB(j,ns,ib,ng), &
+     &                                                TRIM(ncname)
+                        exit_flag=5
+                        EXIT
+                      END IF
+                    END IF
+                  END DO
+                END DO
+              END DO
+#  else
               DO ib=1,4
                 DO j=j1,j2
                   ic=ic+1
@@ -1831,6 +1999,7 @@
                   END IF
                 END DO
               END DO
+#  endif
             END IF
 #  ifdef SOLVE3D
           CASE ('VdecayB')
@@ -2307,7 +2476,7 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
@@ -4434,7 +4603,7 @@
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a floating-point 3D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4659,7 +4828,7 @@
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a floating-point 4D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4809,6 +4978,247 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_get_fvar_4d
+!
+      SUBROUTINE pio_netcdf_get_fvar_5d (ng, model, ncname, myVarName,  &
+     &                                   A, pioFile, start, total,      &
+     &                                   broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested floating-point 5D-array variable from  !
+!  specified NetCDF file.                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL,           !
+!                    default=TRUE)                                     !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 5D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(r8), intent(out), optional :: min_val
+      real(r8), intent(out), optional :: max_val
+
+      real(r8), intent(out) :: A(:,:,:,:,:)
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      logical, dimension(3) :: foundit
+!
+      integer :: i, j, k, l, m, status
+
+      integer, dimension(5) :: Asize
+!
+      real(r8) :: Afactor, Aoffset, Aspval
+
+      real(r8), parameter :: Aepsilon = 1.0E-8_r8
+
+      real(r8), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_5d"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point 5D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=total(1)
+        Asize(2)=total(2)
+        Asize(3)=total(3)
+        Asize(4)=total(4)
+        Asize(5)=total(5)
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+        Asize(4)=UBOUND(A, DIM=4)
+        Asize(5)=UBOUND(A, DIM=5)
+      END IF
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
+     &                          AttName, AttValue, foundit,             &
+     &                          pioFile = my_pioFile)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO m=1,Asize(5)                       ! zero out missing values
+          DO l=1,Asize(4)
+            DO k=1,Asize(3)
+              DO j=1,Asize(2)
+                DO i=1,Asize(1)
+                  IF ((foundit(3).and.                                    &
+     &                 (ABS(A(i,j,k,l,m)-Aspval).lt.Aepsilon)).or.        &
+     &                (.not.foundit(3).and.                               &
+     &                 (ABS(A(i,j,k,l,m)).ge.ABS(Aspval)))) THEN
+                    A(i,j,k,l,m)=0.0_r8
+                  END IF
+                END DO
+              END DO
+            END DO
+          END DO
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,m)=Afactor*A(i,j,k,l,m)
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,m)=A(i,j,k,l,m)+Aoffset
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_5D - error while reading ',       &
+     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        /,26x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_5D - error while inquiring ',     &
+     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        2x,a,/,26x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_5d
 !
       SUBROUTINE pio_netcdf_get_lvar_0d (ng, model, ncname, myVarName,  &
      &                                   A, pioFile, start, total)
@@ -6614,17 +7024,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0DP - error while inquiring ',    &
-     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
      &        2x,a,/,27x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0DP - error while writing ',      &
-     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
      &        /,27x,'call from:',2x,a)
 !
       RETURN
@@ -6729,17 +7139,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1DP - error while inquiring ',    &
-     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
      &        2x,a,/,27x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1DP - error while writing ',      &
-     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
      &        /,27x,'call from:',2x,a)
 !
       RETURN
@@ -6844,17 +7254,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2DP - error while inquiring ',    &
-     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
      &        2x,a,/,27x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2DP - error while writing ',      &
-     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
      &        /,27x,'call from:',2x,a)
 !
       RETURN
@@ -6959,17 +7369,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3DP - error while inquiring ',    &
-     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
      &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3DP - error while writing ',      &
-     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
      &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
@@ -7082,17 +7492,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -7197,17 +7607,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -7312,17 +7722,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2D  - error while writing ',      &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -7427,17 +7837,17 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a,/,26x,a)
 !
       RETURN
@@ -7542,21 +7952,136 @@
         END IF
       END IF
 !
-!  Close input file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
-  20  FORMAT (/,'PIO_NETCDF_PUT_FVAR_4D_PIO - error while writing ',    &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4D - error while writing ',       &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a,/,26x,a)
 !
       RETURN
       END SUBROUTINE pio_netcdf_put_fvar_4d
+!
+      SUBROUTINE pio_netcdf_put_fvar_5d (ng, model, ncname, myVarName,  &
+     &                                   A, start, total,               &
+     &                                   pioFile, pioVar)
+!
+!=======================================================================
+!                                                                      !
+!  It writes a floating-point 5D-array variable into a NetCDF file.    !
+!  If the file descritor is not provided, it opens the file, writes    !
+!  data, and then closes the file.                                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (real)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     pioVar       PIO variable descriptor, TYPE(Var_desc_t), OPTIONAL !
+!                    pioVar%varID       Variable ID                    !
+!                    pioVar%ncid        File ID                        !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: start(:), total(:)
+!
+      real(r8), intent(in) :: A(:,:,:,:,:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+      TYPE (Var_desc_t),  intent(in), optional :: pioVar
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_put_fvar_5d"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a floating-point 5D-array variable.
+!-----------------------------------------------------------------------
+!
+!  If file descriptor is not provided, open file for writing.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 1, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  If variable descriptor is not provided, inquire its value.
+!
+      IF (.not.PRESENT(pioVar)) THEN
+        status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      ELSE
+        my_pioVar=pioVar
+      END IF
+!
+!  Write out data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        status=PIO_put_var(my_pioFile, my_pioVar, start, total, A)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+!
+!  Close NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5D - error while inquiring ',     &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
+     &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5D - error while writing ',       &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
+     &        /,26x,'call from:',2x,a,/,26x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_put_fvar_5d
 !
       SUBROUTINE pio_netcdf_put_ivar_0d (ng, model, ncname, myVarName,  &
      &                                   A, start, total,               &
@@ -7664,17 +8189,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_IVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_IVAR_0D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -7779,17 +8304,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL PIO_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_IVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_IVAR_1D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -7894,17 +8419,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_IVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_IVAR_2D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8029,17 +8554,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_LVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in ouput file:',   &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,'PIO_NETCDF_PUT_LVAR_0D  - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8160,17 +8685,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_LVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_LVAR_1D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8293,17 +8818,17 @@
         END IF
       END IF
 !
-!  Close file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_LVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_LVAR_2D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8426,17 +8951,17 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_SVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_SVAR_0D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8554,17 +9079,17 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_SVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_SVAR_1D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8682,17 +9207,17 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_SVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_SVAR_2D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN
@@ -8810,17 +9335,17 @@
         END IF
       END IF
 !
-!  Close input NetCDF file.
+!  Close NetCDF file.
 !
       IF (.not.PRESENT(pioFile)) THEN
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
   10  FORMAT (/,' PIO_NETCDF_PUT_SVAR_3D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
+     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
      &        2x,a,/,26x,'call from:',2x,a)
   20  FORMAT (/,' PIO_NETCDF_PUT_SVAR_3D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
+     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
      &        /,26x,'call from:',2x,a)
 !
       RETURN

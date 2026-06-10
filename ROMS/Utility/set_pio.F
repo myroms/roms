@@ -21,6 +21,7 @@
       USE mod_parallel
       USE mod_pio_netcdf
       USE mod_iounits
+      USE mod_scalars
 # if defined PROPAGATOR && defined CHECKPOINTING
       USE mod_storage
 # endif
@@ -74,6 +75,8 @@
 !  Initialize PIO and get IO system descriptor.  It uses collective
 !  communicatios.
 !-----------------------------------------------------------------------
+!
+      IF (exit_flag.ne.NoError) RETURN
 !
       IF (.not.allocated(pioSystem)) THEN
         allocate ( pioSystem(NpioComps,Ngrids) )

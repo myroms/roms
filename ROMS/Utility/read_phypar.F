@@ -7636,7 +7636,12 @@
             END IF
           END IF
 # endif
-# ifdef TANGENT
+# ifdef WEAK_CONSTRAINT
+          WRITE (out,230) '     Output Impulse Forcing File:  ',        &
+     &                    TRIM(TLF(ng)%name)
+# endif
+#endif
+#ifdef TANGENT
           IF (ndefTLM(ng).eq.0) THEN
             WRITE (out,230) '             Output Tangent File:  ',      &
      &                      TRIM(TLM(ng)%name)
@@ -7644,13 +7649,8 @@
             WRITE (out,230) '        Prefix for Tangent Files:  ',      &
      &                      TRIM(TLM(ng)%head)
           END IF
-# endif
-# ifdef WEAK_CONSTRAINT
-          WRITE (out,230) '     Output Impulse Forcing File:  ',        &
-     &                    TRIM(TLF(ng)%name)
-# endif
 #endif
-#ifdef ADJOINT
+#if defined ADJOINT && !defined CORRELATION
           IF (ndefADJ(ng).eq.0) THEN
             WRITE (out,230) '             Output Adjoint File:  ',      &
      &                      TRIM(ADM(ng)%name)
