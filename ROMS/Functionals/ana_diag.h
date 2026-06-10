@@ -93,7 +93,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, io_error, j, k
+      integer :: i, io_err, j, k
 !
       real(r8) :: umax, ubarmax, vmax, vbarmax
 !

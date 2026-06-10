@@ -144,7 +144,7 @@
 !
       IF ((model.le.11).or.                                             &
      &    (model.eq.14).or.(model.eq.15).or.(model.eq.19)) THEN
-#ifdef ANA_INITIAL
+#if defined ANA_INITIAL && !defined CORRELATION
         IF (nrrec(ng).ne.0) THEN
           get_var(idFsur)=.TRUE.
           get_var(idUbar)=.TRUE.

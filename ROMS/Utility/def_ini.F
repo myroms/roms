@@ -95,8 +95,6 @@
       logical :: got_var(NV)
       logical :: Ldefine = .FALSE.
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
 # ifdef ADJUST_BOUNDARY
@@ -938,8 +936,6 @@
       logical :: got_var(NV)
       logical :: Ldefine = .FALSE.
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
 #  ifdef ADJUST_BOUNDARY

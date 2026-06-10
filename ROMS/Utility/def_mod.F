@@ -100,8 +100,6 @@
       logical, dimension(NV) :: got_var(NV)
       logical :: foundAtt(2), foundit
 !
-      integer, parameter :: Natt = 25
-
       integer :: iterDim, recordDim, surveyDim, threeDim
       integer :: datumDim, datumDimP1
       integer :: NinnerDim, NinnerDimP1, NinnerDimP2
@@ -2434,8 +2432,6 @@
       logical, dimension(NV) :: got_var(NV)
       logical :: foundAtt(2), foundit
 !
-      integer, parameter :: Natt = 25
-
       integer :: iterDim, recordDim, surveyDim, threeDim
       integer :: datumDim, datumDimP1
       integer :: NinnerDim, NinnerDimP1, NinnerDimP2
