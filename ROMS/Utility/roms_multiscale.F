@@ -1290,9 +1290,9 @@
         END IF
       END IF
 !
-  10  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,    &
+  10  FORMAT (a,': Convergence for ''',a,'''', ', B-MultiScale = ',i0,  &
      &        ', boundary = ',i0,/)
-  20  FORMAT (a,': Convergence for ''',a,'', ', B-MultiScale = ',i0,/)
+  20  FORMAT (a,': Convergence for ''',a,'''', ', B-MultiScale = ',i0,/)
   30  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &
      &        'deps = ',1p,e12.5,2x,'level = ',i0) 
   40  FORMAT (7x,'K-LAP  => iterDiff = ',i3.3,2x,'iter = ',i3.3,2x,     &

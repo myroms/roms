@@ -67,10 +67,10 @@
 ! Balance operator logical switches for state variables to consider in the
 ! error covariance multivariate constraints.
 
-balance(isSalt) =  T                      ! salinity
-balance(isFsur) =  T                      ! free-sruface
+balance(isSalt) =  F                      ! salinity
+balance(isFsur) =  F                      ! free-sruface
 balance(isVbar) =  F                      ! 2D momentum (ubar, vbar)
-balance(isVvel) =  T                      ! 3D momentum (u, v)
+balance(isVvel) =  F                      ! 3D momentum (u, v)
 
 ! Parameter to process the Nvct eigenvector of the stabilized representer
 ! matrix when computing array modes (here, Nvct=Ninner is the most important
@@ -358,9 +358,9 @@ HdecayMY(isTvar) ==  50.0d+3   50.0d+3                     ! 1:NT tracers  Y-sca
 
 ! Model error covariance: vertical, isotropic decorrelation length scales (m).
 
-VdecayM(isUvel) == 100.0d0                                ! 3D U-momentum
-VdecayM(isVvel) == 100.0d0                                ! 3D V-momentum
-VdecayM(isTvar) == 100.0d0   100.0d0                      ! 1:NT tracers
+VdecayM(isUvel) ==  30.0d0                                 ! 3D U-momentum
+VdecayM(isVvel) ==  30.0d0                                 ! 3D V-momentum
+VdecayM(isTvar) ==  30.0d0    30.0d0                       ! 1:NT tracers
 
 ! Model error covariance: temporal decorrelation scales (days).
 ! This scales are only used in weak-constraint data assimilation.
@@ -406,9 +406,9 @@ HdecayIY(isTvar) == 50.0d+3  50.0d+3                      ! 1:NT tracers  Y-scal
 ! Initial conditions error covariance: vertical, isotropic decorrelation
 ! length scales (m).
 
-VdecayI(isUvel) == 100.0d0                                ! 3D U-momentum
-VdecayI(isVvel) == 100.0d0                                ! 3D V-momentum
-VdecayI(isTvar) == 100.0d0   100.0d0                      ! 1:NT tracers
+VdecayI(isUvel) ==  30.0d0                                ! 3D U-momentum
+VdecayI(isVvel) ==  30.0d0                                ! 3D V-momentum
+VdecayI(isTvar) ==  30.0d0   30.0d0                       ! 1:NT tracers
 
 ! Boundary conditions error covariance: horizontal, isotropic decorrelation
 ! scales (m). If multiscale B-modeling, enter value for each Nscale since
