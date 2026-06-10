@@ -64,9 +64,6 @@
 #endif
 !    QCK       Output nonlinear model brief snpashots data             !
 !    RST       Output restart data                                     !
-!    TIDE      Input tide forcing                                      !
-!    TLF       Input/output tangent linear model impulse forcing       !
-!    TLM       Output tangent linear model history                     !
 #ifdef SP4DVAR
 !    SCA       Output adjoint scratch state vector file                !
 !    SCT       Output tangent scratch state vector file                !
@@ -81,6 +78,12 @@
 !                STD(3,ng)  lateral open boundary conditions           !
 !                STD(4,ng)  surface forcing                            !
 !                STD(5,ng)  computed from background (output)          !
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+!    SVC       Input spatially-varying correlation length scales file  !
+#endif
+!    TIDE      Input tide forcing                                      !
+!    TLF       Input/output tangent linear model impulse forcing       !
+!    TLM       Output tangent linear model history                     !
 !    XTR       Output extracted history fields                         !
 !                                                                      !
 !  Input/output information files:                                     !
@@ -95,7 +98,7 @@
 !  fposnam     Input initial floats positions filename.                !
 !  iparnam     Input ice parameters file name.                         !
 !  sparnam     Input sediment transport parameters filename.           !
-!  vegnam      Input vegetation input parameters file name.             !
+!  vegnam      Input vegetation input parameters file name.            !
 !  sposnam     Input station positions file name.                      !
 !  varname     Input IO variables information file name.               !
 !                                                                      !
@@ -249,7 +252,10 @@
 #endif
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
-      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
+      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation 
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      TYPE(T_IO), allocatable :: SVC(:)     ! correlation length scales
+#endif
       TYPE(T_IO), allocatable :: TIDE(:)    ! tidal forcing
       TYPE(T_IO), allocatable :: TLF(:)     ! TLM impulse fields
       TYPE(T_IO), allocatable :: TLM(:)     ! TLM history fields
@@ -476,6 +482,11 @@
       IF (.not.allocated(STA)) THEN
         allocate ( STA(Ngrids) )
       END IF
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (.not.allocated(SVC)) THEN
+        allocate ( SVC(Ngrids) )
+      END IF
+#endif
       IF (.not.allocated(TIDE)) THEN
         allocate ( TIDE(Ngrids) )
       END IF
@@ -557,6 +568,9 @@
         RST(ng)%ncid=-1
         SSF(ng)%ncid=-1
         STA(ng)%ncid=-1
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+        SVC(ng)%ncid=-1
+#endif
         TLF(ng)%ncid=-1
         TLM(ng)%ncid=-1
         TIDE(ng)%ncid=-1
@@ -725,6 +739,12 @@
           STA(ng)%base(i:i)=blank
           STA(ng)%name(i:i)=blank
 
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+          SVC(ng)%head(i:i)=blank
+          SVC(ng)%base(i:i)=blank
+          SVC(ng)%name(i:i)=blank
+#endif
+
           TLF(ng)%head(i:i)=blank
           TLF(ng)%base(i:i)=blank
           TLF(ng)%name(i:i)=blank
@@ -836,6 +856,11 @@
 #endif
 
       IF (allocated(SSF))       deallocate ( SSF )
+
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+      IF (allocated(SVC))       deallocate ( SVC )
+#endif
+
       IF (allocated(STA))       deallocate ( STA )
       IF (allocated(TIDE))      deallocate ( TIDE )
       IF (allocated(TLF))       deallocate ( TLF )

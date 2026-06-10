@@ -94,8 +94,6 @@
 # endif
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
 # ifdef ADJUST_BOUNDARY
@@ -884,8 +882,6 @@
 #  endif
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
 #  ifdef ADJUST_BOUNDARY

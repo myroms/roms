@@ -137,8 +137,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, itrc, j, nvd3, nvd4
 # if defined WRITE_WATER && defined MASKING
       integer :: xy_pdim, xyz_pdim
@@ -333,6 +331,12 @@
 # ifdef FOUR_DVAR
         status=def_dim(ng, model, AVG(ng)%ncid, ncname, 'Nstate',       &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, AVG(ng)%ncid, ncname, 'Nscale',       &
+     &                 Nscale(ng), DimIDs(36))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
@@ -2712,8 +2716,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, ifield, itrc, j, nvd3, nvd4
 #  if defined WRITE_WATER && defined MASKING
       integer :: xy_pdim, xyz_pdim
@@ -2909,6 +2911,12 @@
 #  ifdef FOUR_DVAR
         status=def_dim(ng, model, AVG(ng)%pioFile, ncname, 'Nstate',    &
      &                 NstateVar(ng), DimIDs(29))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  ifdef MULTI_SCALE_B
+        status=def_dim(ng, model, AVG(ng)%pioFile, ncname, 'Nscale',    &
+     &                 Nscale(ng), DimIDs(36))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 

@@ -97,8 +97,6 @@
 
       logical :: Ldefine = .FALSE.
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, nvd3, nvd4
       integer :: status, varid
 
@@ -719,8 +717,6 @@
 
       logical :: Ldefine = .FALSE.
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, nvd3, nvd4
       integer :: status
 
