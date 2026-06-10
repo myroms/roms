@@ -294,8 +294,9 @@
 # endif
 #endif
 
-#if defined WEAK_CONSTRAINT || defined IMPULSE || \
-    defined FORCING_SV      || defined HESSIAN_FSV
+#if defined WEAK_CONSTRAINT || defined IMPULSE   || \
+    defined FORCING_SV      || defined FOUR_DVAR || \
+    defined HESSIAN_FSV
 !
 !  Working state vector to store impulse forcing and interpolating
 !  from time snapshots.

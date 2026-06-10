@@ -420,7 +420,9 @@
 ** IMPULSE                 if processing adjoint impulse forcing             **
 ** MINRES                  if Minimal Residual Method for 4DVar minimization **
 ** MULTIPLE_TLM            if multiple TLM history files in 4DVAR            **
+** MULTI_SCALE_B           if multiscale background-error covariance modeling**
 ** NLM_OUTER               if nonlinear model as basic state in outer loop   **
+** NONUNIFORM_SCALES       if spatially-varying decorrelation length scales  **
 ** OBS_IMPACT              if observation impact to 4DVAR data assimilation  **
 ** OBS_IMPACT_SPLIT        to separate impact due to IC, forcing, and OBC    **
 ** POSTERIOR_EOFS          if posterior analysis error covariance EOFS       **

@@ -1,6 +1,6 @@
 # git $Id$
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::: David Robertson :::
-# Copyright (c) 2002-2026 The ROMS Group                                :::
+# Copyright (c) 2002-2025 The ROMS Group                                :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.md                                                 :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -146,7 +146,7 @@ endif()
 
 # NetCDF Library.
 
-if( DEFINED ENV{SINGULARITY_COMMAND} AND IN_ECBUILD )
+if(DEFINED ENV{SINGULARITY_COMMAND} AND IN_ECBUILD )
   find_package( NetCDF REQUIRED COMPONENTS Fortran )
   include_directories( ${NETCDF_INCLUDE_DIRS} )
   list( APPEND netcdf_libs "netcdff" "netcdf" )
@@ -182,6 +182,7 @@ add_subdirectory( "ROMS/Utility" )
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   "/usr/local/include"
+  "$ENV{NETCDF}/include"
   "Master"
   "ROMS/Drivers"
   "ROMS/Functionals"
@@ -200,6 +201,7 @@ include_directories(
 link_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   "/usr/local/lib"
+  "$ENV{NETCDF}/lib"
 )
 
 list(APPEND srcs
@@ -292,13 +294,6 @@ set_property(
     ${CMAKE_CURRENT_BINARY_DIR}/f90/biology.f90
   APPEND_STRING PROPERTY COMPILE_FLAGS ${ROMS_FREEFLAGS}
 )
-
-if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  set_property(
-    SOURCE ${CMAKE_CURRENT_BINARY_DIR}/f90/ran_state.f90
-    APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-strict-overflow"
-  )
-endif()
 
 ###########################################################################
 # Clean-up the dependencies
@@ -404,6 +399,7 @@ else()
     add_library( ROMS_static STATIC $<TARGET_OBJECTS:Objects> )
     set_target_properties(ROMS_static PROPERTIES OUTPUT_NAME ROMS)
     install( TARGETS ROMS_static ARCHIVE )
+    install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 
     # This is needed to add to the depency list of the ROMS executable
     # since it is linking with libROMS.a instead of libROMS_static.a

@@ -4663,7 +4663,7 @@
 !
       USE mod_parallel,   ONLY : OCN_COMM_WORLD
       USE mod_iounits,    ONLY : SourceFile, ioerror
-      USE mod_ncparam,    ONLY : MaxLen
+      USE mod_ncparam,    ONLY : MaxLen, Natt
       USE mod_scalars,    ONLY : NoError, exit_flag
 !
       USE def_dim_mod,    ONLY : def_dim
@@ -4684,7 +4684,6 @@
       integer :: Ncomp, Nfields, i, j, ncid, status, varid
       integer :: ibuffer(3)
 !
-      integer, parameter :: Natt = 25           ! ROMS framework usage
       integer, parameter :: ng = 1              ! ROMS framework usage
       integer, parameter :: iKernel = 1         ! ROMS framework usage
 !

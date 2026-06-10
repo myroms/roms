@@ -386,7 +386,7 @@
 !
 !  Associate temporarily work state variables, my_var.
 !
-      CALL state_assign (ng, model, Lout)
+      CALL state_assign (ng, tile, model, Lout)
 !
 !  Regrid nonlinear model initial conditions,
 !
