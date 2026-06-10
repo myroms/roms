@@ -54,33 +54,31 @@
       USE mod_scalars
       USE mod_stepping
 !
-#ifdef BALANCE_OPERATOR
-      USE ad_balance_mod,     ONLY : ad_balance
+      USE analytical_mod,       ONLY : ana_perturb
+      USE close_io_mod,         ONLY : close_inp,                       &
+     &                                 close_out
+      USE  convolve_mod,        ONLY : convolve
+      USE def_norm_mod,         ONLY : def_norm
+      USE get_state_mod,        ONLY : get_state
+      USE inp_par_mod,          ONLY : inp_par
+#ifdef MULTI_SCALE_B
+      USE multiscale_eigen_mod, ONLY : multiscale_eigen,                &
+     &                                 multiscale_eigen_read,           &
+     &                                 multiscale_eigen_write
 #endif
-      USE ad_convolution_mod, ONLY : ad_convolution
-      USE ad_def_his_mod,     ONLY : ad_def_his
-      USE ad_variability_mod, ONLY : ad_variability
-      USE ad_wrt_his_mod,     ONLY : ad_wrt_his
-      USE analytical_mod,     ONLY : ana_perturb
-      USE close_io_mod,       ONLY : close_inp, close_out
-      USE def_norm_mod,       ONLY : def_norm
-      USE get_state_mod,      ONLY : get_state
-      USE ini_adjust_mod,     ONLY : load_ADtoTL
-      USE ini_adjust_mod,     ONLY : load_TLtoAD
-      USE inp_par_mod,        ONLY : inp_par
-      USE normalization_mod,  ONLY : normalization
-      USE stdout_mod,         ONLY : Set_StdOutUnit, stdout_unit
-      USE strings_mod,        ONLY : FoundError
-#ifdef BALANCE_OPERATOR
-      USE tl_balance_mod,     ONLY : tl_balance
+      USE normalization_mod,    ONLY : normalization
+#ifdef MULTI_SCALE_B
+      USE roms_multiscale_mod,  ONLY : MSB
+# ifdef NONUNIFORM_SCALES
+      USE roms_multiscale_mod,  ONLY : multiscale_get_scales
+# endif
 #endif
-      USE tl_convolution_mod, ONLY : tl_convolution
-      USE tl_variability_mod, ONLY : tl_variability
-      USE strings_mod,        ONLY : FoundError
-      USE wrt_rst_mod,        ONLY : wrt_rst
-#if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
-      USE zeta_balance_mod,   ONLY : balance_ref, biconj
-#endif
+      USE stdout_mod,           ONLY : Set_StdOutUnit,                  &
+     &                                 stdout_unit
+      USE strings_mod,          ONLY : FoundError
+      USE tl_def_his_mod,       ONLY : tl_def_his
+      USE tl_wrt_his_mod,       ONLY : tl_wrt_his
+      USE wrt_rst_mod,          ONLY : wrt_rst
 !
       implicit none
 !
@@ -112,7 +110,7 @@
 #ifdef DISTRIBUTE
       integer :: MyError, MySize
 #endif
-      integer :: STDrec, Tindex
+      integer :: NRMrec, STDrec, Tindex, ifac
       integer :: chunk_size, ng, thread, tile
 #ifdef _OPENMP
       integer :: my_threadnum
@@ -232,29 +230,33 @@
 !  Read in standard deviation factors for error covariance.
 !-----------------------------------------------------------------------
 !
+#ifdef WEAK_CONSTRAINT
+      NSA=2               ! include weak constraint error hypothesis
+#else
+      NSA=1               ! only strong constraint error hypothesis
+#endif
+!
 !  Initial conditions standard deviation. They are loaded in Tindex=1
 !  of the e_var(...,Tindex) state variables.
 !
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
-          CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 10, 10, STD(1,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
 !  Model error standard deviation. They are loaded in Tindex=2
 !  of the e_var(...,Tindex) state variables.
 !
-      STDrec=1
-      Tindex=2
-      DO ng=1,Ngrids
-        IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
+      IF (NSA.eq.2) THEN
+        STDrec=1
+        Tindex=2
+        DO ng=1,Ngrids
           CALL get_state (ng, 11, 11, STD(2,ng), STDrec, Tindex)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
-      END DO
+        END DO
+      END IF
 
 #ifdef ADJUST_BOUNDARY
 !
@@ -263,10 +265,8 @@
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
-          CALL get_state (ng, 12, 12, STD(3,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 12, 12, STD(3,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 #endif
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
@@ -276,10 +276,8 @@
       STDrec=1
       Tindex=1
       DO ng=1,Ngrids
-        IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
-          CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        END IF
+        CALL get_state (ng, 13, 13, STD(4,ng), STDrec, Tindex)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 #endif
 !
@@ -287,41 +285,119 @@
 !  Compute or read in error covariance normalization factors.
 !-----------------------------------------------------------------------
 !
-!  If computing, write out factors to NetCDF. This is an expensive
-!  computation and needs to be computed once for a particular
-!  application grid.
+      NESTED_LOOP : DO ng=1,Ngrids
+
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
 !
-      DO ng=1,Ngrids
-        IF (ANY(LwrtNRM(:,ng))) THEN
+!  Read in horizontal, spatially-varying correlation length scales.
+!
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL multiscale_get_scales (MSB(ng), ng, tile, iTLM)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END DO
+#endif
+!
+!  Process normalization coefficients.
+!
+        GET_NORMALIZATION : IF (ANY(LwrtNRM(:,ng))) THEN
+!
+!  If computing, define output normalization NetCDF file(s).
+!
           IF (LdefNRM(1,ng).or.LwrtNRM(1,ng)) THEN
             CALL def_norm (ng, iNLM, 1)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
-
+!
           IF ((LdefNRM(2,ng).or.LwrtNRM(2,ng)).and.(NSA.eq.2)) THEN
             CALL def_norm (ng, iNLM, 2)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
+
 #ifdef ADJUST_BOUNDARY
+!
           IF (LdefNRM(3,ng).or.LwrtNRM(3,ng)) THEN
             CALL def_norm (ng, iNLM, 3)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
+
 #if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
           IF (LdefNRM(4,ng).or.LwrtNRM(4,ng)) THEN
             CALL def_norm (ng, iNLM, 4)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
 #endif
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#ifdef MULTI_SCALE_B
+!
+!  Compute the extrema eigenvalues of the K-Laplacian operator required
+!  by the Chebyshev Iterations (CI) solver, which is applied to implicit
+!  diffusion operators in the modeling of the multiscale background-
+!  error covariance for variables in the control vector.
+!
+!  The eigenvalue spectrum of the K-Laplacian operator remains invariant
+!  for a fixed application grid and a given value of K. Consequently,
+!  estimates can be precomputed via the Lanczos formulation of the
+!  Conjugate Gradient (CG) method, initialized with random vectors.
+!
+          ifac=1
           DO tile=first_tile(ng),last_tile(ng),+1
-            CALL normalization (ng, tile, 2)
+            CALL multiscale_eigen (ng, tile, Lnew(ng), ifac)
           END DO
+!
+!  Write out extrema eigenvalues into output normalizations NetCDF
+!  file(s).
+!
+          CALL multiscale_eigen_write (MSB(ng), ng, iTLM)
+#endif
+!
+!  Compute normalization factors. The ifac=2 indicates the squared-root
+!  operator, so the spatial convolution is applied for only half of the
+!  pseudo-diffusion steps.
+!
+          ifac=2
+          DO tile=first_tile(ng),last_tile(ng),+1
+            CALL normalization (ng, tile, ifac)
+          END DO
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           LdefNRM(1:4,ng)=.FALSE.
           LwrtNRM(1:4,ng)=.FALSE.
-        END IF
-      END DO
+!
+!  Otherwise, read in normalization coefficients.
+!
+        ELSE
+        
+          NRMrec=1
+          CALL get_state (ng, 14, 14, NRM(1,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+          IF (NSA.eq.2) THEN
+            CALL get_state (ng, 15, 15, NRM(2,ng), NRMrec, 2)
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          END IF
+
+#ifdef ADJUST_BOUNDARY
+!
+          CALL get_state (ng, 16, 16, NRM(3,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+          CALL get_state (ng, 17, 17, NRM(4,ng), NRMrec, 1)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+
+#ifdef MULTI_SCALE_B
+!
+!  Read in extrema Ritz eigenvalues frot the normalization file, which
+!  are required by the Implicit Chebyshev Iterations (CI) solver.
+!
+          CALL multiscale_eigen_read (MSB(ng), ng, iTLM)
+#endif
+        END IF GET_NORMALIZATION 
+      END DO NESTED_LOOP
 !
       RETURN
       END SUBROUTINE ROMS_initialize
@@ -340,80 +416,37 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lweak, add
       integer :: i, ng, tile
-#ifdef BALANCE_OPERATOR
-      integer :: Lbck = 1
-#endif
+      integer :: Lini = 1
 !
+      character (len=8) :: driver = 'rbl4dvar'
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_run"
 !
 !-----------------------------------------------------------------------
-!  Test correlation model.
+!  Test correlation model: Dirac Delta Functions.
 !-----------------------------------------------------------------------
-
-#ifdef BALANCE_OPERATOR
-!
-!  Read background state, use initial conditions.
-!
-      DO ng=1,Ngrids
-        CALL get_state (ng, iNLM, 9, INI(ng), Lbck, Lbck)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END DO
-
-# ifdef ZETA_ELLIPTIC
-!
-!  Compute the reference zeta and biconjugate gradient arrays
-!  required for the balance of free surface.
-!
-      IF (balance(isFsur)) THEN
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL balance_ref (ng, tile, Lbck)
-            CALL biconj (ng, tile, iNLM, Lbck)
-          END DO
-          wrtZetaRef(ng)=.TRUE.
-        END DO
-      END IF
-# endif
-#endif
 !
 !  Initialize adjoint model state with a delta function at specified
 !  point. Use USER parameters from standard input to perturb solution
 !  in routine "ana_perturb". Then, convolve solution with the adjoint
 !  diffusion operator.
 !
-      ADmodel=.TRUE.
-      Lweak=.FALSE.
-
+      ADmodel=.FALSE.
+      TLmodel=.TRUE.
+!
       DO ng=1,Ngrids
-        Lnew(ng)=1
+        Lold(ng)=1
+        Lnew(ng)=2
         DO tile=first_tile(ng),last_tile(ng),+1
-          CALL ana_perturb (ng, tile, iADM)
-#ifdef BALANCE_OPERATOR
-          CALL ad_balance (ng, tile, Lbck, Lnew(ng))
-          CALL ad_variability (ng, tile, Lnew(ng), Lweak)
-#endif
-          CALL ad_convolution (ng, tile, Lnew(ng), Lweak, 2)
-        END DO
-
-        ADmodel=.FALSE.
-!
-!  Initialize tangent linear model with convolved adjoint solution.
-!  Then, apply tangent linear convolution.
-!
-        add=.FALSE.
-        DO tile=first_tile(ng),last_tile(ng),+1
-          CALL load_ADtoTL (ng, tile, Lnew(ng), Lnew(ng), add)
-          CALL tl_convolution (ng, tile, Lnew(ng), Lweak, 2)
-#ifdef BALANCE_OPERATOR
-          CALL tl_variability (ng, tile, Lnew(ng), Lweak)
-          CALL tl_balance (ng, tile, Lbck, Lnew(ng))
-#endif
-          CALL load_TLtoAD (ng, tile, Lnew(ng), Lnew(ng), add)
+          CALL ana_perturb (ng, tile, iTLM)
         END DO
       END DO
+!
+!  Apply background-error covariance convolutions.
+!
+      CALL convolve (driver, Lini, Lold, Lnew)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Write out background error correlation in adjoint history NetCDF
 !  file.
@@ -421,20 +454,21 @@
       DO ng=1,Ngrids
         kstp(ng)=Lnew(ng)
 #ifdef SOLVE3D
-        nstp(ng)=Lnew(ng)
+        nrhs(ng)=Lnew(ng)
 #endif
-        LdefADJ(ng)=.TRUE.
-        LwrtADJ(ng)=.TRUE.
+        Lfout(ng)=Lnew(ng)
+        LdefTLM(ng)=.TRUE.
+        LwrtTLM(ng)=.TRUE.
         LwrtState2d(ng)=.TRUE.
-        CALL ad_def_his (ng, LdefADJ(ng))
+        CALL tl_def_his (ng, LdefTLM(ng))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.TRUE.
 #endif
 #ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
+        CALL tl_wrt_his (ng, MyRank)
 #else
-        CALL ad_wrt_his (ng, -1)
+        CALL tl_wrt_his (ng, -1)
 #endif
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS

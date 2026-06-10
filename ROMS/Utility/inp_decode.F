@@ -74,11 +74,13 @@
         MODULE PROCEDURE load_1d_dp      ! 1D real(dp) array
         MODULE PROCEDURE load_2d_dp      ! 2D real(dp) array
         MODULE PROCEDURE load_3d_dp      ! 3D real(dp) array
+        MODULE PROCEDURE load_4d_dp      ! 4D real(dp) array
 #endif
         MODULE PROCEDURE load_0d_r8      ! scalar real(r8)
         MODULE PROCEDURE load_1d_r8      ! 1D real(r8) array
         MODULE PROCEDURE load_2d_r8      ! 2D real(r8) array
         MODULE PROCEDURE load_3d_r8      ! 3D real(r8) array
+        MODULE PROCEDURE load_4d_r8      ! 4D real(r8) array
       END INTERFACE load_r
 
       INTERFACE load_s1d
@@ -1247,6 +1249,77 @@
 !
       RETURN
       END FUNCTION load_3d_dp
+!
+      FUNCTION load_4d_dp (Ninp, Vinp, Iout, Jout, Kout, Lout, Vout)    &
+     &                     RESULT (Nval)
+!
+!***********************************************************************
+!                                                                      !
+!  It loads input values into a requested model 4D double precision    !
+!  array when numerical kernel is in single precision.                 !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (1D real(dp) array)                      !
+!     Iout       Size of output integer variable first  I-dimension    !
+!     Jout       Size of output integer variable second J-dimension    !
+!     Kout       Size of output integer variable third  K-dimension    !
+!     Lout       Size of output integer variable third  L-dimension    !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output 3D variable (real, KIND=dp)                    !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in) :: Ninp, Iout, Jout, Kout, Lout
+      real(dp), intent(in) :: Vinp(:)
+!
+      real(dp), intent(out) :: Vout(:,:,:,:)
+!
+!  Local variable declarations.
+!
+      integer :: Nstr, i, ic
+      integer :: Nout, Nval
+!
+      real(dp), dimension(Iout*Jout*Kout*Lout) :: Vwrk
+!
+!-----------------------------------------------------------------------
+!  Load 4D floating-point variable with input values.
+!-----------------------------------------------------------------------
+!
+!  If not all values are provided for variable, assume the last value
+!  for the rest of the array.
+!
+      ic=0
+      Nout=Iout*Jout*Kout*Lout
+      IF (Ninp.le.Nout) THEN
+        DO i=1,Ninp
+          ic=ic+1
+          Vwrk(i)=Vinp(i)
+        END DO
+        IF (Nout.gt.Ninp) THEN
+          Nstr=Ninp+1
+          DO i=Nstr,Nout
+            ic=ic+1
+            Vwrk(i)=Vinp(Ninp)
+          END DO
+        END IF
+      ELSE
+        DO i=1,Nout
+          ic=ic+1
+          Vwrk(i)=Vinp(i)
+        END DO
+      END IF
+      Vout=RESHAPE(Vwrk,(/Iout,Jout,Kout,Lout/))
+      Nval=ic
+!
+      RETURN
+      END FUNCTION load_4d_dp
 #endif
 !
       FUNCTION load_0d_r8 (Ninp, Vinp, Nout, Vout) RESULT (Nval)
@@ -1532,6 +1605,89 @@
 !
       RETURN
       END FUNCTION load_3d_r8
+!
+      FUNCTION load_4d_r8 (Ninp, Vinp, Iout, Jout, Kout, Lout, Vout)    &
+     &                     RESULT (Nval)
+!
+!***********************************************************************
+!                                                                      !
+!  It loads input values into a requested model 3D floating-point      !
+!  array (KIND=r8).                                                    !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Ninp       Number of input elements to process in Vinp (integer) !
+!     Vinp       Input values (1D real(dp) array)                      !
+!     Iout       Size of output integer variable first  I-dimension    !
+!     Jout       Size of output integer variable second J-dimension    !
+!     Kout       Size of output integer variable third  K-dimension    !
+!     Lout       Size of output integer variable third  L-dimension    !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Vout       Output 4D variable (real, KIND=r8)                    !
+!     Nval       Number of output values processed                     !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer,  intent(in) :: Ninp, Iout, Jout, Kout, Lout
+      real(dp), intent(in) :: Vinp(:)
+!
+      real(r8), intent(out) :: Vout(:,:,:,:)
+!
+!  Local variable declarations.
+!
+      integer :: Nstr, i, ic
+      integer :: Nout, Nval
+!
+      real(r8), dimension(Iout*Jout*Kout*Lout) :: Vwrk
+!
+!-----------------------------------------------------------------------
+!  Load 4D floating-point variable with input values.
+!-----------------------------------------------------------------------
+!
+!  If not all values are provided for variable, assume the last value
+!  for the rest of the array.
+!
+      ic=0
+      Nout=Iout*Jout*Kout*Lout
+      IF (Ninp.le.Nout) THEN
+        DO i=1,Ninp
+          ic=ic+1
+#ifdef SINGLE_PRECISION
+          Vwrk(i)=REAL(Vinp(i),r8)
+#else
+          Vwrk(i)=Vinp(i)
+#endif
+        END DO
+        IF (Nout.gt.Ninp) THEN
+          Nstr=Ninp+1
+          DO i=Nstr,Nout
+            ic=ic+1
+#ifdef SINGLE_PRECISION
+            Vwrk(i)=REAL(Vinp(Ninp),r8)
+#else
+            Vwrk(i)=Vinp(Ninp)
+#endif
+          END DO
+        END IF
+      ELSE
+        DO i=1,Nout
+          ic=ic+1
+#ifdef SINGLE_PRECISION
+          Vwrk(i)=REAL(Vinp(i),r8)
+#else
+          Vwrk(i)=Vinp(i)
+#endif
+        END DO
+      END IF
+      Vout=RESHAPE(Vwrk,(/Iout,Jout,Kout,Lout/))
+      Nval=ic
+!
+      RETURN
+      END FUNCTION load_4d_r8
 !
       FUNCTION load_lbc (Ninp, Vinp, line, nline, ifield, igrid,        &
      &                   iTrcStr, iTrcEnd, svname, S)

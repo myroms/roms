@@ -109,7 +109,7 @@
 !
 !  Associate temporarily work state variables, my_var.
 !
-      CALL state_assign (ng, Istate, Linp)
+      CALL state_assign (ng, tile, Istate, Linp)
 !
 !  Compute new nonlinear model initial conditions.
 !      

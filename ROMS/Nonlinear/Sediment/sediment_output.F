@@ -97,8 +97,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, nvd3, nvd4, status
 !
       real(r8) :: Aval(6)
@@ -744,8 +742,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, status
 !
       real(r8) :: Aval(6)
@@ -1650,8 +1646,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, nvd3, nvd4, status
 !
       real(r8) :: Aval(6)
@@ -2899,8 +2893,6 @@
 !
       logical :: got_var(NV)
 !
-      integer, parameter :: Natt = 25
-
       integer :: i, itrc, j, status
 !
       real(r8) :: Aval(6)

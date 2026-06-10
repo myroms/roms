@@ -56,6 +56,7 @@
 !                    Vinfo(23) =>  Variable "formula_terms" attribute  !
 !                    Vinfo(24) =>  Variable "_FillValue" attribute     !
 !                    Vinfo(25) =>  Variable "positive" attribute       !
+!                    Vinfo(26) =>  Variable "range" attribute          !
 !     ncname       NetCDF file name                                    !
 !     SetFillVal   Logical switch to set fill value in land areas      !
 !                    (optional)                                        !
@@ -123,7 +124,7 @@
       real(r8), dimension(:), intent(inout) :: Aval
 !
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(inout) :: Vinfo(25)
+      character (len=*), intent(inout) :: Vinfo(Natt)
 !
 !  Local variable declarations.
 !
@@ -676,7 +677,7 @@
 !
 !  If applicable, define "cell_methods" attribute.
 !
-        IF (exit_flag.eq.NoError) THEN
+        IF ((exit_flag.eq.NoError).and.(ABS(INT(Aval(5))).ne.0)) THEN
           IF (((ABS(INT(Aval(5))).le.4).and.(nVdim.gt.2)).or.           &
      &        ((ABS(INT(Aval(5))).gt.4).and.(nVdim.gt.3))) THEN
             IF ((ncid.eq.AVG(ng)%ncid).or.                              &
@@ -993,6 +994,24 @@
           END IF
         END IF
 !
+!  If applicable, define "range" attribute.
+!  (variables with range dimension)
+!
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(26))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'range',                     &
+     &                          Vinfo(26)(1:latt))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,30) 'range',                    &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+!
 !  If applicable, define "field" attribute (always last).
 !
         IF (exit_flag.eq.NoError) THEN
@@ -1125,7 +1144,7 @@
       real(r8), dimension(:), intent(inout) :: Aval
 !
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(inout) :: Vinfo(25)
+      character (len=*), intent(inout) :: Vinfo(Natt)
 !
       TYPE (File_desc_t) :: pioFile
       TYPE (Var_desc_t), intent(out) :: pioVar
@@ -1996,6 +2015,24 @@
      &                       Vinfo(23)(1:latt))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,30) 'formula_terms',              &
+     &                                    TRIM(Vinfo(1)),               &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+!
+!  If applicable, define "range" attribute.
+!  (variables with range dimension)
+!
+      IF (exit_flag.eq.NoError) THEN
+        latt=LEN_TRIM(Vinfo(26))
+        IF (latt.gt.0) THEN
+          status=PIO_put_att(pioFile, pioVar, 'range',                  &
+     &                       Vinfo(26)(1:latt))
+          IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,30) 'range',                      &
      &                                    TRIM(Vinfo(1)),               &
      &                                    TRIM(ncname)
             exit_flag=3

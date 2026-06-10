@@ -38,6 +38,7 @@ list ( APPEND _files
        ROMS/Modules/mod_pio_netcdf.F
        ROMS/Modules/mod_scalars.F
        ROMS/Modules/mod_sedbed.F
+       ROMS/Modules/mod_sedflocs.F
        ROMS/Modules/mod_sediment.F
        ROMS/Modules/mod_sources.F
        ROMS/Modules/mod_stepping.F

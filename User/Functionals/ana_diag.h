@@ -80,7 +80,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, io_error, j, k
+      integer :: i, io_err, j, k
 !
       character (len=256) :: io_errmsg
 

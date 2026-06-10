@@ -1343,6 +1343,7 @@
 !
       DO rec=1,2
         DO is=1,NstateVar(ng)
+# ifndef MULTI_SCALE_B
           IF (Hdecay(rec,is,ng).gt.0.0_r8) THEN
             NHsteps(rec,is)=NINT(Hdecay(rec,is,ng)*                     &
      &                           Hdecay(rec,is,ng)/                     &
@@ -1351,6 +1352,7 @@
               NHsteps(rec,is)=NHsteps(rec,is)+1
             END IF
           END IF
+# endif
 # ifdef SOLVE3D
           IF (Vdecay(rec,is,ng).gt.0.0_r8) THEN
             NVsteps(rec,is)=NINT(Vdecay(rec,is,ng)*                     &
@@ -1373,6 +1375,7 @@
 !
       DO ibry=1,4
         DO is=1,NstateVar(ng)
+#  ifndef MULTI_SCALE_B
           IF (HdecayB(is,ibry,ng).gt.0.0_r8) THEN
             NHstepsB(ibry,is)=NINT(HdecayB(is,ibry,ng)*                 &
      &                             HdecayB(is,ibry,ng)/                 &
@@ -1381,6 +1384,7 @@
               NHstepsB(ibry,is)=NHstepsB(ibry,is)+1
             END IF
           END IF
+#  endif
 #  ifdef SOLVE3D
           IF (VdecayB(is,ibry,ng).gt.0.0_r8) THEN
             NVstepsB(ibry,is)=NINT(VdecayB(is,ibry,ng)*                 &
@@ -1401,6 +1405,7 @@
 !  Report convolution parameters.
 !
       IF (Master.and.LwrtInfo(ng)) THEN
+# ifndef MULTI_SCALE_B
         DO rec=1,NSA
           DO is=1,NstateVar(ng)
             IF (rec.eq.1) THEN
@@ -1422,6 +1427,7 @@
           END DO
           WRITE (stdout,120)
         END DO
+# endif
 # if defined SOLVE3D && defined VCONVOLUTION
         DO rec=1,NSA
           DO is=1,NstateVar(ng)
@@ -1446,6 +1452,7 @@
         END DO
 # endif
 # ifdef ADJUST_BOUNDARY
+#  ifndef MULTI_SCALE_B
         DO is=1,NstateVar(ng)
           DO ibry=1,4
             IF (Lobc(ibry,is,ng)) THEN
@@ -1466,6 +1473,7 @@
             END IF
           END DO
         END DO
+#  endif
         WRITE (stdout,120)
 #  if defined SOLVE3D && defined VCONVOLUTION
         DO is=1,NstateVar(ng)
