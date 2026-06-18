@@ -392,6 +392,9 @@
       real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
 # ifdef SOLAR_SOURCE
+#  ifdef BOTTOM_ALBEDO
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: swdk
+#  endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: ad_swdk
 # endif
 
@@ -951,16 +954,61 @@
 !
 !  Apply bottom and surface tracer flux conditions.
 !
+#  ifdef BOTTOM_ALBEDO
+          IF (itrc.eq.itemp) THEN
+!
+!  Surface net heat flux is reduced by the reflected solar radiation
+!  that reached the sea surface swdk(N) < 0
+!  Bottom heat flux is the external btflux (typically zero) augmented
+!  by the unreflected solar at the seafloor srflx*swdk. Positive FC(0)
+!  is cooling.
+!
+            DO i=Istr,Iend
+!^            tl_FC(i,N(ng))=dt(ng)*tl_stflx(i,j,itrc)+                 &
+!^  &                        dt(ng)*srflx(i,j)*tl_swdk(i,j,N(ng))
+!^
+              adfac=dt(ng)*ad_FC(i,N(ng))
+              ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)+adfac
+              ad_swdk(i,j,N(ng))=ad_swdk(i,j,N(ng))+                    &
+    &                            adfac*srflx(i,j)
+              ad_FC(i,N(ng))=0.0_r8
+!^            tl_FC(i,0)=dt(ng)*tl_btflx(i,j,itrc)+                     &
+!^  &                    dt(ng)*srflx(i,j)*tl_swdk(i,j,0)
+!^
+              adfac=dt(ng)*ad_FC(i,0)
+              ad_btflx(i,j,itrc)=ad_btflx(i,j,itrc)+adfac
+              ad_swdk(i,j,0)=ad_swdk(i,j,0)+                            &
+    &                        adfac*srflx(i,j)
+              ad_FC(i,0)=0.0_r8
+            END DO
+          ELSE
+            DO i=Istr,Iend
+!^            tl_FC(i,N(ng))=dt(ng)*tl_stflx(i,j,itrc)
+!^
+              ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)+                    &
+    &                            dt(ng)*ad_FC(i,N(ng))
+              ad_FC(i,N(ng))=0.0_r8
+!^            tl_FC(i,0)=dt(ng)*tl_btflx(i,j,itrc)
+!^
+              ad_btflx(i,j,itrc)=ad_btflx(i,j,itrc)+                    &
+    &                            dt(ng)*ad_FC(i,0)
+              ad_FC(i,0)=0.0_r8
+            END DO
+          END IF
+#  else
           DO i=Istr,Iend
 !^          tl_FC(i,N(ng))=dt(ng)*tl_stflx(i,j,itrc)
 !^
-            ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)+dt(ng)*ad_FC(i,N(ng))
+            ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)+                      &
+     &                         dt(ng)*ad_FC(i,N(ng))
             ad_FC(i,N(ng))=0.0_r8
 !^          tl_FC(i,0)=dt(ng)*tl_btflx(i,j,itrc)
 !^
-            ad_btflx(i,j,itrc)=ad_btflx(i,j,itrc)+dt(ng)*ad_FC(i,0)
+            ad_btflx(i,j,itrc)=ad_btflx(i,j,itrc)+                      &
+     &                         dt(ng)*ad_FC(i,0)
             ad_FC(i,0)=0.0_r8
           END DO
+#  endif
 
 #  ifdef SOLAR_SOURCE
 !
@@ -2388,15 +2436,108 @@
       END DO T_LOOP1
 
 #  ifdef SOLAR_SOURCE
+#   ifdef BOTTOM_ALBEDO
+!
+!  Nonzero seafloor albedo reflects some light reaching the bottom.
+!  The reflected light is absorbed by Paulson and Simpson scales 
+!  (mu1, mu2) set by WTYPE. The modified net downward swrad changes the
+!  internal heating. When not defined (default) the radiation reaching
+!  the seabed is blocked (btflx=0) and heats the bottom layer.
+!  (J. Wilkin 2026-06-01)
+!
+!  swdk(0) presently holds the value of "swrad" reaching the seafloor.
+!  The k-loop below is reversed so that bot_albedo*swdk(0) sets the
+!  basis of vertical profile of reflected light. At k=N, swdk(N) < 0
+!  is the fraction of light reaching the surface that escapes the ocean.
+!  This is used later in the surface boundary condition. When the loop
+!  reaches k=0, FE=1 and swdk(0) is overwritten with (1-albedo)*swdk(0)
+!  which is the fraction of swrad entering the seabed. This is used
+!  in the bottom boundary condition.
+!
+!  First compute BASIC STATE "swdk".
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          swdk(i,j,N(ng))=0.0_r8              !  initialize
+        END DO
+      END DO
+!
+      DO k=0,N(ng)-1           ! need downward swrad at seafloor z_w(0)
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+            FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k) ! distance below surface
+          END DO
+        END DO
+!
+        CALL lmd_swfrac_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
+     &                        -1.0_r8, FX, FE)
+!
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+            swdk(i,j,k)=FE(i,j)               ! downward swrad at z_w(k)
+          END DO
+        END DO
+      END DO
+!
+!  Adjoint of bottom albedo Reflectance. For the BASIC STATE in the
+!  quadratic term, use "FE(i,j)=swdk(i,j,k)", as computed in the section
+!  above.
+!
+      IF (bot_albedo(ng).ne.0.0_r8) THEN
+!^      DO k=N(ng),0,-1
+!^
+        DO k=0,N(ng)
+          DO j=Jstr,Jend                                                 
+            DO i=Istr,Iend
+              FX(i,j)=z_w(i,j,k)-z_w(i,j,0)  !  distance above seafloor
+!^            tl_swdk(i,j,k)=tl_swdk(i,j,k)-                            &
+!^   &                       bot_albedo(ng)*                            &
+!^   &                       (tl_swdk(i,j,0)*FE(i,j)+                   &
+!^   &                        swdk(i,j,0)*tl_FE(i,j))
+!^
+              adfac=-bot_albedo(ng)*ad_swdk(i,j,k)
+              ad_FE(i,j)=ad_FE(i,j)+adfac*swdk(i,j,0)
+              ad_swdk(i,j,0)=ad_swdk(i,j,0)+adfac*FE(i,j)
+            END DO
+          END DO
+!
+!^        CALL tl_lmd_swfrac_tile (ng, tile,                            &
+!^   &                             LBi, UBi, LBj, UBj,                  &
+!^   &                             IminS, ImaxS, JminS, JmaxS,          &
+!^   &                             -1.0_r8, FX, tl_FX, tl_FE)
+!^
+          CALL ad_lmd_swfrac_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
+     &                             -1.0_r8, FX, ad_FX, ad_FE)
+!
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            tl_FX(i,j)=tl_z_w(i,j,k)-tl_z_w(i,j,0)
+!>
+              ad_z_w(i,j,k)=ad_z_w(i,j,k)+ad_FX(i,j)
+              ad_z_w(i,j,0)=ad_z_w(i,j,0)-ad_FX(i,j)
+              ad_FX(i,j)=0.0_r8
+            END DO
+          END DO
+         END DO
+       END IF
+#   endif
 !
 !  Compute fraction of the solar shortwave radiation, "swdk"
 !  (at vertical W-points) penetrating water column. First, compute
 !  BASIC STATE arrays.
 !
+#   ifdef BOTTOM_ALBEDO
+      DO k=0,N(ng)-1           ! need downward swrad at seafloor z_w(0)
+#   else
       DO k=1,N(ng)-1
+#   endif
         DO j=Jstr,Jend
           DO i=Istr,Iend
-            FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)
+            FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)  ! distance below surface
           END DO
         END DO
         DO j=Jstr,Jend
@@ -2426,6 +2567,17 @@
           END DO
         END DO
       END DO
+
+#   ifdef BOTTOM_ALBEDO
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+!^        tl_swdk(i,j,N(ng))=0.0_r8
+!^
+          ad_swdk(i,j,N(ng))=0.0_r8
+        END DO
+      END DO
+#   endif
 #  endif
 # endif /* !TS_FIXED */
 !
