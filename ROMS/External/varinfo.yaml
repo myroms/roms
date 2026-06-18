@@ -8874,7 +8874,7 @@ metadata:
 
   - variable:       vbar_Bcorr                                       # Input
     standard_name:  barotropic_sea_water_y_velocity
-    long_name:      u-barotropic horizontal background-error decorrelation length scales
+    long_name:      v-barotropic horizontal background-error decorrelation length scales
     units:          meter                                            # [m]
     field:          vbar_Bcorr
     time:           nulvar

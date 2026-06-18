@@ -406,6 +406,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Various parameters.
 
        WTYPE == 1
+  BOT_ALBEDO == 0.0d0
      LEVSFRC == 15
      LEVBFRC == 1
 

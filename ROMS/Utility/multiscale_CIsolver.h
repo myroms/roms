@@ -310,6 +310,11 @@
 !
       END DO KDIFF_ITER
 !
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
+!
       RETURN
       END SUBROUTINE multiscale_CI_2d_tl
 !
@@ -623,6 +628,11 @@
 
       END DO KDIFF_ITER
 !
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
+!
       RETURN
       END SUBROUTINE multiscale_CI_2d_ad
 
@@ -910,6 +920,11 @@
         END DO LEVEL_LOOP4
 !
       END DO KDIFF_ITER
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CI_3d_tl
@@ -1223,6 +1238,11 @@
         END DO LEVEL_LOOP1
 !
       END DO KDIFF_ITER
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CI_3d_ad
@@ -1552,6 +1572,11 @@
         END SELECT
 !
       END DO KDIFF_ITER
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CI_b1d_tl
@@ -1950,6 +1975,11 @@
 !
       END DO KDIFF_ITER
 !
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
+!
       RETURN
       END SUBROUTINE multiscale_CI_b1d_ad
 
@@ -2298,6 +2328,11 @@
         END DO LEVEL_LOOP4
 !
       END DO KDIFF_ITER
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CI_b2d_tl
@@ -2721,6 +2756,11 @@
         END DO LEVEL_LOOP1
 !
       END DO KDIFF_ITER
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CI_b2d_ad

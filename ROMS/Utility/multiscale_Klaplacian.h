@@ -113,18 +113,16 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%zeta_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%zeta_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux', 'ssflux')
           itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,1,ms,   &
-     &                                              itrc)
-          BscaleY(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,2,ms,   &
-     &                                              itrc)
+          BscaleX(is:,js:) => self%stflux_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:,js:) => self%stflux_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -263,6 +261,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r2d_tl
@@ -341,18 +347,16 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('zeta')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%zeta_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%zeta_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%zeta_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #if defined ADJUST_STFLUX && defined SOLVE3D
         CASE ('shflux', 'ssflux')
           itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,1,ms,   &
-     &                                              itrc)
-          BscaleY(is:ie,js:je) => self%stflux_Bcorr(is:ie,js:je,2,ms,   &
-     &                                              itrc)
+          BscaleX(is:,js:) => self%stflux_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:,js:) => self%stflux_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -499,6 +503,14 @@
       CALL ad_dabc_r2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r2d_ad
@@ -576,15 +588,15 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%ubar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%ubar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #ifdef ADJUST_WSTRESS
         CASE ('sustr')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%sustr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%sustr_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -719,6 +731,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u2d_tl
@@ -796,15 +816,15 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('ubar', 'ubar_eastward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%ubar_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%ubar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%ubar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #ifdef ADJUST_WSTRESS
         CASE ('sustr')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%sustr_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%sustr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%sustr_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -946,6 +966,14 @@
       CALL ad_dabc_u2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u2d_ad
@@ -1023,15 +1051,15 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%vbar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%vbar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #ifdef ADJUST_WSTRESS
         CASE ('svstr')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%svstr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%svstr_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -1167,6 +1195,14 @@
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_A)
 #endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v2d_tl
@@ -1244,15 +1280,15 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('vbar', 'vbar_northward')
 #ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%vbar_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%vbar_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%vbar_Bcorr(is:ie,js:je,2,ms)
 #endif
           Mlap=self%Mlap(ifield,ms)
 #ifdef ADJUST_WSTRESS
         CASE ('svstr')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%svstr_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%svstr_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%svstr_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
 #endif
@@ -1394,6 +1430,14 @@
       CALL ad_dabc_v2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v2d_ad
@@ -1484,8 +1528,8 @@
         CASE ('temp', 'salt')
           itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
-          BscaleY(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
+          BscaleX(is:,js:) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:,js:) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -1857,6 +1901,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r3d_tl
@@ -1953,8 +2005,8 @@
         CASE ('temp', 'salt')
           itrc = tracer_index(TRIM(StateVarName(ifield)))
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
-          BscaleY(is:ie,js:je) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
+          BscaleX(is:,js:) => self%t_Bcorr(is:ie,js:je,1,ms,itrc)
+          BscaleY(is:,js:) => self%t_Bcorr(is:ie,js:je,2,ms,itrc)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -2429,6 +2481,14 @@
       CALL ad_dabc_r3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r3d_ad
@@ -2517,8 +2577,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%u_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%u_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -2917,6 +2977,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u3d_tl
@@ -3011,8 +3079,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('u', 'u_eastward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%u_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%u_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%u_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -3506,6 +3574,14 @@
       CALL ad_dabc_u3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u3d_ad
@@ -3594,8 +3670,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%v_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%v_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -3988,6 +4064,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 # endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v3d_tl
@@ -4082,8 +4166,8 @@
       SELECT CASE (TRIM(StateVarName(ifield)))
         CASE ('v', 'v_northward')
 # ifdef NONUNIFORM_SCALES
-          BscaleX(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,1,ms)
-          BscaleY(is:ie,js:je) => self%v_Bcorr(is:ie,js:je,2,ms)
+          BscaleX(is:,js:) => self%v_Bcorr(is:ie,js:je,1,ms)
+          BscaleY(is:,js:) => self%v_Bcorr(is:ie,js:je,2,ms)
 # endif
           Mlap=self%Mlap(ifield,ms)
       END SELECT
@@ -4576,6 +4660,14 @@
       CALL ad_dabc_v3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v3d_ad
