@@ -261,6 +261,14 @@
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
 #endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r2d_tl
@@ -495,6 +503,14 @@
       CALL ad_dabc_r2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r2d_ad
@@ -714,6 +730,14 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
+#endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
 #endif
 !
       RETURN
@@ -942,6 +966,14 @@
       CALL ad_dabc_u2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u2d_ad
@@ -1162,6 +1194,14 @@
      &                      NghostPoints,                               &
      &                      EWperiodic(ng), NSperiodic(ng),             &
      &                      tl_A)
+#endif
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
 #endif
 !
       RETURN
@@ -1390,6 +1430,14 @@
       CALL ad_dabc_v2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_A)
+
+#ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+#endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v2d_ad
@@ -1852,6 +1900,14 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
+# endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
 # endif
 !
       RETURN
@@ -2425,6 +2481,14 @@
       CALL ad_dabc_r3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_r3d_ad
@@ -2912,6 +2976,14 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
+# endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
 # endif
 !
       RETURN
@@ -3502,6 +3574,14 @@
       CALL ad_dabc_u3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_u3d_ad
@@ -3983,6 +4063,14 @@
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    tl_A)
+# endif
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
 # endif
 !
       RETURN
@@ -4572,6 +4660,14 @@
       CALL ad_dabc_v3d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       ad_A)
+
+# ifdef NONUNIFORM_SCALES
+!
+!  Nullify local pointers.
+!
+      nullify (BscaleX)
+      nullify (BscaleY)
+# endif
 !
       RETURN
       END SUBROUTINE multiscale_Klap_v3d_ad

@@ -357,6 +357,11 @@
         END DO
       END DO
 !
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
+!
       RETURN
       END SUBROUTINE multiscale_CG_2d_tl
 
@@ -690,6 +695,11 @@
           END DO
         END DO
       END DO
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CG_3d_tl
@@ -1090,6 +1100,11 @@
             tl_A(i)=self%cgB1d_x(i)/tl_scale(i)
           END DO
       END SELECT
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CG_b1d_tl
@@ -1504,6 +1519,11 @@
             END DO
           END DO
       END SELECT
+!
+!  Nullify local pointers.
+!
+      nullify (eigMin)
+      nullify (eigMax)
 !
       RETURN
       END SUBROUTINE multiscale_CG_b2d_tl
