@@ -108,8 +108,8 @@
 !  Contol vector to store state variables at the aggregated observation
 !  locations.
 !
-        real (r8), allocatable :: state(:)           ! state vector
-        integer,   allocatable :: ObsVetting(:)      ! reject/accept flag
+        real (r8), pointer :: state(:)               ! state vector
+        integer,   pointer :: ObsVetting(:)          ! reject/accept flag
 !
 !  Cost Function values per observations in the pool depot.
 !
@@ -205,7 +205,24 @@
 !
       integer, parameter :: iSTD = 10
 !
-!  H(x) operators per nested grid, [1:Ngrids].
+!  H(x) operators per nested grid [1:Ngrids]: The state vector pointer
+!                                             in CLASS(obs_hofx) is
+!  associated with 4D-Var driver variables "NLmodVal", "TLmodVal", or
+!  "ADmodVal" to prevent memory redundancy. These variables store
+!  aggregated values from the NLM, TLM, and ADM kernels, evaluated at
+!  data assimilation observation locations. This structure supports
+!  integration of both legacy and modern observation operators without
+!  changes to complex data assimilation algorithms. Thus, we have:
+!
+!    NLmodVal => nlm_hofx(ng)%state
+!    TLmodVal => tlm_hofx(ng)%state
+!    adm_hofx(ng)%state => ADmodVal  (adjoint pointer operation)
+!
+!  ADmodVal values are set by the 4D-Var conjugate gradient minimization
+!  algorithm, such as "rpcg_lanczos" or "congrad". Any method for
+!  aggregating data assimilation control variables into the state vector
+!  is acceptable, provided it is applied consistently across all 4D-Var
+!  drivers.
 !
       TYPE (obs_hofx), allocatable :: nlm_hofx(:)     ! nonlinear
 # ifdef ADJOINT
@@ -259,14 +276,14 @@
 !
       IF (.not.allocated(geom_hofx)) THEN
         allocate ( geom_hofx(Ngrids) )
-      END IF
 !
-      IF (IsAreaAveraged) THEN
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL geom_hofx(ng)% create (ng, tile, model)
+        IF (IsAreaAveraged) THEN
+          DO ng=1,Ngrids
+            DO tile=first_tile(ng),last_tile(ng),+1
+              CALL geom_hofx(ng)% create (ng, tile, model)
+            END DO
           END DO
-        END DO
+        END IF
       END IF
 !
 !  Allocate and create nonlinear H(x) object.
@@ -296,7 +313,7 @@
 !  Allocate and create tangent linear H(x) object.
 !
       IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-        IF (.not.allocated(nlm_hofx)) THEN
+        IF (.not.allocated(tlm_hofx)) THEN
           allocate ( tlm_hofx(Ngrids) )
         END IF
 !
@@ -313,7 +330,7 @@
 !  Allocate and create adjoint H^(x) object.
 !
       IF (model.eq.iADM) THEN
-        IF (.not.allocated(nlm_hofx)) THEN
+        IF (.not.allocated(adm_hofx)) THEN
           allocate ( adm_hofx(Ngrids) )
         END IF
 !
@@ -621,7 +638,7 @@
 !
 !  Allocate contol state vector.
 !
-      IF (.not.allocated(self%state)) THEN
+      IF (.not.associated(self%state)) THEN
         allocate ( self%state(ntotal) )
         Dmem(ng)=Dmem(ng)+REAL(ntotal,r8)
       END IF
@@ -629,7 +646,7 @@
 !  Allocate processing flag to reject (zero) or accept (unity)
 !  observations.
 !
-      IF (.not.allocated(self%ObsVetting)) THEN
+      IF (.not.associated(self%ObsVetting)) THEN
         allocate ( self%ObsVetting(ntotal) )
         Dmem(ng)=Dmem(ng)+REAL(ntotal,r8)
       END IF

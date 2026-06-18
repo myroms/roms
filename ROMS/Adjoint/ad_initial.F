@@ -69,8 +69,11 @@
       USE rho_eos_mod,       ONLY : rho_eos
       USE set_massflux_mod,  ONLY : set_massflux
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_initial_mod,   ONLY : obs_initial
+# endif
+# if defined OBSERVATIONS && defined MODERN_OBS
+      USE roms_hofx_mod,     ONLY : hofx_initialize
 # endif
 # ifdef MASKING
       USE set_masks_mod,     ONLY : set_masks
@@ -445,6 +448,7 @@
 # endif
 
 # ifdef OBSERVATIONS
+#  ifdef ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  Initialize various variables needed for processing observations
@@ -453,20 +457,29 @@
 !  the first "ObsTime" to process.
 !-----------------------------------------------------------------------
 !
-# ifdef RBL4DVAR_FCT_SENSITIVITY
+#   ifdef RBL4DVAR_FCT_SENSITIVITY
       IF (.not.Lsen4DVAR(ng).and.LsenFCT(ng)) THEN
-#  ifdef OBS_SPACE
+#    ifdef OBS_SPACE
         IF (Lobspace(ng)) THEN
-#  endif
-# endif
+#    endif
+#   endif
           CALL obs_initial (ng, iADM, .TRUE.)
-# ifdef OBS_SPACE
+#   ifdef OBS_SPACE
         END IF
-# endif
-# ifdef RBL4DVAR_FCT_SENSITIVITY
+#   endif
+#   ifdef RBL4DVAR_FCT_SENSITIVITY
       END IF
-# endif
+#   endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  elif defined MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  Allocate and initialize adjoint H(x) object.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_initialize (iADM)
+#  endif
 # endif
 
 # if defined ANA_PERTURB  && \

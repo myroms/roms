@@ -236,8 +236,8 @@
 #  ifdef SOLVE3D
         real(r8), allocatable :: Zobs(:)
 #  endif
-        real(r8), allocatable :: ADmodVal(:)
-        real(r8), allocatable :: NLmodVal(:)
+        real(r8), pointer :: ADmodVal(:)
+        real(r8), pointer :: NLmodVal(:)
 
         real(r8), allocatable :: misfit(:)
         real(r8), allocatable :: unvetted(:)
@@ -255,7 +255,7 @@
         real(r8), allocatable :: Jobs(:,:)
 #  endif
 #  ifdef TLM_OBS
-        real(r8), allocatable :: TLmodVal(:)
+        real(r8), pointer :: TLmodVal(:)
 #   if defined ARRAY_MODES       || defined CLIPPING  || \
        defined RBL4DVAR          || defined R4DVAR    || \
        defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
@@ -1225,11 +1225,11 @@
       END IF
 #  endif
 
-      IF (allocated(ADmodVal)) THEN
+      IF (associated(ADmodVal)) THEN
         deallocate (ADmodVal)
       END IF
 
-      IF (allocated(NLmodVal)) THEN
+      IF (associated(NLmodVal)) THEN
         deallocate (NLmodVal)
       END IF
 
@@ -1282,7 +1282,7 @@
 #  endif
 
 #  ifdef TLM_OBS
-      IF (allocated(TLmodVal)) THEN
+      IF (associated(TLmodVal)) THEN
         deallocate (TLmodVal)
       END IF
 
@@ -2064,17 +2064,21 @@
       Zobs = IniVal
 #  endif
 
+#  ifdef ARCHAIC_OBS
       IF (.not.allocated(ADmodVal)) THEN
         allocate ( ADmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ADmodVal = IniVal
+#  endif
 
+#  ifdef ARCHAIC_OBS
       IF (.not.allocated(NLmodVal)) THEN
         allocate ( NLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       NLmodVal = IniVal
+#  endif
 
       IF (.not.allocated(misfit)) THEN
         allocate ( misfit(Mobs) )
@@ -2185,11 +2189,13 @@
 #  endif
 
 #  ifdef TLM_OBS
-      IF (.not.allocated(TLmodVal)) THEN
+#   ifdef ARCHAIC_OBS
+      IF (.not.associated(TLmodVal)) THEN
         allocate ( TLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       TLmodVal = IniVal
+#   endif
 
 #   if defined ARRAY_MODES       || defined CLIPPING  || \
        defined RBL4DVAR          || defined R4DVAR    || \

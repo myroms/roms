@@ -44,7 +44,7 @@
       logical :: Lvalue(4)
 
       integer :: Mval, Npts, Nval
-      integer :: i, ib, igrid, itrc, k, ng, ns, status
+      integer :: i, ib, igrid, iobsfile, itrc, k, ng, ns, status
       integer :: Cdim, Clen, Mscale, Rdim
       integer :: obs_lib
       integer :: Ivalue(1)
@@ -2600,7 +2600,8 @@
         END IF
 #    endif
 #   endif
-#   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
+#   if defined ARCHAIC_OBS  && \
+      !(defined CORRELATION || defined OPT_OBSERVATIONS)
         fname=OBS(ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2747,8 +2748,6 @@
      &        /,15x,a,/,15x,a)
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i0, &
      &        /,15x,a,/,15x,'correct input script: ',1x,'''',a,'''',/)
- 240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i2, &
-     &        /,15x,a)
  250  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
      &        /,15x,a)
  260  FORMAT (/,' READ_PHYPAR - Invalid dimension parameter, ',a,i0,    &

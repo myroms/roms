@@ -831,7 +831,8 @@
       logical                         :: foundit
       integer                         :: Nstr, Nend, iobs, i
       integer                         :: nlocs, nsurvey
-      real (r8)                       :: Tstr, Tend
+      real (r8)                       :: Tstr, Tend, Tsurvey
+      character (len=20)              :: poolName
 !
 !  Check if requested observation name exists in the pool object.
 !
@@ -852,10 +853,13 @@
             foundit=.TRUE.
           ELSE
             DO i=nsurvey,1,-1
-              IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
-     &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
+              Tsurvey=self%pool(iobs)%surveyTime(i)
+              IF ((Tstr.le.Tsurvey).and.(Tsurvey.lt.Tend)) THEN
+                poolName=self%pool(iobs)%name
                 Nstr=self%pool(iobs)%surveyIndex(i)
-                IF (i.ne.1) THEN
+                IF (nsurvey.eq.1) THEN
+                  Nend=nlocs
+                ELSE IF (i.ne.1) THEN
                   Nend=self%pool(iobs)%surveyIndex(i-1)-1
                 ELSE
                   Nend=self%pool(iobs)%surveyIndex(i)
@@ -874,10 +878,13 @@
             foundit=.TRUE.
           ELSE
             DO i=1,nsurvey
-              IF ((Tstr.le.self%pool(iobs)%surveyTime(i)).and.          &
-     &            (self%pool(iobs)%surveyTime(i).lt.Tend)) THEN
+              Tsurvey=self%pool(iobs)%surveyTime(i)
+              IF ((Tstr.le.Tsurvey).and.(Tsurvey.lt.Tend)) THEN
+                poolName=self%pool(iobs)%name
                 Nstr=self%pool(iobs)%surveyIndex(i)
-                IF (i.ne.nsurvey) THEN
+                IF (nsurvey.eq.1) THEN
+                  Nend=nlocs
+                ELSE IF (i.ne.nsurvey) THEN
                   Nend=self%pool(iobs)%surveyIndex(i+1)-1
                 ELSE
                   Nend=self%pool(iobs)%surveyIndex(i)

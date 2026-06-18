@@ -32,9 +32,12 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_read_mod,   ONLY : obs_read
       USE obs_write_mod,  ONLY : obs_write
+# endif
+# if defined OBSERVATIONS && defined MODERN_OBS
+      USE roms_hofx_mod,  ONLY : hofx_run
 # endif
       USE strings_mod,    ONLY : FoundError
       USE tl_def_his_mod, ONLY : tl_def_his
@@ -303,8 +306,8 @@
       END IF
 # endif
 
-# if defined FOUR_DVAR
-#  ifdef OBSERVATIONS
+# if defined FOUR_DVAR && defined OBSERVATIONS
+#  if defined ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process and write model state at observation
@@ -314,6 +317,11 @@
         IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.              &
      &      (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
           ProcessObs(ng)=.TRUE.
+#   ifdef DISTRIBUTE
+          tile=MyRank
+#   else
+          tile=-1
+#   endif
 #   ifdef DISTRIBUTE
           tile=MyRank
 #   else
@@ -336,8 +344,26 @@
         ELSE
           ProcessObs(ng)=.FALSE.
         END IF
+
+#  elif defined MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  If needed, interpolate the tangent-linear model solution to the
+!  observation locations, using the linearized H(x). Apply enhanced
+!  operators and filter CLASS objects associated with multiple input
+!  IODA-type observation files.
+!-----------------------------------------------------------------------
+!
+#   ifdef DISTRIBUTE
+          tile=MyRank
+#   else
+          tile=-1
+#   endif
+          CALL hofx_run (ng, tile, iTLM)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------

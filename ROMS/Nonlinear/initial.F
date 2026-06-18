@@ -66,7 +66,7 @@
 # ifdef ARCHAIC_OBS
       USE obs_initial_mod,   ONLY : obs_initial
 # endif
-# ifdef MODERN_OBS
+# if defined OBSERVATIONS && defined MODERN_OBS
       USE roms_hofx_mod,     ONLY : hofx_initialize
       USE roms_obs_mod,      ONLY : obs_initialize
       USE roms_vchange_mod,  ONLY : vchange_initialize

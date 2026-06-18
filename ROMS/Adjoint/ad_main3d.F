@@ -76,7 +76,7 @@
 # ifdef LMD_MIXING_NOT_YET
 !!    USE ad_lmd_vmix_mod,         ONLY : ad_lmd_vmix
 # endif
-# if defined FOUR_DVAR && defined OBSERVATIONS
+# if defined FOUR_DVAR && defined OBSERVATIONS && defined ARCHAIC_OBS
 #  ifdef WEAK_CONSTRAINT
       USE ad_htobs_mod,            ONLY : ad_htobs
 #  else
@@ -145,7 +145,7 @@
       USE mct_coupler_mod,         ONLY : ocn2wav_coupling
 # endif
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
-      defined OBSERVATIONS
+      defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_read_mod,            ONLY : obs_read
 # endif
       USE omega_mod,               ONLY : omega
@@ -153,6 +153,9 @@
       USE packing_mod,             ONLY : ad_pack
 # endif
       USE rho_eos_mod,             ONLY : rho_eos
+# if defined OBSERVATIONS && defined MODERN_OBS
+      USE roms_hofx_mod,           ONLY : hofx_run
+# endif
       USE set_depth_mod,           ONLY : set_depth
       USE set_massflux_mod
       USE strings_mod,             ONLY : FoundError
@@ -675,6 +678,7 @@
 
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
       defined OBSERVATIONS
+#  if defined ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  If appropriate, read observation and model state at observation
@@ -683,13 +687,13 @@
 !
             DO ig=1,GridsInLayer(nl)
               ng=GridNumber(ig,nl)
-#  ifdef SENSITIVITY_4DVAR
-#   ifdef RBL4DVAR_FCT_SENSITIVITY
+#   ifdef SENSITIVITY_4DVAR
+#    ifdef RBL4DVAR_FCT_SENSITIVITY
               IF (.not.Lsen4DVAR(ng).and.LsenFCT(ng)) THEN
-#   else
+#    else
               IF (.not.Lsen4DVAR(ng)) THEN
+#    endif
 #   endif
-#  endif
               HalfDT=0.5_r8*dt(ng)
               IF (((time(ng)-HalfDT).le.ObsTime(ng)).and.               &
      &             (ObsTime(ng).lt.(time(ng)+HalfDT))) THEN
@@ -699,29 +703,47 @@
                 ProcessObs(ng)=.FALSE.
               END IF
 !
-#  ifdef SP4DVAR
+#   ifdef SP4DVAR
 !
 !  Skip assimilation of obs on first timestep unless inter=Nsaddle.
 !
               IF ((iic(ng).ne.ntstart(ng)).or.Lsadd(ng)) THEN
-#  endif
+#   endif
 
               DO tile=first_tile(ng),last_tile(ng),+1
-#  ifdef WEAK_CONSTRAINT
+#   ifdef WEAK_CONSTRAINT
                 CALL ad_htobs (ng, tile, iADM)
-#  else
+#   else
                 CALL ad_misfit (ng, tile, iADM)
-#  endif
+#   endif
               END DO
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-#  ifdef SENSITIVITY_4DVAR
+#   ifdef SENSITIVITY_4DVAR
               END IF
-#  endif
-#  ifdef SP4DVAR
+#   endif
+#   ifdef SP4DVAR
               END IF
-#  endif
+#   endif
             END DO
+
+#  elif defined MODERN_OBS
+!
+!-----------------------------------------------------------------------
+!  If needed, compute adjoint forcing terms due to observations, using
+!  the transpose[H(x)] operator. Apply enhanced operators and filters
+!  CLASS objects associated with multiple input IODA-type observation
+!  files.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL hofx_run (ng, tile, iADM)
+              END DO
+            END DO
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 # endif
 
 # ifdef WEAK_CONSTRAINT
