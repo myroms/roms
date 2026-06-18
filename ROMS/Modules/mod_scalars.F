@@ -3341,12 +3341,10 @@
         Dmem(1)=Dmem(1)+REAL(MstateVar*Ngrids,r8)
       END IF
 
-# ifndef MULTI_SCALE_B
       IF (.not.allocated(HdecayB)) THEN
         allocate ( HdecayB(MstateVar,4,Ngrids) )
         Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar*Ngrids,r8)
       END IF
-# endif
 
       IF (.not.allocated(VdecayB)) THEN
         allocate ( VdecayB(MstateVar,4,Ngrids) )
@@ -4732,7 +4730,6 @@
 # ifndef MULTI_SCALE_B
       Hdecay=IniVal
 # endif
-      Hdecay=IniVal
       Tdecay=IniVal
       Vdecay=IniVal
 
