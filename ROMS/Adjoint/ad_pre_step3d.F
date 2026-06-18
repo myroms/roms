@@ -2486,18 +2486,20 @@
 !  above.
 !
       IF (bot_albedo(ng).ne.0.0_r8) THEN
-        DO k=N(ng),0,-1 
+!^      DO k=N(ng),0,-1
+!^
+        DO k=0,N(ng)
           DO j=Jstr,Jend                                                 
             DO i=Istr,Iend
               FX(i,j)=z_w(i,j,k)-z_w(i,j,0)  !  distance above seafloor
 !^            tl_swdk(i,j,k)=tl_swdk(i,j,k)-                            &
-!^   &                        bot_albedo(ng)*                           &
-!^   &                        (tl_swdk(i,j,0)*FE(i,j)+                  &
-!^   &                         swdk(i,j,0)*tl_FE(i,j))
+!^   &                       bot_albedo(ng)*                            &
+!^   &                       (tl_swdk(i,j,0)*FE(i,j)+                   &
+!^   &                        swdk(i,j,0)*tl_FE(i,j))
 !^
               adfac=-bot_albedo(ng)*ad_swdk(i,j,k)
-              ad_FE(i,j)=ad_FE(i,j)+adfac
-              ad_swdk(i,j,0)=ad_swdk(i,j,0)+adfac*swdk(i,j,k)
+              ad_FE(i,j)=ad_FE(i,j)+adfac*swdk(i,j,0)
+              ad_swdk(i,j,0)=ad_swdk(i,j,0)+adfac*FE(i,j)
             END DO
           END DO
 !

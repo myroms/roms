@@ -1235,6 +1235,11 @@
         integer, allocatable :: Hcount(:)
 #endif
 !
+!  State variable names. The associated with the state variable metadata
+!  indices, and are specified in "mod_necparam".
+!
+        character (len=40), allocatable :: StateVarName(:)
+!
 !-----------------------------------------------------------------------
 !  Adjoint sensitivity parameters.
 !-----------------------------------------------------------------------
@@ -1288,7 +1293,6 @@
 # if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
         character (len=40), allocatable :: BscaleVarName(:)
 # endif
-        character (len=40), allocatable :: StateVarName(:)
 !
 !  Logical switch to compute initial conditions, model and surface
 !  forcing error covariance normalization factors.
@@ -3216,6 +3220,10 @@
       END IF
 #endif
 
+      IF (.not.allocated(StateVarName)) THEN
+        allocate ( StateVarName(MstateVar) )
+      END IF
+
       IF (.not.allocated(KstrS)) THEN
         allocate ( KstrS(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3256,10 +3264,6 @@
 #endif
 
 #if defined FOUR_DVAR || defined VERIFICATION
-
-      IF (.not.allocated(StateVarName)) THEN
-        allocate ( StateVarName(MstateVar) )
-      END IF
 
 # if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
       IF (.not.allocated(BscaleVarName)) THEN

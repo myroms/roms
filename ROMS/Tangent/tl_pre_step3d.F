@@ -458,28 +458,27 @@
             END DO
           END DO
 !
-!^        CALL lmd_swfrac_tile (ng, tile,                               &
-!^   &                          LBi, UBi, LBj, UBj,                     &
-!^   &                          IminS, ImaxS, JminS, JmaxS,             &
-!^   &                          -1.0_r8, FX, FE)                         
-!^
+!  Get BASIC STATE value of FE.
+!
+          CALL lmd_swfrac_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          -1.0_r8, FX, FE)
+!
           CALL tl_lmd_swfrac_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             -1.0_r8, FX, tl_FX, tl_FE)
 !
-!  For the BASIC STATE in the quadratic term, use "FE(i,j)=swdk(i,j,k)",
-!  as computed in the regular section above.
-!
           DO j=Jstr,Jend                                                 
             DO i=Istr,Iend
-!^             swdk(i,j,k)=swdk(i,j,k)-                                 &
-!^   &                     bot_albedo(ng)*swdk(i,j,0)*FE(i,j)
+!^            swdk(i,j,k)=swdk(i,j,k)-                                  &
+!^   &                    bot_albedo(ng)*swdk(i,j,0)*FE(i,j)
 !^
-               tl_swdk(i,j,k)=tl_swdk(i,j,k)-                           &
-     &                        bot_albedo(ng)*                           &
-     &                        (tl_swdk(i,j,0)*swdk(i,j,k)+              &
-     &                         swdk(i,j,0)*tl_FE(i,j))
+              tl_swdk(i,j,k)=tl_swdk(i,j,k)-                            &
+     &                       bot_albedo(ng)*                            &
+     &                       (tl_swdk(i,j,0)*FE(i,j)+                   &
+     &                        swdk(i,j,0)*tl_FE(i,j))
             END DO
           END DO
         END DO

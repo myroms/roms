@@ -1082,73 +1082,62 @@
             LREAD_CORRELATION : IF (foundit) THEN
               SELECT CASE (TRIM(Cname))
                 CASE ('zeta_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%zeta_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%zeta_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%rmask
 #  endif
                 CASE ('ubar_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%ubar_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%ubar_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%umask
 #  endif
                 CASE ('vbar_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%vbar_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%vbar_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%vmask
 #  endif
 #  ifdef ADJUST_WSTRESS
                 CASE ('sustr_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%sustr_Bcorr(is:ie,    &
-     &                                                        js:je,    &
-     &                                                        1:2,ns)
+                  Bscale(is:,js:,1:) => self%sustr_Bcorr(is:ie,js:je,   &
+     &                                                   1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%umask
 #   endif
                 CASE ('svstr_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%svstr_Bcorr(is:ie,    &
-     &                                                        js:je,    &
-     &                                                        1:2,ns)
+                  Bscale(is:,js:,1:) => self%svstr_Bcorr(is:ie,js:je,   &
+     &                                                   1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%vmask
 #   endif
 #  endif
 #  ifdef SOLVE3D
                 CASE ('u_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%u_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns)
+                  Bscale(is:,js:,1:) => self%u_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%umask
 #   endif
                 CASE ('v_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%v_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns)
+                  Bscale(is:,js:,1:) => self%v_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%vmask
 #   endif
                 CASE ('temp_Bcorr', 'salt_Bcorr')
                   itrc = tracer_index(TRIM(Cname))
-                  Bscale(is:ie,js:je,1:2) => self%t_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns,       &
-     &                                                    itrc)
+                  Bscale(is:,js:,1:) => self%t_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns,itrc)
 #   ifdef MASKING
                   mask => GRID(ng)%rmask
 #   endif
 #   ifdef ADJUST_STFLUX
                 CASE ('shflux_Bcorr', 'ssflux_Bcorr')
                   itrc = tracer_index(TRIM(Cname))
-                  Bscale(is:ie,js:je,1:2) => self%stflux_Bcorr(is:ie,   &
-     &                                                         js:je,   &
-     &                                                         1:2,ns,  &
-     &                                                         itrc)
+                  Bscale(is:,js:,1:) => self%stflux_Bcorr(is:ie,js:je,  &
+     &                                                    1:2,ns,itrc)
 #    ifdef MASKING
                   mask => GRID(ng)%rmask
 #    endif
