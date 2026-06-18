@@ -580,18 +580,21 @@
 !
 !  Allocate the maximum and minimum eigenvalues of the K-Laplacian.
 !
+      nullify (self % zeta_eigen)
       IF (.not.associated(self % zeta_eigen)) THEN
         allocate ( self % zeta_eigen(Mlap,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % zeta_eigen = IniVal
       END IF
 !
+      nullify (self % ubar_eigen)
       IF (.not.associated(self % ubar_eigen)) THEN
         allocate ( self % ubar_eigen(Mlap,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % ubar_eigen = IniVal
       END IF
 !
+      nullify (self % vbar_eigen)
       IF (.not.associated(self % vbar_eigen)) THEN
         allocate ( self % vbar_eigen(Mlap,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
@@ -600,12 +603,14 @@
 
 # ifdef ADJUST_WSTRESS
 !
+      nullify (self % sustr_eigen)
       IF (.not.associated(self % sustr_eigen)) THEN
         allocate ( self % sustr_eigen(Mlap,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
         self % sustr_eigen = IniVal
       END IF
 !
+      nullify (self % svstr_eigen)
       IF (.not.associated(self % svstr_eigen)) THEN
         allocate ( self % svstr_eigen(Mlap,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2,r8)
@@ -615,18 +620,21 @@
 
 # ifdef SOLVE3D
 !
+      nullify (self % u_eigen)
       IF (.not.associated(self % u_eigen)) THEN
         allocate ( self % u_eigen(Mlap,N(ng),Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2,r8)
         self % u_eigen = IniVal
       END IF
 !
+      nullify (self % v_eigen)
       IF (.not.associated(self % v_eigen)) THEN
         allocate ( self % v_eigen(Mlap,N(ng),Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2,r8)
         self % v_eigen = IniVal
       END IF
 !
+      nullify (self % t_eigen)
       IF (.not.associated(self % t_eigen)) THEN
         allocate ( self % t_eigen(Mlap,N(ng),Nscale(ng),2,NT(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*Nscale(ng)*2*NT(ng),r8)
@@ -635,6 +643,7 @@
 
 #  ifdef ADJUST_STFLUX
 !
+      nullify (self % stflux_eigen)
       IF (.not.associated(self % stflux_eigen)) THEN
         allocate ( self % stflux_eigen(Mlap,Nscale(ng),2,NT(ng)) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*Nscale(ng)*2*NT(ng),r8)
@@ -645,18 +654,21 @@
 
 # ifdef ADJUST_BOUNDARY
 !
+      nullify (self % zeta_obc_eigen)
       IF (.not.associated(self % zeta_obc_eigen)) THEN
         allocate ( self % zeta_obc_eigen(Mlap,4,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
         self % zeta_obc_eigen = IniVal
       END IF
 !
+      nullify (self % ubar_obc_eigen)
       IF (.not.associated(self % ubar_obc_eigen)) THEN
         allocate ( self % ubar_obc_eigen(Mlap,4,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
         self % ubar_obc_eigen = IniVal
       END IF
 !
+      nullify (self % vbar_obc_eigen)
       IF (.not.associated(self % vbar_obc_eigen)) THEN
         allocate ( self % vbar_obc_eigen(Mlap,4,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*4*Nscale(ng)*2,r8)
@@ -665,18 +677,21 @@
 
 #  ifdef SOLVE3D
 !
+      nullify (self % u_obc_eigen)
       IF (.not.associated(self % u_obc_eigen)) THEN
         allocate ( self % u_obc_eigen(Mlap,N(ng),4,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*4*Nscale(ng)*2,r8)
         self % u_obc_eigen = IniVal
       END IF
 !
+      nullify (self % v_obc_eigen)
       IF (.not.associated(self % v_obc_eigen)) THEN
         allocate ( self % v_obc_eigen(Mlap,N(ng),4,Nscale(ng),2) )
         Dmem(ng)=Dmem(ng)+REAL(Mlap*N(ng)*4*Nscale(ng)*2,r8)
         self % v_obc_eigen = IniVal
       END IF
 !
+      nullify (self % t_obc_eigen)
       IF (.not.associated(self % t_obc_eigen)) THEN
         allocate ( self % t_obc_eigen(Mlap,N(ng),4,Nscale(ng),2,        &
      &                                NT(ng)) )
@@ -882,18 +897,21 @@
 !  Spatially varying isotropic or anisotropic horizontal Daley length
 !  scales.
 !
+      nullify (self % zeta_Bcorr)
       IF (.not.associated(self % zeta_Bcorr)) THEN
         allocate ( self % zeta_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
         self % zeta_Bcorr = IniVal
       END IF
 !
+      nullify (self % ubar_Bcorr)
       IF (.not.associated(self % ubar_Bcorr)) THEN
         allocate ( self % ubar_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
         self % ubar_Bcorr = IniVal
       END IF
 !
+      nullify (self % vbar_Bcorr)
       IF (.not.associated(self % vbar_Bcorr)) THEN
         allocate ( self % vbar_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
@@ -902,12 +920,14 @@
 
 #  ifdef ADJUST_WSTRESS
 !
+      nullify (self % sustr_Bcorr)
       IF (.not.associated(self % sustr_Bcorr)) THEN
         allocate ( self % sustr_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
         self % sustr_Bcorr = IniVal
       END IF
 !
+      nullify (self % svstr_Bcorr)
       IF (.not.associated(self % svstr_Bcorr)) THEN
         allocate ( self % svstr_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
@@ -917,18 +937,21 @@
 
 #  ifdef SOLVE3D
 !
+      nullify (self % u_Bcorr)
       IF (.not.associated(self % u_Bcorr)) THEN
         allocate ( self % u_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
         self % u_Bcorr = IniVal
       END IF
 !
+      nullify (self % v_Bcorr)
       IF (.not.associated(self % v_Bcorr)) THEN
         allocate ( self % v_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng)) )
         Dmem(ng)=Dmem(ng)+size2d*REAL(2*Nscale(ng),r8)
         self % v_Bcorr = IniVal
       END IF
 !
+      nullify (self % t_Bcorr)
       IF (.not.associated(self % t_Bcorr)) THEN
         allocate ( self % t_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng),         &
      &                            NT(ng)) )
@@ -938,6 +961,7 @@
 
 #   ifdef ADJUST_STFLUX
 !
+      nullify (self % stflux_Bcorr)
       IF (.not.associated(self % stflux_Bcorr)) THEN
         allocate ( self % stflux_Bcorr(LBi:UBi,LBj:UBj,2,Nscale(ng),    &
      &                                 NT(ng)) )
@@ -1082,73 +1106,62 @@
             LREAD_CORRELATION : IF (foundit) THEN
               SELECT CASE (TRIM(Cname))
                 CASE ('zeta_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%zeta_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%zeta_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%rmask
 #  endif
                 CASE ('ubar_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%ubar_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%ubar_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%umask
 #  endif
                 CASE ('vbar_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%vbar_Bcorr(is:ie,     &
-     &                                                       js:je,     &
-     &                                                       1:2,ns)
+                  Bscale(is:,js:,1:) => self%vbar_Bcorr(is:ie,js:je,    &
+     &                                                  1:2,ns)
 #  ifdef MASKING
                   mask => GRID(ng)%vmask
 #  endif
 #  ifdef ADJUST_WSTRESS
                 CASE ('sustr_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%sustr_Bcorr(is:ie,    &
-     &                                                        js:je,    &
-     &                                                        1:2,ns)
+                  Bscale(is:,js:,1:) => self%sustr_Bcorr(is:ie,js:je,   &
+     &                                                   1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%umask
 #   endif
                 CASE ('svstr_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%svstr_Bcorr(is:ie,    &
-     &                                                        js:je,    &
-     &                                                        1:2,ns)
+                  Bscale(is:,js:,1:) => self%svstr_Bcorr(is:ie,js:je,   &
+     &                                                   1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%vmask
 #   endif
 #  endif
 #  ifdef SOLVE3D
                 CASE ('u_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%u_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns)
+                  Bscale(is:,js:,1:) => self%u_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%umask
 #   endif
                 CASE ('v_Bcorr')
-                  Bscale(is:ie,js:je,1:2) => self%v_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns)
+                  Bscale(is:,js:,1:) => self%v_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns)
 #   ifdef MASKING
                   mask => GRID(ng)%vmask
 #   endif
                 CASE ('temp_Bcorr', 'salt_Bcorr')
                   itrc = tracer_index(TRIM(Cname))
-                  Bscale(is:ie,js:je,1:2) => self%t_Bcorr(is:ie,        &
-     &                                                    js:je,        &
-     &                                                    1:2,ns,       &
-     &                                                    itrc)
+                  Bscale(is:,js:,1:) => self%t_Bcorr(is:ie,js:je,       &
+     &                                               1:2,ns,itrc)
 #   ifdef MASKING
                   mask => GRID(ng)%rmask
 #   endif
 #   ifdef ADJUST_STFLUX
                 CASE ('shflux_Bcorr', 'ssflux_Bcorr')
                   itrc = tracer_index(TRIM(Cname))
-                  Bscale(is:ie,js:je,1:2) => self%stflux_Bcorr(is:ie,   &
-     &                                                         js:je,   &
-     &                                                         1:2,ns,  &
-     &                                                         itrc)
+                  Bscale(is:,js:,1:) => self%stflux_Bcorr(is:ie,js:je,  &
+     &                                                    1:2,ns,itrc)
 #    ifdef MASKING
                   mask => GRID(ng)%rmask
 #    endif
@@ -1194,12 +1207,13 @@
 !
 !  Exchange boundary data.
 
-      CALL mp_exchange3d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj, 1, 2,                     &
-     &                    NghostPoints,                                 &
-     &                    EWperiodic(ng), NSperiodic(ng),               &
-     &                    Bscale)
+              CALL mp_exchange3d (ng, tile, model, 1,                   &
+     &                            LBi, UBi, LBj, UBj, 1, 2,             &
+     &                            NghostPoints,                         &
+     &                            EWperiodic(ng), NSperiodic(ng),       &
+     &                            Bscale)
 #  endif
+              nullify (Bscale)
             END IF LREAD_CORRELATION
           END DO MS_LOOP
         END IF

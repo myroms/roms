@@ -50,9 +50,9 @@
       integer :: Ivalue(1)
 !
       integer :: Nfiles(Ngrids)
-      integer :: delta(3,Ngrids)
+      integer :: delta2(2,Ngrids), delta3(3,Ngrids)
 # ifdef SOLVE3D
-      integer :: deltaT(3,MT,Ngrids)
+      integer :: delta2T(2,MT,Ngrids), delta3T(3,MT,Ngrids)
 # endif
 # ifdef MULTI_SCALE_B
       integer, allocatable :: Miter(:,:)
@@ -115,9 +115,11 @@
       Clen=LEN(Cval(1))
       Rdim=SIZE(Rval,1)
       Nval=0
-      delta=0
+      delta2=0
+      delta3=0
 # ifdef SOLVE3D
-      deltaT=0
+      delta2T=0
+      delta3T=0
 # endif 
 !
 !  Set NetCDF library to process reading and writing the observation
@@ -403,76 +405,76 @@
               Npts=load_i(Nval, Rval, 1, Ivalue)
               Nrandom=Ivalue(1)
             CASE ('Dirac(isFsur)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
-                  Dirac(i,isFsur,ng)=delta(i,ng)
+                  Dirac(i,isFsur,ng)=delta2(i,ng)
                 END DO
               END DO            
             CASE ('Dirac(isUbar)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta) 
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2) 
               DO ng=1,Ngrids
                 DO i=1,2
-                  Dirac(i,isUbar,ng)=delta(i,ng)
+                  Dirac(i,isUbar,ng)=delta2(i,ng)
                 END DO
               END DO            
             CASE ('Dirac(isVbar)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
-                  Dirac(i,isVbar,ng)=delta(i,ng)
+                  Dirac(i,isVbar,ng)=delta2(i,ng)
                 END DO
               END DO            
 #  ifdef SOLVE3D
             CASE ('Dirac(isUvel)')
-              Npts=load_i(Nval, Rval, 3, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
               DO ng=1,Ngrids
                 DO i=1,3
-                  Dirac(i,isUvel,ng)=delta(i,ng)
+                  Dirac(i,isUvel,ng)=delta3(i,ng)
                 END DO
               END DO            
             CASE ('Dirac(isVvel)')
-              Npts=load_i(Nval, Rval, 3, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
               DO ng=1,Ngrids
                 DO i=1,3
-                  Dirac(i,isVvel,ng)=delta(i,ng)
+                  Dirac(i,isVvel,ng)=delta3(i,ng)
                 END DO
               END DO            
             CASE ('Dirac(isTvar)')
-              Npts=load_i(Nval, Rval, 3, MT, Ngrids, deltaT)
+              Npts=load_i(Nval, Rval, 3, MT, Ngrids, delta3T)
               DO ng=1,Ngrids
                 DO itrc=1,NT(ng)
                   k=isTvar(itrc)
                   DO i=1,3
-                    Dirac(i,k,ng)=deltaT(i,itrc,ng)
+                    Dirac(i,k,ng)=delta3T(i,itrc,ng)
                   END DO
                 END DO
               END DO
 #  endif
 #  ifdef ADJUST_WSTRESS
             CASE ('Dirac(isUstr)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
-                  Dirac(i,isUstr,ng)=delta(i,ng)
+                  Dirac(i,isUstr,ng)=delta2(i,ng)
                 END DO
               END DO            
             CASE ('Dirac(isVstr)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta)
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
-                  Dirac(i,isVstr,ng)=delta(i,ng)
+                  Dirac(i,isVstr,ng)=delta2(i,ng)
                 END DO
               END DO            
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
             CASE ('Dirac(isTsur)')
-              Npts=load_i(Nval, Rval, 2, MT, Ngrids, deltaT)
+              Npts=load_i(Nval, Rval, 2, MT, Ngrids, delta2T)
               DO ng=1,Ngrids
                 DO itrc=1,NT(ng)
                   k=isTsur(itrc)
                   DO i=1,2
-                    Dirac(i,k,ng)=deltaT(i,itrc,ng)
+                    Dirac(i,k,ng)=delta2T(i,itrc,ng)
                   END DO
                 END DO
               END DO

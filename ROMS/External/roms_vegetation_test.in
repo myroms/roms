@@ -403,6 +403,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Various parameters.
 
        WTYPE == 1
+  BOT_ALBEDO == 0.0d0
      LEVSFRC == 15
      LEVBFRC == 1
 
@@ -2113,6 +2114,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                8         5        Black Sea
 !                9         7        Dark coastal water
 !
+! BOT_ALBEDO   Bottom albedo coefficient (nondimensional): fraction of
+!                downward solar radiation at the seabed that is reflected.
+!                The length scales of upward absorption follow Jerlov water
+!                type. The unreflected fraction is absorbed by the bed
+!                (effectively modifying bottom tracer flux).
+!
 !------------------------------------------------------------------------------
 ! Body-force parameters. Used when CPP option BODYFORCE is activated.
 !------------------------------------------------------------------------------
@@ -2789,7 +2796,8 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Hout(idMtke)   Write out turbulent kinetic energy.
 ! Hout(idMtls)   Write out turbulent kinetic energy times length scale.
 !
-! Hout(inert)    Write out extra inert passive tracers.
+! Hout(inert)    Write out inert passive tracers.
+! Hout(Znert)    Write out inert passive tracers constant depth slices.
 !
 !------------------------------------------------------------------------------
 ! Logical switches (T/F) to activate writing of instantaneous fields into
@@ -2910,6 +2918,7 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Qout(idMtls)   Write out turbulent kinetic energy times length scale.
 !
 ! Qout(inert)    Write out inert passive tracers.
+! Qout(Znert)    Write out inert passive tracers constant depth slices.
 ! Qout(Snert)    Write out surface inert passive tracers.
 !
 !------------------------------------------------------------------------------
@@ -3084,7 +3093,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M2zetw)   Write out 2D quasi-static sea level adjustment.
 ! Dout(M2zqsp)   Write out 2D quasi-static sea level pressure adjustment.
 ! Dout(M2zbeh)   Write out 2D Bernoulli head adjustment.
-! Dout(M2fveg)   Write out 2D submerged aquatic vegetation drag force.
 !
 ! Dout(M3hjvf)   Write out 3D horizontal J vortex force.
 ! Dout(M3vjvf)   Write out 3D vertical J vortex force.
@@ -3094,7 +3102,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M3bstm)   Write out 3D bottom streaming.
 ! Dout(M3wrol)   Write out 3D wave roller acceleration.
 ! Dout(M3wbrk)   Write out 3D wave breaking.
-! Dout(M3fveg)   Write out 3D submerged aquatic vegetation drag force.
 !
 ! Time-averaged, active (temperature and salinity) and passive (inert) tracer
 ! diagnostic terms, [1:NAT+NPT,Ngrids] values expected:
@@ -3167,19 +3174,15 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !
 ! The ROMS input and output NetCDF files can be processed using the standard
 ! NetCDF library developed by UNIDATA, the Parallel-IO (PIO) library developed
-! at NCAR, or the SCORPIO library available in E3SM (Sreepathi et al., 2013;
-! doi:10.1109/HiPC.2013.6799128). The SCORPIO library was forked from the PIO
-! library several years ago, and they have evolved separately. In addition to
-! the standard NetCDF library, ROMS can be compiled with either the PIO or
-! SCORPIO libraries. Check  www.myroms.org/wiki/External_Libraries  for more
-! information on how to obtain and install these libraries. The user has the
-! choice to select which library is used to process input and output NetCDF
-! files. For parallel I/O, we recommend using the PIO library because it is
-! more efficient than the SCORPIO library in our benchmark tests.
+! at NCAR. In addition to the standard NetCDF library, ROMS can be compiled
+! with either the PIO library. Check  www.myroms.org/wiki/External_Libraries
+! for more information on how to obtain and install these libraries. The user
+! has the choice to select which library is used to process input and output
+! NetCDF files. For parallel I/O, we recommend using the PIO library because
+! it is more efficient than other options in ROMS.
 !
-! The Parallel I/O using the PIO or SCORPIO libraries is restricted to
-! distributed-memory applications because it uses MPI-IO implementations
-! like ROMIO.
+! The Parallel I/O using the PIO library is restricted to distributed-memory
+! applications because it uses MPI-IO implementations like ROMIO.
 !
 ! * ROMS Input and Output NetCDF library to use flag: [1 or 2]
 !
@@ -3566,6 +3569,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! FPOSNAM      Input initial drifters positions filename.
 ! BPARNAM      Input biological parameters filename.
 ! SPARNAM      Input sediment transport parameters filename.
-! VEGNAME      Input vegetation file name.
+! VEGNAME      Input vegetation filename.
 ! USRNAME      USER's input generic filename.
 !

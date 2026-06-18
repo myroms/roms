@@ -407,6 +407,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Various parameters.
 
        WTYPE == 4
+  BOT_ALBEDO == 0.0d0
      LEVSFRC == 40
      LEVBFRC == 1
 
@@ -2127,6 +2128,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                8         5        Black Sea
 !                9         7        Dark coastal water
 !
+! BOT_ALBEDO   Bottom albedo coefficient (nondimensional): fraction of
+!                downward solar radiation at the seabed that is reflected.
+!                The length scales of upward absorption follow Jerlov water
+!                type. The unreflected fraction is absorbed by the bed
+!                (effectively modifying bottom tracer flux).
+!
 !------------------------------------------------------------------------------
 ! Body-force parameters. Used when CPP option BODYFORCE is activated.
 !------------------------------------------------------------------------------
@@ -3100,7 +3107,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M2zetw)   Write out 2D quasi-static sea level adjustment.
 ! Dout(M2zqsp)   Write out 2D quasi-static sea level pressure adjustment.
 ! Dout(M2zbeh)   Write out 2D Bernoulli head adjustment.
-! Dout(M2fsgr)   Write out 2D seagrass drag force.
 !
 ! Dout(M3hjvf)   Write out 3D horizontal J vortex force.
 ! Dout(M3vjvf)   Write out 3D vertical J vortex force.
@@ -3110,7 +3116,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! Dout(M3bstm)   Write out 3D bottom streaming.
 ! Dout(M3wrol)   Write out 3D wave roller acceleration.
 ! Dout(M3wbrk)   Write out 3D wave breaking.
-! Dout(M3fsgr)   Write out 3D seagrass drag force.
 !
 ! Time-averaged, active (temperature and salinity) and passive (inert) tracer
 ! diagnostic terms, [1:NAT+NPT,Ngrids] values expected:
@@ -3578,5 +3583,6 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 ! FPOSNAM      Input initial drifters positions filename.
 ! BPARNAM      Input biological parameters filename.
 ! SPARNAM      Input sediment transport parameters filename.
+! VEGNAME      Input vegetation filename.
 ! USRNAME      USER's input generic filename.
 !

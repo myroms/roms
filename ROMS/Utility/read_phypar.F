@@ -973,6 +973,8 @@
               Npts=load_r(Nval, Rval, Ngrids, Dcrit)
             CASE ('WTYPE')
               Npts=load_i(Nval, Rval, Ngrids, lmd_Jwt)
+            CASE ('BOT_ALBEDO')
+              Npts=load_r(Nval, Rval, Ngrids, bot_albedo)
             CASE ('LEVSFRC')
               Npts=load_i(Nval, Rval, Ngrids, levsfrc)
             CASE ('LEVBFRC')
@@ -5562,6 +5564,10 @@
             exit_flag=5
             RETURN
           END IF
+# endif
+# ifdef BOTTOM_ALBEDO
+          WRITE (out,200) bot_albedo(ng), 'bot_albedo',                 &
+     &          'Bottom albedo coefficient (nondimensional).'
 # endif
 # ifdef BODYFORCE
           WRITE (out,130) levsfrc(ng), 'levsfrc',                       &
