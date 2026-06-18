@@ -3530,8 +3530,8 @@
       StateVarName(isVstr)=TRIM(Vname(1,idSvar(isVstr)))
 #endif
 #ifdef SOLVE3D
-# if defined ADJUST_STFLUX  || defined FORCING_SV     || \
-     defined HESSIAN_FSV    || defined SO_SEMI        || \
+# if defined ADJUST_STFLUX  || defined FORCING_SV    || \
+     defined HESSIAN_FSV    || defined SO_SEMI       || \
      defined STOCHASTIC_OPT
       DO i=1,MT
         StateVarName(isTsur(i))=TRIM(Vname(1,idSvar(isTsur(i))))

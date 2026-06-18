@@ -406,6 +406,7 @@ LtracerSponge == F F                            ! temperature, salinity, inert
 ! Various parameters.
 
        WTYPE == 1
+  BOT_ALBEDO == 0.0d0
      LEVSFRC == 15
      LEVBFRC == 1
 
@@ -2117,6 +2118,12 @@ PIO_I2C_Preq = 65                 ! Maximum pending I2C requests
 !                7         3        Baltic
 !                8         5        Black Sea
 !                9         7        Dark coastal water
+!
+! BOT_ALBEDO   Bottom albedo coefficient (nondimensional): fraction of
+!                downward solar radiation at the seabed that is reflected.
+!                The length scales of upward absorption follow Jerlov water
+!                type. The unreflected fraction is absorbed by the bed
+!                (effectively modifying bottom tracer flux).
 !
 !------------------------------------------------------------------------------
 ! Body-force parameters. Used when CPP option BODYFORCE is activated.
