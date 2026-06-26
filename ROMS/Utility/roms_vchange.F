@@ -54,19 +54,19 @@
 !  treated as a new array expression that destroys the original
 !  parallel decomposition
 !
-        real (r8), allocatable :: field2d(:,:)
+        real (r8), pointer :: field2d(:,:)   => NULL()
 # ifdef SOLVE3D
-        real (r8), allocatable :: field3d(:,:,:)
+        real (r8), pointer :: field3d(:,:,:) => NULL()
 # endif
 # ifdef SOLVE3D
 !
 !  Generic A-grid and C-grid vector components.
 !
-        real (r8), allocatable :: Ua(:,:,:)
-        real (r8), allocatable :: Va(:,:,:)
+        real (r8), pointer :: Ua(:,:,:)      => NULL()
+        real (r8), pointer :: Va(:,:,:)      => NULL()
 !
-        real (r8), allocatable :: Uc(:,:,:)
-        real (r8), allocatable :: Vc(:,:,:)
+        real (r8), pointer :: Uc(:,:,:)      => NULL()
+        real (r8), pointer :: Vc(:,:,:)      => NULL()
 # endif
 !
         CONTAINS
@@ -125,11 +125,9 @@
 !
 !  It allocates the variable change object.
 !
-      SUBROUTINE vchange_initialize (model)
+      SUBROUTINE vchange_initialize
 !
-      integer,          intent(in   ) :: model      ! kernel identifier
-!
-!  Allocate varible changes object
+!  Allocate variable changes object.
 !
       IF (.not.allocated(VarCha)) THEN
         allocate ( VarCha(Ngrids) )
@@ -148,13 +146,13 @@
 !
 !  Deallocate generic arrays.
 !
-      IF (allocated(VarCha(ng)%field2d)) deallocate (VarCha(ng)%field2d)
+      IF (associated(VarCha(ng)%field2d)) nullify (VarCha(ng)%field2d)
 # ifdef SOLVE3D
-      IF (allocated(VarCha(ng)%field3d)) deallocate (VarCha(ng)%field3d)
-      IF (allocated(VarCha(ng)%Ua))      deallocate (VarCha(ng)%Ua)
-      IF (allocated(VarCha(ng)%Va))      deallocate (VarCha(ng)%Va)
-      IF (allocated(VarCha(ng)%Uc))      deallocate (VarCha(ng)%Uc)
-      IF (allocated(VarCha(ng)%Vc))      deallocate (VarCha(ng)%Vc)
+      IF (associated(VarCha(ng)%field3d)) nullify (VarCha(ng)%field3d)
+      IF (associated(VarCha(ng)%Ua))      nullify (VarCha(ng)%Ua)
+      IF (associated(VarCha(ng)%Va))      nullify (VarCha(ng)%Va)
+      IF (associated(VarCha(ng)%Uc))      nullify (VarCha(ng)%Uc)
+      IF (associated(VarCha(ng)%Vc))      nullify (VarCha(ng)%Vc)
 # endif
 !
 !  Nullify pointers.
@@ -183,31 +181,32 @@
       integer,            intent(in   ) :: model    ! kernel identifier
       character (len=*),  intent(in   ) :: varname  ! state variable
 !
-      integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: i, itrc, j, k, nz
+      integer                           :: is, ie, js, je, ks, ke
+      integer                           :: itrc, nz
 !
       real (r8),    target, allocatable :: field(:,:,:)
       real (r8),            allocatable :: Zeven(:)
 !
 !  Initialize.
 !
-      LBi=BOUNDS(ng)%LBi(tile)
-      UBi=BOUNDS(ng)%UBi(tile)
-      LBj=BOUNDS(ng)%LBj(tile)
-      UBj=BOUNDS(ng)%UBj(tile)
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
 !
 !  Set generic variable change array, VarCha%field2d, for the state
 !  variable associated with the observations. Then, compute the 
 !  appropriate variable change(s), if any. Otherwise, the default is
 !  the identity operator.
 !
-      IF (allocated(self%field2d)) deallocate (self%field2d)
 # ifdef SOLVE3D
       IF (TRIM(varname).eq.'Ucodar') THEN
-        IF (allocated(self%Ua)) deallocate (self%Ua)
-        IF (allocated(self%Va)) deallocate (self%Va)
-        IF (allocated(self%Uc)) deallocate (self%Uc)
-        IF (allocated(self%Vc)) deallocate (self%Vc)
+        self%Ua => NULL()
+        self%Va => NULL()
+        self%Uc => NULL()
+        self%Vc => NULL()
       END IF
 # endif
 !
@@ -215,37 +214,23 @@
 !
         CASE ('adt', 'ssh', 'ADT', 'SSH')
 !
-          allocate ( self%field2d(LBi:UBi, LBj:UBj) )
+          self%field2d => NULL()
 !
           IF (model.eq.iNLM) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%zeta(i,j,KOUT)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%zeta(is:ie,js:je,        &
+     &                                              KOUT)
 # ifdef ADJOINT
           ELSE IF (model.eq.iADM) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%f_zeta(i,j)
-              END DO
-            END DO
+            self%field2d => OCEAN(ng)%f_zeta
 # endif
 # ifdef TLM_OBS
           ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%tl_zeta(i,j,KOUT)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%tl_zeta(is:ie,js:je,     &
+     &                                                 KOUT)
 # endif
 # ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%e_zeta(i,j,1)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%e_zeta(is:ie,js:je,1)
 # endif
           END IF
 
@@ -253,77 +238,57 @@
 !
         CASE ('sss', 'sst', 'SSS', 'SST')
 !
-          allocate ( self%field2d(LBi:UBi, LBj:UBj) )
+          self%field2d => NULL()
 !
           itrc=tracer_index(varname)
           IF (model.eq.iNLM) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%t(i,j,N(ng),NOUT,itrc)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%t(is:ie,js:je,           &
+     &                                           N(ng),NOUT,itrc)
 #  ifdef ADJOINT
           ELSE IF (model.eq.iADM) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%f_t(i,j,N(ng),itrc)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%f_t(is:ie,js:je,         &
+     &                                             N(ng),itrc)
 #  endif
 #  ifdef TLM_OBS
           ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%tl_t(i,j,N(ng),NOUT,itrc)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%tl_t(is:ie,js:je,        &
+     &                                              N(ng),NOUT,itrc)
 #  endif
 #  ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
-            DO j=LBj,UBj
-              DO i=LBi,UBi
-                self%field2d(i,j)=OCEAN(ng)%e_t(i,j,N(ng),1,itrc)
-              END DO
-            END DO
+            self%field2d(is:,js:) => OCEAN(ng)%e_t(is:ie,js:je,         &
+     &                                             N(ng),1,itrc)
 #  endif
           END IF
 !
         CASE ('Ucodar', 'Vcodar')
 !
-          allocate ( self%field2d(LBi:UBi, LBj:UBj) )
+          self%field2d => NULL()
 !
 !  Transform u- and v-momentum component from C-grid to A-grid. The
 !  A-grid velocities are computed once during the "Ucodar" case.
 !
           IF (TRIM(varname).eq.'Ucodar') THEN
 !
-            allocate ( self%Ua(LBi:UBi, LBj:UBj, N(ng)) )
-            allocate ( self%Va(LBi:UBi, LBj:UBj, N(ng)) )
-            allocate ( self%Uc(LBi:UBi, LBj:UBj, N(ng)) )
-            allocate ( self%Vc(LBi:UBi, LBj:UBj, N(ng)) )
+            self%Ua => NULL()
+            self%Va => NULL()
+            allocate ( self%Ua(is:ie, js:je, ks:ke) )
+            allocate ( self%Va(is:ie, js:je, ks:ke) )
 !
-            self%Ua=0.0_r8
-            self%Va=0.0_r8
+            self%Uc => NULL()
+            self%Vc => NULL()
 !
             IF (model.eq.iNLM) THEN
-              DO k=1,N(ng)
-                DO j=LBj,UBj
-                  DO i=LBi,UBi
-                    self%Uc(i,j,k)=OCEAN(ng)%u(i,j,k,NOUT)
-                    self%Vc(i,j,k)=OCEAN(ng)%v(i,j,k,NOUT)
-                  END DO
-                END DO
-              END DO
+              self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%u(is:ie,js:je,       &
+     &                                               ks:ke,NOUT)
+              self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%v(is:ie,js:je,       &
+     &                                               ks:ke,NOUT)
 #  ifdef TLM_OBS
             ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-              DO k=1,N(ng)
-                DO j=LBj,UBj
-                  DO i=LBi,UBi
-                    self%Uc(i,j,k)=OCEAN(ng)%tl_u(i,j,k,NOUT)
-                    self%Vc(i,j,k)=OCEAN(ng)%tl_v(i,j,k,NOUT)
-                  END DO
-                END DO
-              END DO
+              self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_u(is:ie,js:je,    &
+     &                                                  ks:ke,NOUT)
+              self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_v(is:ie,js:je,    &
+     &                                                  ks:ke,NOUT)
 #  endif
             END IF
             CALL self%uv_c2a (ng, tile, model)
@@ -334,7 +299,7 @@
           nz=1
 !
           IF (.not.allocated(field)) THEN
-            allocate ( field(LBi:UBi, LBj:UBj, nz) )
+            allocate ( field(is:ie, js:je, nz) )
             field=0.0_r8
           END IF
           IF (.not.allocated(Zeven)) THEN
@@ -346,22 +311,18 @@
             self%mask  => GRID(ng)%rmask
             self%depth => GRID(ng)%z_r
             CALL self%interp_k2z (ng, tile, model,                      &
-     &                            LBi, UBi, LBj, UBj,                   &
+     &                            is, ie, js, je,                       &
      &                            varname, Zeven,                       &
      &                            self%Ua, field)
           ELSE IF (TRIM(varname).eq.'Vcodar') THEN
             CALL self%interp_k2z (ng, tile, model,                      &
-     &                            LBi, UBi, LBj, UBj,                   &
+     &                            is, ie, js, je,                       &
      &                            varname, Zeven,                       &
      &                            self%Va, field)
             nullify (self%mask, self%depth)
           END IF
 !
-          DO j=LBj,UBj
-            DO i=LBi,UBi
-              self%field2d(i,j)=field(i,j,1)
-            END DO
-          END DO
+          self%field2d(is:ie,js:je)=field(is:ie,js:je,1)
           deallocate (field)
 # endif
       END SELECT
@@ -386,66 +347,46 @@
       integer,            intent(in   ) :: model    ! kernel identifier
       character (len=*),  intent(in   ) :: varname
 !
-      integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: i, itrc, j, k
+      integer                           :: is, ie, js, je, ks, ke
+      integer                           :: itrc
 !
 !  Initialize.
 !
-      LBi=BOUNDS(ng)%LBi(tile)
-      UBi=BOUNDS(ng)%UBi(tile)
-      LBj=BOUNDS(ng)%LBj(tile)
-      UBj=BOUNDS(ng)%UBj(tile)
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
 !
 !  Set pointer (VarCha%field3d) to state variable associated with the
 !  observations. Compute the appropriate variable change(s), if any.
 !  Otherwise, the default is the identity operator.
 !
-      IF (allocated(self%field3d)) deallocate (self%field3d)
-!
       SELECT CASE (TRIM(varname))
 !
         CASE ('salt', 'temp', 'tracer')
 !
-          allocate ( self%field3d(LBi:UBi, LBj:UBj, N(ng)) )
+          self%field3d => NULL()
 !
           itrc=tracer_index(varname)
           IF (model.eq.iNLM) THEN
-            DO k=1,N(ng)
-              DO j=LBj,UBj
-                DO i=LBi,UBi
-                  self%field3d(i,j,k)=OCEAN(ng)%t(i,j,k,NOUT,itrc)
-                END DO
-              END DO
-            END DO
+            self%field3d(is:,js:,ks:) => OCEAN(ng)%t(is:ie,js:je,       &
+     &                                               ks:ke,NOUT,itrc)
 #  ifdef ADJOINT
           ELSE IF (model.eq.iADM) THEN
-            DO k=1,N(ng)
-              DO j=LBj,UBj
-                DO i=LBi,UBi
-                  self%field3d(i,j,k)=OCEAN(ng)%f_t(i,j,k,itrc)
-                END DO
-              END DO
-            END DO
+            self%field3d(is:,js:,ks:) => OCEAN(ng)%f_t(is:ie,js:je,     &
+     &                                                 ks:ke,itrc)
 #  endif
 #  ifdef TLM_OBS
           ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-            DO k=1,N(ng)
-              DO j=LBj,UBj
-                DO i=LBi,UBi
-                  self%field3d(i,j,k)=OCEAN(ng)%tl_t(i,j,k,NOUT,itrc)
-                END DO
-              END DO
-            END DO
+            self%field3d(is:,js:,ks:) => OCEAN(ng)%tl_t(is:ie,js:je,    &
+     &                                                  ks:ke,NOUT,itrc)
 #  endif
 #  ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
-            DO k=1,N(ng)
-              DO j=LBj,UBj
-                DO i=LBi,UBi
-                  self%field3d(i,j,k)=OCEAN(ng)%e_t(i,j,k,1,itrc)
-                END DO
-              END DO
-            END DO
+            self%field3d(is:,js:,ks:) => OCEAN(ng)%e_t(is:ie,js:je,     &
+     &                                                 ks:ke,1,itrc)
 #  endif
           END IF
       END SELECT

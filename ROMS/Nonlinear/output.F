@@ -21,7 +21,7 @@
 # ifdef FLOATS
       USE mod_floats
 # endif
-# if (defined FOUR_DVAR || defined VERIFICATION) && defined ARCHAIC_OBS
+# if (defined FOUR_DVAR || defined VERIFICATION)
       USE mod_fourdvar
 # endif
       USE mod_iounits
@@ -55,7 +55,9 @@
       USE obs_write_mod,   ONLY : obs_write
 # endif
 # if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,   ONLY : hofx_run, iSTD
+      USE roms_hofx_mod,   ONLY : hofx_finalize,                        &
+     &                            hofx_run,                             &
+     &                            iSTD, nlm_hofx
 # endif
       USE strings_mod,     ONLY : FoundError
 # ifdef AVERAGES
@@ -92,6 +94,7 @@
       logical :: Ldefine, Lupdate, NewFile
 !
       integer :: Fcount, ifile, status, tile
+      integer :: i
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -750,6 +753,24 @@
 !-----------------------------------------------------------------------
 !
       CALL hofx_run (ng, tile, iNLM)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  At the final time step, complete the nonlinear H(x) operator
+!  computation. If needed, perform a parallel exchange. Next, link
+!  the aggregated control vector to the "NLmodVal" pointer for data
+!  assimilation. Also, load the observation screening and quality
+!  control scale (0: reject, 1: accept).
+!
+      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
+        CALL hofx_finalize (iNLM)
+!
+        nullify (NLmodVal)
+        NLmodVal => nlm_hofx(ng)%state
+!
+        DO i=1,Ndatum(ng)
+          ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
+        END DO
+      END IF
 #  endif
 # endif
 # ifdef PROFILE

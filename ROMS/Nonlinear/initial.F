@@ -66,11 +66,6 @@
 # ifdef ARCHAIC_OBS
       USE obs_initial_mod,   ONLY : obs_initial
 # endif
-# if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,     ONLY : hofx_initialize
-      USE roms_obs_mod,      ONLY : obs_initialize
-      USE roms_vchange_mod,  ONLY : vchange_initialize
-# endif
 #endif
 #ifdef MASKING
       USE set_masks_mod,     ONLY : set_masks
@@ -510,29 +505,6 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !$OMP BARRIER
-# endif
-# ifdef MODERN_OBS
-!
-!-----------------------------------------------------------------------
-!  Open IODA-type observation enhanced NetCDF-4 files with first-level
-!  "Groups" (MetaData, ObsError, ObsValue, PreQC). Multiple files can
-!  separate control vector variables, observation types, complex
-!  operators, and area-averaged and/or time-averaged filters. All the
-!  observations are read and stored in the "obs_pool" object to
-!  facilitate processing by the "obs_hofx" operators
-!-----------------------------------------------------------------------
-!
-!  Allocate and populate observation pool object.
-!
-      DO ng=1,Ngrids
-        CALL obs_initialize (ng, iNLM, nOBSfiles(ng))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      END DO
-!
-!  Allocate and initialize H(x) and variable change objects.
-!
-      CALL hofx_initialize (iNLM)
-      CALL vchange_initialize (iNLM)
 # endif
 #endif
 

@@ -45,8 +45,7 @@
 #ifdef VERIFICATION
 # ifdef MODERN_OBS
       USE roms_hofx_mod,     ONLY : hofx_finalize
-# endif
-# ifdef ARCHAIC_OBS
+# else
       USE stats_modobs_mod,  ONLY : stats_modobs
 # endif
 #endif
@@ -346,10 +345,16 @@
 !
 !  Local variable declarations.
 !
-      integer :: Fcount, ng, thread
+      integer :: Fcount, ng, tile, thread
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_finalize"
+!
+#ifdef DISTRIBUTE
+      tile=MyRank
+#else
+      tile=-1
+#endif
 
 #ifdef ENKF_RESTART
 !
@@ -360,29 +365,11 @@
 !
       IF (exit_flag.eq.NoError) THEN
         DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-          CALL wrt_dai (ng, MyRank)
-# else
-          CALL wrt_dai (ng, -1)
-# endif
+          CALL wrt_dai (ng, tile)
         END DO
       END IF
 #endif
 #ifdef VERIFICATION
-# ifdef ARCHAIC_OBS
-!
-!-----------------------------------------------------------------------
-!  Compute and report model-observation comparison statistics.
-!-----------------------------------------------------------------------
-!
-      DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-        CALL stats_modobs (ng, MyRank)
-#  else
-        CALL stats_modobs (ng, -1)
-#  endif
-      END DO
-# endif
 # ifdef MODERN_OBS
 !
 !-----------------------------------------------------------------------
@@ -391,6 +378,15 @@
 !-----------------------------------------------------------------------
 !
       CALL hofx_finalize (iNLM)
+# else
+!
+!-----------------------------------------------------------------------
+!  Compute and report model-observation comparison statistics.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        CALL stats_modobs (ng, tile)
+      END DO
 # endif
 #endif
 !
@@ -413,11 +409,7 @@
             END IF
             blowup=exit_flag
             exit_flag=NoError
-#ifdef DISTRIBUTE
-            CALL wrt_rst (ng, MyRank)
-#else
-            CALL wrt_rst (ng, -1)
-#endif
+            CALL wrt_rst (ng, tile)
           END IF
         END DO
       END IF

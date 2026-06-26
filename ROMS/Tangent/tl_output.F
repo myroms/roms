@@ -37,7 +37,9 @@
       USE obs_write_mod,  ONLY : obs_write
 # endif
 # if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,  ONLY : hofx_run
+      USE roms_hofx_mod,  ONLY : hofx_finalize,                         &
+     &                           hofx_run,                              &
+     &                           tlm_hofx
 # endif
       USE strings_mod,    ONLY : FoundError
       USE tl_def_his_mod, ONLY : tl_def_his
@@ -75,6 +77,14 @@
 !-----------------------------------------------------------------------
 !  If appropriate, process tangent linear history NetCDF file.
 !-----------------------------------------------------------------------
+!
+!  Set tile for local array manipulations in output routines.
+!
+# ifdef DISTRIBUTE
+      tile=MyRank
+# else
+      tile=-1
+# endif
 !
 !  Turn off checking for analytical header files.
 !
@@ -176,32 +186,20 @@
 !  Write only on first time step.
 !
         IF (iic(ng).eq.1) THEN
-#  ifdef DISTRIBUTE
-          CALL tl_wrt_his (ng, MyRank)
-#  else
-          CALL tl_wrt_his (ng, -1)
-#  endif
+          CALL tl_wrt_his (ng, tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # else
         IF (LwrtPER(ng)) THEN
           IF ((iic(ng).gt.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nTLM(ng)).eq.0)) THEN
-#  ifdef DISTRIBUTE
-            CALL tl_wrt_his (ng, MyRank)
-#  else
-            CALL tl_wrt_his (ng, -1)
-#  endif
+            CALL tl_wrt_his (ng, tile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         ELSE
           IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                       &
      &        ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
-#  ifdef DISTRIBUTE
-            CALL tl_wrt_his (ng, MyRank)
-#  else
-            CALL tl_wrt_his (ng, -1)
-#  endif
+            CALL tl_wrt_his (ng, tile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
@@ -296,11 +294,7 @@
       IF (LwrtAVG(ng)) THEN
         IF ((iic(ng).gt.ntstart(ng)).and.                               &
      &      (MOD(iic(ng)-1,nAVG(ng)).eq.0)) THEN
-#  ifdef DISTRIBUTE
-          CALL wrt_avg (ng, MyRank)
-#  else
-          CALL wrt_avg (ng, -1)
-#  endif
+          CALL wrt_avg (ng, tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
@@ -314,36 +308,27 @@
 !  locations. Compute misfit (model-observations) cost function.
 !-----------------------------------------------------------------------
 !
-        IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.              &
-     &      (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
-          ProcessObs(ng)=.TRUE.
-#   ifdef DISTRIBUTE
-          tile=MyRank
-#   else
-          tile=-1
-#   endif
-#   ifdef DISTRIBUTE
-          tile=MyRank
-#   else
-          tile=-1
-#   endif
-          CALL obs_read (ng, iTLM, .FALSE.)
+      IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
+     &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
+        ProcessObs(ng)=.TRUE.
+        CALL obs_read (ng, iTLM, .FALSE.)
+
 #   ifdef SP4DVAR
 !
 !  Do not assimilate obs on the last time step unless inter=Nsaddle.
 !
-          IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
-            CALL obs_write (ng, tile, iTLM)
-          END IF
-#   else
+        IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
           CALL obs_write (ng, tile, iTLM)
+        END IF
+#   else
+        CALL obs_write (ng, tile, iTLM)
 #   endif
 #   ifndef WEAK_CONSTRAINT
-          CALL obs_cost (ng, iTLM)
+        CALL obs_cost (ng, iTLM)
 #   endif
-        ELSE
-          ProcessObs(ng)=.FALSE.
-        END IF
+      ELSE
+        ProcessObs(ng)=.FALSE.
+      END IF
 
 #  elif defined MODERN_OBS
 !
@@ -354,13 +339,20 @@
 !  IODA-type observation files.
 !-----------------------------------------------------------------------
 !
-#   ifdef DISTRIBUTE
-          tile=MyRank
-#   else
-          tile=-1
-#   endif
-          CALL hofx_run (ng, tile, iTLM)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      CALL hofx_run (ng, tile, iTLM)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  At the final time step, complete the tangent linear H(x) operator
+!  computation. If needed, perform a parallel exchange. Next, link
+!  the aggregated control vector to the "TLmodVal" pointer for data
+!  assimilation.
+!
+      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
+        CALL hofx_finalize (iTLM)
+!
+        nullify (TLmodVal)
+        TLmodVal => tlm_hofx(ng)%state
+      END IF
 #  endif
 # endif
 

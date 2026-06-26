@@ -67,9 +67,6 @@
 # if defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_initial_mod,     ONLY : obs_initial
 # endif
-# if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,       ONLY : hofx_initialize
-# endif
 # ifdef SOLVE3D
       USE set_depth_mod,       ONLY : set_depth
 # endif
@@ -516,8 +513,7 @@
       END IF
 # endif
 
-# ifdef OBSERVATIONS
-#  ifdef ARCHAIC_OBS
+# if defined OBSERVATIONS && defined ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables
@@ -529,15 +525,6 @@
 !
       CALL obs_initial (ng, iTLM, .FALSE.)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-#  elif defined MODERM_OBS 
-!
-!-----------------------------------------------------------------------
-!  Allocate and initialize tangent linear H(x) object.
-!-----------------------------------------------------------------------
-!
-      CALL hofx_initialize (iTLM)
-#  endif
 # endif
 
 # if defined ANA_PERTURB && defined SANITY_CHECK

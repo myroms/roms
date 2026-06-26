@@ -98,8 +98,8 @@
 !
 !  Tally of processed observations.
 !
-        integer :: ObsCount                          ! approved
-        integer :: ObsReject                         ! rejected
+        integer :: ObsCount                           ! approved
+        integer :: ObsReject                          ! rejected
 !
 !  H(x) operator name.
 !
@@ -108,8 +108,8 @@
 !  Contol vector to store state variables at the aggregated observation
 !  locations.
 !
-        real (r8), pointer :: state(:)               ! state vector
-        integer,   pointer :: ObsVetting(:)          ! reject/accept flag
+        real (r8), pointer :: state(:)      => NULL() ! state vector
+        integer,   pointer :: ObsVetting(:) => NULL() ! reject/accept
 !
 !  Cost Function values per observations in the pool depot.
 !
@@ -117,10 +117,10 @@
 !
 !  Pointers for geometry variables.
 !
-        real (r8), pointer :: angle(:,:)   => NULL() ! curvilinear angle
-        real (r8), pointer :: mask(:,:)    => NULL() ! land-sea mask
+        real (r8), pointer :: angle(:,:)   => NULL()  ! rotation angle
+        real (r8), pointer :: mask(:,:)    => NULL()  ! land-sea mask
 # ifdef SOLVE3D
-        real (r8), pointer :: depth(:,:,:) => NULL() ! depths (m)
+        real (r8), pointer :: depth(:,:,:) => NULL()  ! depths (m)
 # endif
 !
         CONTAINS
@@ -253,9 +253,7 @@
 !
 !  It allocates and initializes the H(x) objects.
 !
-      SUBROUTINE hofx_initialize (model)
-!
-      integer,          intent(in   ) :: model      ! kernel identifier
+      SUBROUTINE hofx_initialize
 !
       logical                         :: IsAreaAveraged
       integer                         :: i, ng, ntotal, tile
@@ -280,66 +278,63 @@
         IF (IsAreaAveraged) THEN
           DO ng=1,Ngrids
             DO tile=first_tile(ng),last_tile(ng),+1
-              CALL geom_hofx(ng)% create (ng, tile, model)
+              CALL geom_hofx(ng)% create (ng, tile, iNLM)
             END DO
           END DO
         END IF
       END IF
+
+# ifdef NONLINEAR
 !
 !  Allocate and create nonlinear H(x) object.
 !
-      IF (model.eq.iNLM) THEN
-        IF (.not.allocated(nlm_hofx)) THEN
-          allocate ( nlm_hofx(Ngrids) )
-        END IF
-# ifndef VERIFICATION
-        IF (.not.allocated(berr_hofx)) THEN
-          allocate ( berr_hofx(Ngrids) )
-        END IF
-# endif
-!
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL nlm_hofx(ng)%create  (ng, tile, model, ntotal)
-# ifndef VERIFICATION
-            CALL berr_hofx(ng)%create (ng, tile, model, ntotal)
-# endif
-          END DO
-        END DO
+      IF (.not.allocated(nlm_hofx)) THEN
+        allocate ( nlm_hofx(Ngrids) )
       END IF
+#  ifndef VERIFICATION
+      IF (.not.allocated(berr_hofx)) THEN
+        allocate ( berr_hofx(Ngrids) )
+      END IF
+#  endif
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL nlm_hofx(ng)%create  (ng, tile, iNLM, ntotal)
+#  ifndef VERIFICATION
+          CALL berr_hofx(ng)%create (ng, tile, iNLM, ntotal)
+#  endif
+        END DO
+      END DO
+# endif
 
 # if defined FOUR_DVAR && defined TLM_OBS
 !
 !  Allocate and create tangent linear H(x) object.
 !
-      IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-        IF (.not.allocated(tlm_hofx)) THEN
-          allocate ( tlm_hofx(Ngrids) )
-        END IF
-!
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL tlm_hofx(ng)%create  (ng, tile, model, ntotal)
-          END DO
-        END DO
+      IF (.not.allocated(tlm_hofx)) THEN
+        allocate ( tlm_hofx(Ngrids) )
       END IF
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL tlm_hofx(ng)%create  (ng, tile, iTLM, ntotal)
+        END DO
+      END DO
 # endif
 
 # if defined FOUR_DVAR && defined ADJOINT
 !
 !  Allocate and create adjoint H^(x) object.
 !
-      IF (model.eq.iADM) THEN
-        IF (.not.allocated(adm_hofx)) THEN
-          allocate ( adm_hofx(Ngrids) )
-        END IF
-!
-        DO ng=1,Ngrids
-          DO tile=first_tile(ng),last_tile(ng),+1
-            CALL adm_hofx(ng)%create  (ng, tile, model, ntotal)
-          END DO
-        END DO
+      IF (.not.allocated(adm_hofx)) THEN
+        allocate ( adm_hofx(Ngrids) )
       END IF
+!
+      DO ng=1,Ngrids
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL adm_hofx(ng)%create  (ng, tile, iADM, ntotal)
+        END DO
+      END DO
 # endif
 !
       RETURN
@@ -355,11 +350,13 @@
       integer,            intent(in   ) :: model  ! kernel identifier
 !
       character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", obs_initialize"
+     &    __FILE__//", hofx_run"
 !
       SourceFile=MyFile
 !
 !  Compute model at the observation locations.
+!
+      ProcessObs(ng)=.FALSE.
 !
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
@@ -469,6 +466,16 @@
 #  endif
           END DO
 # endif
+
+# if defined FOUR_DVAR && defined TLM_OBS
+        CASE (iTLM, iRPM)                            ! tangent linear
+          DO ng=1,Ngrids
+#  ifdef DISTRIBUTE
+            CALL tlm_hofx(ng)%update (ng, model)
+#  endif
+          END DO
+# endif
+
         CASE DEFAULT
           IF (Master) WRITE (stdout,20) model
           exit_flag=5
@@ -484,8 +491,8 @@
         END DO
       END IF
 !
-  10  FORMAT (/,2x,'ROMS_HOFX        - ',a,': ',                        &
-     &        'Finalizing and writing H(x)')
+  10  FORMAT (/,1x,'ROMS_HOFX - ',a,': ',                               &
+     &        'Finalizing H(x) Operator Computation')
   20  FORMAT (/,' ROMS_HOFX::HOFX_FINALIZE: illegal identifier, '       &
      &        'model = ',i0)
 !
@@ -691,8 +698,8 @@
 !
 !  Deallocate H(x) object variables.
 !
-      IF (allocated(self%state))      deallocate (self%state)
-      IF (allocated(self%ObsVetting)) deallocate (self%ObsVetting)
+      IF (associated(self%state))      nullify (self%state)
+      IF (associated(self%ObsVetting)) nullify (self%ObsVetting)
 !
 !  Nullify pointers.
 !
@@ -932,6 +939,8 @@
         END IF
         ObsSum=0
         ObsReject=0
+!
+        ProcessObs(ng)=.TRUE.
 !
         IF (Master) WRITE(stdout,10) tdays(ng), time_code(ng)
 !
@@ -3568,6 +3577,9 @@
       character (len=11)                :: svar_name(NobsVar(ng))
       character (len=11)                :: text(NobsVar(ng))
 !
+      character (len=*),     parameter :: MyFile =                      &
+     &    __FILE__//", obs_hofx_stats"
+!
 !  Initialize.
 !
       CC=0.0_r8
@@ -3663,8 +3675,67 @@
         WRITE (stdout,40) 'STD Error         ', (SDE(i),i=1,ic)
         WRITE (stdout,40) 'Cross-Correlation ', (CC(i),i=1,ic)
         WRITE (stdout,40) 'Mean Squared Error', (MSE(i),i=1,ic)
-        WRITE (stdout,50) 'Observation Count ', (Ncount(i),i=1,ic)
+        WRITE (stdout,50) 'Observation Count ', (Ncount(i),i=1,ic),     &
+     &                                          SUM(Ncount)
+        WRITE (stdout,'(1x)')
       END IF
+!
+!  Write out observations and nonlinear H(x) statistics into output
+!  4D-Var data assimilation file.
+!
+      CALL netcdf_put_ivar (ng, model, DAV(ng)%name,                    &
+     &                      'Nused_obs', Ncount,                        &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'obs_mean', obs_mean,                       &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'obs_std', obs_std,                         &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'model_mean', mod_mean,                     &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'model_std', mod_std,                       &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'model_bias', MB,                           &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'SDE', SDE,                                 &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'CC', CC,                                   &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+      CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                    &
+     &                      'MSE', MSE,                                 &
+     &                      (/1/), (/NobsVar(ng)/),                     &
+     &                      ncid = DAV(ng)%ncid)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
  10   FORMAT (/,' Model-Observations Comparison Statistics:',/)
  20   FORMAT (t22,*(a11,1x))

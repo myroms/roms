@@ -222,6 +222,7 @@
 !
         CONTAINS
 !
+        PROCEDURE :: aggregate        => obs_pool_aggregate
         PROCEDURE :: create           => obs_pool_create
         PROCEDURE :: destroy          => obs_pool_destroy
         PROCEDURE :: get              => obs_pool_get
@@ -532,9 +533,18 @@
         END DO
       END IF
 !
-!  Read the observation variables in Group ObsError. If the IODA file is
-!  created with the "roms2ioda.m" script, the observation error is in
-!  terms of standard deviations and has the same units as its value.
+!  Read the observation variables in the ObsError Group from the IODA
+!  file. In IODA, observation error is provided as a STANDARD DEVIATION,
+!  using the same units as the observed value. In contrast, the ROMS
+!  legacy observation file expresses error as COVARIANCE, which uses
+!  squared units.
+!
+!  The roms2ioda.m script applies the square root to the observation
+!  error when converting to IODA-type data. Therefore, to use this data
+!  in ROMS data assimilation algorithms, convert the observation error
+!  back to COVARIANCE units by squaring it. For the non-weak constraint
+!  algorithm, use the INVERSE of the error to eliminate repeated
+!  division operations.
 !
       IF (IOtype.eq.io_nf90) THEN
         CALL netcdf_inq_var (ng, model, self%ncname_inp,                &
@@ -546,6 +556,9 @@
      &                          var_name(i), self%error(:,i),           &
      &                          GrpName = 'ObsError')
           self%error(:,i)=self%error(:,i)*self%error(:,i)
+#ifndef WEAK_CONSTRAINT
+          self%error(:,i)=1.0_r8/self%error(:,i)
+#endif
           ncount=SIZE(self%error,1)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           IF (Master) WRITE (stdout,30) 'ObsError', TRIM(var_name(i)),  &
@@ -711,6 +724,68 @@
 !
 !<><><><><><><><><><><><><><><><><><><><><><><><>  CLASS OBS_POOL <><><>
 !
+!  It combines observation pool data into a single vector to support
+!  minimization in data assimilation. Observations are ordered according
+!  to the observation pool, matching the H(x) operators and the
+!  "pack_mapping" index sequence. For details, please refer to the
+!  "obs_pool_tally" routine. This method allows integration of both
+!  legacy and modern observation operators without changes to complex
+!  data assimilation algorithms.
+!
+      SUBROUTINE obs_pool_aggregate (self, ng, ObsVar, ObsData)
+!
+      CLASS (obs_pool),   intent(inout) :: self      ! observation set
+      integer,            intent(in   ) :: ng        ! nested grid
+      character (len=*),  intent(in   ) :: ObsVar    ! variable
+      real (r8), pointer, intent(out  ) :: ObsData(:)
+!
+      integer                           :: nlocs, npool, nvars
+      integer                           :: my_ndatum
+      integer                           :: i, ic, j, k
+!
+!  Initialize.
+!
+      my_ndatum=self%ndatum
+      npool=SIZE(self%pool)
+      ic=0
+!
+!  Allocate pointer.
+!
+      nullify (ObsData)
+      allocate ( ObsData(my_ndatum) )
+      ObsData=0.0_r8
+!
+!  Aggregate requested observation variable.
+!
+      SELECT CASE (TRIM(ObsVar))
+        CASE ('error')               ! observation error
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%error(j,k)
+              END DO
+            END DO
+          END DO
+        CASE ('value')               ! observation value
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%value(j,k)
+              END DO
+            END DO
+          END DO
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE obs_pool_aggregate
+!
+!-----------------------------------------------------------------------
 !  It creates a set observation-type objects. A single or multiple
 !  data assimilation observation files are allowed. In IODA, we have
 !  a file for each observation type.
@@ -857,12 +932,10 @@
               IF ((Tstr.le.Tsurvey).and.(Tsurvey.lt.Tend)) THEN
                 poolName=self%pool(iobs)%name
                 Nstr=self%pool(iobs)%surveyIndex(i)
-                IF (nsurvey.eq.1) THEN
+                IF (i.eq.nsurvey) THEN
                   Nend=nlocs
-                ELSE IF (i.ne.1) THEN
-                  Nend=self%pool(iobs)%surveyIndex(i-1)-1
                 ELSE
-                  Nend=self%pool(iobs)%surveyIndex(i)
+                  Nend=self%pool(iobs)%surveyIndex(i+1)-1
                 END IF
                 self%pool(iobs)%NstrObs=Nstr
                 self%pool(iobs)%NendObs=Nend
@@ -882,12 +955,10 @@
               IF ((Tstr.le.Tsurvey).and.(Tsurvey.lt.Tend)) THEN
                 poolName=self%pool(iobs)%name
                 Nstr=self%pool(iobs)%surveyIndex(i)
-                IF (nsurvey.eq.1) THEN
+                IF (i.eq.nsurvey) THEN
                   Nend=nlocs
-                ELSE IF (i.ne.nsurvey) THEN
-                  Nend=self%pool(iobs)%surveyIndex(i+1)-1
                 ELSE
-                  Nend=self%pool(iobs)%surveyIndex(i)
+                  Nend=self%pool(iobs)%surveyIndex(i+1)-1
                 END IF
                 self%pool(iobs)%NstrObs=Nstr
                 self%pool(iobs)%NendObs=Nend

@@ -46,6 +46,7 @@
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
       USE lapack_mod,     ONLY : DSTEQR
+      USE roms_hofx_mod,  ONLY : adm_hofx
       USE strings_mod,    ONLY : FoundError
 !
       implicit none
@@ -1094,6 +1095,14 @@
       CALL mp_bcastf (ng, model, preducv)
       CALL mp_bcastf (ng, model, preducy)
 # endif
+
+# ifdef MODERN_OBS
+!
+!  Update HofX adjout structure.
+!
+      nullify (adm_hofx(ng)%state)
+      adm_hofx(ng)%state => ADmodVal
+# endif
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors into 4D-Var NetCDF file.
@@ -1123,7 +1132,7 @@
      &        ' algorithm:',/,                                          &
      &        /,11x,'cg_delta = ',1p,e15.8,0p,3x,'(',i3.3,', ',i3.3,')')
  30   FORMAT (/,' RPCG_LANCZOS - Conjugate Gradient Information:',/,    &
-     &        /,11x,'Ndatum     = ',i0,/,  /,                           &
+     &        /,12x,'Ndatum = ',i0,/,  /,                               &
      &        1x,'(',i3.3,',',i3.3,'): ',                               &
      &        'Residual estimate,                      eps = ',         &
      &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &

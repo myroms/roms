@@ -72,9 +72,6 @@
 # if defined OBSERVATIONS && defined ARCHAIC_OBS
       USE obs_initial_mod,   ONLY : obs_initial
 # endif
-# if defined OBSERVATIONS && defined MODERN_OBS
-      USE roms_hofx_mod,     ONLY : hofx_initialize
-# endif
 # ifdef MASKING
       USE set_masks_mod,     ONLY : set_masks
 # endif
@@ -447,8 +444,7 @@
       END IF
 # endif
 
-# ifdef OBSERVATIONS
-#  ifdef ARCHAIC_OBS
+# if defined OBSERVATIONS && defined ARCHAIC_OBS
 !
 !-----------------------------------------------------------------------
 !  Initialize various variables needed for processing observations
@@ -471,15 +467,6 @@
       END IF
 #   endif
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
-#  elif defined MODERN_OBS
-!
-!-----------------------------------------------------------------------
-!  Allocate and initialize adjoint H(x) object.
-!-----------------------------------------------------------------------
-!
-      CALL hofx_initialize (iADM)
-#  endif
 # endif
 
 # if defined ANA_PERTURB  && \
