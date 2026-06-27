@@ -213,6 +213,7 @@
               END DO
               Phase4DVAR=TRIM(ADJUSTL(Cval(Nval)))
 #  endif
+#  ifndef IODA_OBS
             CASE ('NextraObs')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               NextraObs=Ivalue(1)
@@ -232,6 +233,7 @@
               IF (NextraObs.gt.0) THEN
                 ExtraName(Nval)=TRIM(Cval(Nval))
               END IF
+#  endif
             CASE ('tl_M2diff')
               Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
             CASE ('tl_M3diff')
@@ -1333,10 +1335,7 @@
               label='NRM - surface forcing normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, 4, 4, inp_lib, NRM)
-            CASE ('OBSname')
-              label='OBS - data assimilation observations'
-              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, obs_lib, OBS)
+#  ifdef IODA_OBS
             CASE ('NOBSFILES')
               Npts=load_i(Nval, Rval, Ngrids, nOBSfiles)              
               DO ng=1,Ngrids
@@ -1348,11 +1347,11 @@
                   RETURN
                 END IF
               END DO
-              allocate ( OBS2(MAXVAL(nOBSfiles),Ngrids) )
+              allocate ( OBS(MAXVAL(nOBSfiles),Ngrids) )
               allocate ( NOBScount(MAXVAL(nOBSfiles),Ngrids) )
               NOBScount=0
-            CASE ('OBS2name')
-              label='OBS2 - data assimilation observations'
+            CASE ('OBSname')
+              label='OBS - data assimilation IODA-type observations'
               DO ng=1,Ngrids
                 IF (nOBSfiles(ng).lt.0) THEN
                   IF (Master) WRITE (out,260) 'nOBSfiles = ',           &
@@ -1365,7 +1364,13 @@
               END DO
               Npts=load_s2d(Nval, Cval, Cdim, line, label, iobsfile,    &
      &                      igrid, Ngrids, nOBSfiles, NOBScount,        &
-     &                      nOBSfiles(1), inp_lib, OBS2)
+     &                      nOBSfiles(1), inp_lib, OBS)
+#  else
+            CASE ('OBSname')
+              label='OBS - data assimilation observations'
+              Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
+     &                      Ngrids, Nfiles, obs_lib, OBS)
+#  endif
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -2405,6 +2410,7 @@
 #    endif
 #   endif
 #  endif
+#  ifndef IODA_OBS
           IF (NextraObs.gt.0) THEN
             WRITE (out,80) NextraObs, 'NextraObs',                      &
      &            'Number of extra-observations classes to process.'
@@ -2414,7 +2420,7 @@
      &            TRIM(ExtraName(i))
             END DO
           END IF
-
+#  endif
 #  ifdef DIRAC
           WRITE (out,'(/,a,/)')                                         &
      &          ' Dirac Delta Functions (i,j,k) Locations:'
@@ -2602,8 +2608,19 @@
         END IF
 #    endif
 #   endif
-#   if defined ARCHAIC_OBS  && \
-      !(defined CORRELATION || defined OPT_OBSERVATIONS)
+
+#   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
+#    ifdef IODA_OBS
+        DO i=1,nOBSfiles(ng)
+          fname=OBS(i,ng)%name
+          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            IF (Master.and.Lwrite) WRITE (out,165)                        &
+     &      '  Input IODA observations File ',i,':  ', TRIM(fname)
+          END IF
+        END DO
+#    else
         fname=OBS(ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2611,6 +2628,7 @@
           IF (Master.and.Lwrite) WRITE (out,160)                        &
      &      '          Input observations File:  ', TRIM(fname)
         END IF
+#    endif
 #   endif
 #   if !defined CORRELATION
         IF (Master.and.Lwrite) WRITE (out,160)                          &
@@ -2738,6 +2756,7 @@
  150  FORMAT (/,' Input/Output Assimilation Files:',/)
 #  endif
  160  FORMAT (2x,a,a)
+ 165  FORMAT (2x,a,i2.2,a,a)
  170  FORMAT (3x,4(1x,l1),2x,a,t32,a)
  180  FORMAT (3x,4(1x,l1),2x,a,t32,a,i2.2,':',1x,a)
  190  FORMAT (1p,e11.4,2x,a,t32,a,a,'.')
@@ -2750,9 +2769,9 @@
      &        /,15x,a,/,15x,a)
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i0, &
      &        /,15x,a,/,15x,'correct input script: ',1x,'''',a,'''',/)
- 250  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,i0,        &
+ 250  FORMAT (/,' READ_ASSPAR - Invalid input parameter, ',a,i0,        &
      &        /,15x,a)
- 260  FORMAT (/,' READ_PHYPAR - Invalid dimension parameter, ',a,i0,    &
+ 260  FORMAT (/,' READ_ASSPAR - Invalid dimension parameter, ',a,i0,    &
      &        /,15x,a)
 # endif
 !

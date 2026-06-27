@@ -76,7 +76,7 @@
 # ifdef LMD_MIXING_NOT_YET
 !!    USE ad_lmd_vmix_mod,         ONLY : ad_lmd_vmix
 # endif
-# if defined FOUR_DVAR && defined OBSERVATIONS && defined ARCHAIC_OBS
+# if defined FOUR_DVAR && defined OBSERVATIONS && !defined IODA_OBS
 #  ifdef WEAK_CONSTRAINT
       USE ad_htobs_mod,            ONLY : ad_htobs
 #  else
@@ -145,7 +145,7 @@
       USE mct_coupler_mod,         ONLY : ocn2wav_coupling
 # endif
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
-      defined OBSERVATIONS && defined ARCHAIC_OBS
+      defined OBSERVATIONS && !defined IODA_OBS
       USE obs_read_mod,            ONLY : obs_read
 # endif
       USE omega_mod,               ONLY : omega
@@ -153,7 +153,7 @@
       USE packing_mod,             ONLY : ad_pack
 # endif
       USE rho_eos_mod,             ONLY : rho_eos
-# if defined OBSERVATIONS && defined MODERN_OBS
+# if defined OBSERVATIONS && defined IODA_OBS
       USE roms_hofx_mod,           ONLY : hofx_run
 # endif
       USE set_depth_mod,           ONLY : set_depth
@@ -678,7 +678,23 @@
 
 # if (defined FOUR_DVAR    && !defined I4DVAR_ANA_SENSITIVITY) && \
       defined OBSERVATIONS
-#  if defined ARCHAIC_OBS
+#  if defined IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  If needed, compute adjoint forcing terms due to observations, using
+!  the transpose[H(x)] operator. Apply enhanced operators and filters
+!  CLASS objects associated with multiple input IODA-type observation
+!  files.
+!-----------------------------------------------------------------------
+!
+            DO ig=1,GridsInLayer(nl)
+              ng=GridNumber(ig,nl)
+              DO tile=first_tile(ng),last_tile(ng),+1
+                CALL hofx_run (ng, tile, iADM)
+              END DO
+            END DO
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  else
 !
 !-----------------------------------------------------------------------
 !  If appropriate, read observation and model state at observation
@@ -726,23 +742,6 @@
               END IF
 #   endif
             END DO
-
-#  elif defined MODERN_OBS
-!
-!-----------------------------------------------------------------------
-!  If needed, compute adjoint forcing terms due to observations, using
-!  the transpose[H(x)] operator. Apply enhanced operators and filters
-!  CLASS objects associated with multiple input IODA-type observation
-!  files.
-!-----------------------------------------------------------------------
-!
-            DO ig=1,GridsInLayer(nl)
-              ng=GridNumber(ig,nl)
-              DO tile=first_tile(ng),last_tile(ng),+1
-                CALL hofx_run (ng, tile, iADM)
-              END DO
-            END DO
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 # endif
 

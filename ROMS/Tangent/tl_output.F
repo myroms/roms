@@ -32,11 +32,11 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-# if defined OBSERVATIONS && defined ARCHAIC_OBS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_read_mod,   ONLY : obs_read
       USE obs_write_mod,  ONLY : obs_write
 # endif
-# if defined OBSERVATIONS && defined MODERN_OBS
+# if defined OBSERVATIONS && defined IODA_OBS
       USE roms_hofx_mod,  ONLY : hofx_finalize,                         &
      &                           hofx_run,                              &
      &                           tlm_hofx
@@ -301,7 +301,30 @@
 # endif
 
 # if defined FOUR_DVAR && defined OBSERVATIONS
-#  if defined ARCHAIC_OBS
+#  ifdef IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  If needed, interpolate the tangent-linear model solution to the
+!  observation locations, using the linearized H(x). Apply enhanced
+!  operators and filter CLASS objects associated with multiple input
+!  IODA-type observation files.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_run (ng, tile, iTLM)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  At the final time step, complete the tangent linear H(x) operator
+!  computation. If needed, perform a parallel exchange. Next, link
+!  the aggregated control vector to the "TLmodVal" pointer for data
+!  assimilation.
+!
+      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
+        CALL hofx_finalize (iTLM)
+!
+        nullify (TLmodVal)
+        TLmodVal => tlm_hofx(ng)%state
+      END IF
+#  else
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process and write model state at observation
@@ -328,30 +351,6 @@
 #   endif
       ELSE
         ProcessObs(ng)=.FALSE.
-      END IF
-
-#  elif defined MODERN_OBS
-!
-!-----------------------------------------------------------------------
-!  If needed, interpolate the tangent-linear model solution to the
-!  observation locations, using the linearized H(x). Apply enhanced
-!  operators and filter CLASS objects associated with multiple input
-!  IODA-type observation files.
-!-----------------------------------------------------------------------
-!
-      CALL hofx_run (ng, tile, iTLM)
-      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  At the final time step, complete the tangent linear H(x) operator
-!  computation. If needed, perform a parallel exchange. Next, link
-!  the aggregated control vector to the "TLmodVal" pointer for data
-!  assimilation.
-!
-      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
-        CALL hofx_finalize (iTLM)
-!
-        nullify (TLmodVal)
-        TLmodVal => tlm_hofx(ng)%state
       END IF
 #  endif
 # endif

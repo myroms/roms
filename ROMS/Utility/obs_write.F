@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE obs_write_mod
 #if (defined FOUR_DVAR    || defined VERIFICATION) && \
-     defined OBSERVATIONS && defined ARCHAIC_OBS
+     defined OBSERVATIONS && !defined IODA_OBS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===

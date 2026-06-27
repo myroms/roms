@@ -1496,7 +1496,14 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+22)=' INITIALIZE_AUTOMATIC,'
 #endif
+#if defined OBSERVATIONS && defined IODA_OBS
+!
+      IF (Master) WRITE (stdout,20) 'IODA_OBS',                         &
+     &   'Multiple, enhanced NetCDF4, IODA-type observation files'
+      Coptions(is:is+10)=' IODA_OBS,'
+#endif
 #ifdef JEDI
+!
       IF (Master) WRITE (stdout,20) 'JEDI',                             &
      &   'Joint Effort for Data Assimilation Integration'
       is=LEN_TRIM(Coptions)+1

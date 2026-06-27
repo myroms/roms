@@ -46,7 +46,9 @@
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
       USE lapack_mod,     ONLY : DSTEQR
+# ifdef IODA_OBS
       USE roms_hofx_mod,  ONLY : adm_hofx
+# endif
       USE strings_mod,    ONLY : FoundError
 !
       implicit none
@@ -1096,7 +1098,7 @@
       CALL mp_bcastf (ng, model, preducy)
 # endif
 
-# ifdef MODERN_OBS
+# ifdef IODA_OBS
 !
 !  Update HofX adjout structure.
 !

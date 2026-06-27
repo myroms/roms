@@ -362,17 +362,22 @@
 !
         integer, allocatable :: NstateVar(:)
 !
-!  Number of observation types and names to process. If the observation
-!  operators for a specific application have a 1-to-1 association with
-!  the model state variables,  NobsVar = NstateVar.  However, if more
-!  that one state variable is needed to evaluate a particular type of
-!  observation (HF radials, travel time, pressure, etc.), a new class
-!  name is added to the state variable list to assess and differentiate
-!  its impact.  Then, NobsVar = NstateVar + NextraObs.
+!  Number of observation types and names to process.
+# ifndef IODA_OBS
+!
+!  If the observation operators for a specific application correspond
+!  directly to the model state variables, then NobsVar = NstateVar.
+!  If evaluating an observation type requires multiple state variables
+!  (such as HF radials, travel time, or pressure), a new class name is
+!  added to the state variable list to assess and distinguish the impact
+!  of each. In this case, NobsVar = NstateVar + NextraObs.
+# endif
 !
         integer, allocatable :: NobsVar(:)
 
         character(len=40), allocatable :: ObsName(:)
+
+# ifndef IODA_OBS
 !
 ! Number of extra-observation classes, extra-observation type indices,
 ! and extra-observation type names. It is used in observation operators
@@ -384,6 +389,7 @@
         integer, allocatable :: ExtraIndex(:)
 
         character(len=40), allocatable :: ExtraName(:)
+# endif
 !
 !  Number of interpolation weights and (I,J,K) indices offsets.
 !
@@ -1555,7 +1561,7 @@
       USE mod_pio_netcdf
 # endif
 !
-# if defined OBSERVATIONS && defined MODERN_OBS
+# if defined OBSERVATIONS && defined IODA_OBS
       USE roms_obs_mod, ONLY : obs_initialize,                          &
      &                         obs_store
 # endif
@@ -1565,6 +1571,9 @@
 !  Local variable declarations.
 !
       integer :: my_NobsVar, i, icount, ng
+# ifdef IODA_OBS
+      integer :: ipool, npool, nvars
+# endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       integer :: LBi, UBi, LBj, UBj
       integer :: tile
@@ -1579,7 +1588,72 @@
       SourceFile=MyFile
 
 # ifdef OBSERVATIONS
-#  ifdef ARCHAIC_OBS
+#  ifdef IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  Process multiple IODA-type observation files containing first-level
+!  "Groups" such as MetaData, ObsError, ObsValue, and PreQC. These
+!  files separate control-vector variables, observation types, complex
+!  operators, and area- or time-averaged filters. Determine the total
+!  number of observations, allocate the observation CLASS object
+!  "obs_pool", read the observations, and load the data into the 
+!  "obs_store" object to support processing by the "obs_hofx" operators.
+!
+!  Unlike legacy ROMS observation operators, this modern approach reads 
+!  observations once and stores the values in memory. This reduces 
+!  frequent I/O operations and collective distributed-memory 
+!  communications, which often create bottlenecks in large, multi-
+!  processor applications.
+!-----------------------------------------------------------------------
+!
+!  The nested loop below is unnecessary, as the observations fractional
+!  grid locations for nested-grid applications can be recomputed from
+!  their input geographical locations.
+!
+      DO ng=1,Ngrids
+        CALL obs_initialize (ng, iNLM, nOBSfiles(ng))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Obtain the total number of observations from the depot object.
+!  Because ROMS data assimilation algorithms use a legacy single file
+!  observation approach that aggregates data into a vector, the strategy
+!  is to maintain this design and use pointers to connect legacy and
+!  modern observation operators.
+!
+        Ndatum(ng)=obs_store%ndatum
+      END DO
+      Mobs=MAXVAL(Ndatum)
+!
+!  Determine number of observation variables and associated names.
+!
+      npool=SIZE(obs_store%pool)
+      nvars=0
+      DO ipool=1,npool
+        nvars=nvars+obs_store%pool(ipool)%nvars
+      END DO
+      NobsVar=nvars
+!
+      IF (.not.allocated(ObsName)) THEN
+        allocate ( ObsName(MAXVAL(NobsVar)) )
+      END IF
+!
+      icount=0
+      DO ipool=1,npool
+        nvars=obs_store%pool(ipool)%nvars
+        DO i=1,nvars
+          icount=icount+1
+          ObsName(icount)=TRIM(obs_store%pool(ipool)%name)
+        END DO
+      END DO
+!
+!  Allocate and combine observation data into a single vector to
+!  facilitate data assimilation. Arrange the data by observation pool
+!  and align it with the order of H(x) operators.
+!
+      CALL obs_store%aggregate (ng, 'value', ObsVal)
+      CALL obs_store%aggregate (ng, 'error', ObsErr)
+
+#  else
 !
 !-----------------------------------------------------------------------
 !  Inquire the observation NetCDF file and determine the maximum
@@ -1625,48 +1699,6 @@
           RETURN
         END IF
       END DO
-#  else
-!
-!-----------------------------------------------------------------------
-!  Process multiple IODA-type observation files containing first-level
-!  "Groups" such as MetaData, ObsError, ObsValue, and PreQC. These
-!  files separate control-vector variables, observation types, complex
-!  operators, and area- or time-averaged filters. Determine the total
-!  number of observations, allocate the observation CLASS object
-!  "obs_pool", read the observations, and load the data into the 
-!  "obs_store" object to support processing by the "obs_hofx" operators.
-!
-!  Unlike legacy ROMS observation operators, this modern approach reads 
-!  observations once and stores the values in memory. This reduces 
-!  frequent I/O operations and collective distributed-memory 
-!  communications, which often create bottlenecks in large, multi-
-!  processor applications.
-!-----------------------------------------------------------------------
-!
-!  The nested loop below is unnecessary, as the observations fractional
-!  grid locations for nested-grid applications can be recomputed from
-!  their input geographical locations.
-!
-      DO ng=1,Ngrids
-        CALL obs_initialize (ng, iNLM, nOBSfiles(ng))
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  Obtain the total number of observations from the depot object.
-!  Because ROMS data assimilation algorithms use a legacy single file
-!  observation approach that aggregates data into a vector, the strategy
-!  is to maintain this design and use pointers to connect legacy and
-!  modern observation operators.
-!
-        Ndatum(ng)=obs_store%ndatum
-      END DO
-      Mobs=MAXVAL(Ndatum)
-!
-!  Allocate and combine observation data into a single vector to
-!  facilitate data assimilation. Arrange the data by observation pool
-!  and align it with the order of H(x) operators.
-!
-      CALL obs_store%aggregate (ng, 'value', ObsVal)
-      CALL obs_store%aggregate (ng, 'error', ObsErr)
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -1718,15 +1750,13 @@
         NstateVar(ng)=NstateVar(ng)+2
 #  endif
 !
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
         NobsVar(ng)=NstateVar(ng)+NextraObs
-#  else
-        NobsVar(ng)=NstateVar(ng)
 #  endif
 !
 !  Allocate and initialize module variables.
 !
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
         IF (.not.allocated(FOURDVAR(ng) % NobsSurvey)) THEN
           allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nsurvey(ng),r8)
@@ -1969,7 +1999,7 @@
 
       END DO
 
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Read in number of observations available per survey at their times.
@@ -1996,7 +2026,7 @@
      &                            total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  if defined PIO_LIB && defined DISTRIBUTE
+#   if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
             CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),     &
      &                                TRIM(Vname(1,idNobs)),            &
@@ -2011,7 +2041,7 @@
      &                                start = (/1/),                    &
      &                                total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
         END SELECT
 !
 !  Determine maximum size of observation arrays.
@@ -2057,7 +2087,7 @@
       END IF
       ObsProv = 0
 
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
       IF (.not.associated(ObsErr)) THEN
         allocate ( ObsErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2091,7 +2121,7 @@
       END IF
       ObsVetting = IniVal
 
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
       IF (.not.associated(ObsVal)) THEN
         allocate ( ObsVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2131,7 +2161,7 @@
       END IF
       ADmodVal = IniVal
 
-#  ifdef ARCHAIC_OBS
+#  ifndef IODA_OBS
       IF (.not.associated(NLmodVal)) THEN
         allocate ( NLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2248,7 +2278,7 @@
 #  endif
 
 #  ifdef TLM_OBS
-#   ifdef ARCHAIC_OBS
+#   ifndef IODA_OBS
       IF (.not.associated(TLmodVal)) THEN
         allocate ( TLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
@@ -2350,6 +2380,8 @@
 #    endif
 #   endif
 #  endif
+
+#  ifndef IODA_OBS
 !
 !  Allocate and initialize observation types names and indices.
 !  Notice that a mapping from state-to-type (ObsState2Type) and its
@@ -2414,6 +2446,7 @@
           END SELECT
         END DO
       END IF
+#  endif
 
 #  ifdef WEAK_CONSTRAINT
 !

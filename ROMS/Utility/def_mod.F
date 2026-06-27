@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE def_mod_mod
-#if defined FOUR_DVAR || (defined VERIFICATION && defined ARCHAIC_OBS)
+#if defined FOUR_DVAR || defined VERIFICATION
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -163,9 +163,12 @@
 !=======================================================================
 !
       DEFINE : IF (LdefMOD(ng)) THEN
+
+# ifndef IODA_OBS
 !
 !  Open input observations NetCDF.
 !
+
         IF (OBS(ng)%ncid.eq.-1) THEN
           CALL netcdf_open (ng, iNLM, OBS(ng)%name, 1, OBSncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
@@ -192,6 +195,7 @@
      &                        AttName, AttValue, foundAtt,              &
      &                        ncid = OBSncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
 !  Create model/observation (DAV) file
 !
@@ -388,6 +392,8 @@
               ioerror=status
             END IF
           END IF
+
+# ifndef IODA_OBS
 !
 !  Input observations file.
 !
@@ -436,6 +442,7 @@
      &                       __LINE__, MyFile)) RETURN
             END IF
           END IF
+# endif
 !
 !  SVN repository information.
 !
@@ -1179,6 +1186,8 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #   endif
 # endif
+
+# ifndef IODA_OBS
 !
 !  Observations survey time.
 !
@@ -1528,6 +1537,7 @@
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsS),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
@@ -2099,6 +2109,8 @@
 !
         CALL netcdf_enddef (ng, iNLM, ncname, DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifndef IODA_OBS
 !
 !  Close observations NetCDF.
 !
@@ -2106,6 +2118,7 @@
           CALL netcdf_close (ng, iNLM, OBSncid, OBS(ng)%name, .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+# endif
       END IF DEFINE
 !
 !=======================================================================

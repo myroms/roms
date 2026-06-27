@@ -63,7 +63,7 @@
       USE set_massflux_mod,  ONLY : set_massflux
 #endif
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
-# ifdef ARCHAIC_OBS
+# ifndef IODA_OBS
       USE obs_initial_mod,   ONLY : obs_initial
 # endif
 #endif
@@ -488,7 +488,7 @@
 #endif
 
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
-# ifdef ARCHAIC_OBS
+# ifndef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables

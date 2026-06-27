@@ -2444,8 +2444,8 @@
 !  Inquire input observation NetCDF file(s).
 !
       FILES_LOOP : DO nf=1,nfiles
-        ncname=OBS2(nf,ng)%name
-        IOtype=OBS2(nf,ng)%IOtype
+        ncname=OBS(nf,ng)%name
+        IOtype=OBS(nf,ng)%IOtype
 !
         self%pool(nf)%IsAreaAveraged=.FALSE.
         self%pool(nf)%IsTimeAveraged=.FALSE.
@@ -3024,11 +3024,11 @@
 !  Inquire input observation NetCDF file(s).
 !
       FILES_LOOP : DO nf=1,nfiles
-        SELECT CASE (OBS2(nf,ng)%IOtype)
+        SELECT CASE (OBS(nf,ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_dim (ng, model, OBS2(nf,ng)%name)
+            CALL netcdf_get_dim (ng, model, OBS(nf,ng)%name)
           CASE DEFAULT
-            IF (Master) WRITE (stdout,10) OBS2(nf,ng)%IOtype
+            IF (Master) WRITE (stdout,10) OBS(nf,ng)%IOtype
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -3064,13 +3064,13 @@
             obs_Zgrid=0.0_r8
           END IF
 !
-          SELECT CASE (OBS2(nf,ng)%IOtype)
+          SELECT CASE (OBS(nf,ng)%IOtype)
             CASE (io_nf90)
-              CALL netcdf_get_ivar (ng, model, OBS2(nf,ng)%name,        &
+              CALL netcdf_get_ivar (ng, model, OBS(nf,ng)%name,         &
      &                              'obs_type', obs_type)
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
 !
-              CALL netcdf_get_fvar (ng, model, OBS2(nf,ng)%name,        &
+              CALL netcdf_get_fvar (ng, model, OBS(nf,ng)%name,         &
      &                              'obs_Zgrid', obs_Zgrid)
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
           END SELECT
@@ -3106,14 +3106,14 @@
           allocate ( myStateID(mvar(nf)) )
           myStateID=0
 !
-          SELECT CASE (OBS2(nf,ng)%IOtype)
+          SELECT CASE (OBS(nf,ng)%IOtype)
             CASE (io_nf90)
-              CALL netcdf_get_ivar (ng, model, OBS2(nf,ng)%name,        &
+              CALL netcdf_get_ivar (ng, model, OBS(nf,ng)%name,         &
      &                              'stateID', myStateID,               &
      &                              GrpName = 'MetaData')
               IF (FoundError(exit_flag,NoError,__LINE__,MyFile)) RETURN
 !
-              CALL netcdf_inq_var (ng, model, OBS2(nf,ng)%name,         &
+              CALL netcdf_inq_var (ng, model, OBS(nf,ng)%name,          &
      &                             myVarName = 'stateID',               &
      &                             GrpName = 'MetaData',                &
      &                             nVarAtt = mvatt)

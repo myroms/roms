@@ -50,11 +50,11 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,  ONLY : mp_bcasts
 # endif
-# if defined OBSERVATIONS && defined ARCHAIC_OBS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_read_mod,    ONLY : obs_read
       USE obs_write_mod,   ONLY : obs_write
 # endif
-# if defined OBSERVATIONS && defined MODERN_OBS
+# if defined OBSERVATIONS && defined IODA_OBS
       USE roms_hofx_mod,   ONLY : hofx_finalize,                        &
      &                            hofx_run,                             &
      &                            iSTD, nlm_hofx
@@ -713,35 +713,9 @@
 
 # if (defined FOUR_DVAR              || \
       defined VERIFICATION)          && \
-     !defined I4DVAR_ANA_SENSITIVITY
-#  if defined OBSERVATIONS && ARCHAIC_OBS
-!
-!-----------------------------------------------------------------------
-!  If appropriate, process and write model state at observation
-!  locations. Compute misfit (model-observations) cost function.
-!-----------------------------------------------------------------------
-!
-      IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
-     &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
-        ProcessObs=.TRUE.
-        CALL obs_read (ng, iNLM, .FALSE.)
-#   ifdef SP4DVAR
-        IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
-          CALL obs_write (ng, tile, iNLM)
-          CALL obs_cost (ng, iNLM)
-        END IF
-#   else
-        CALL obs_write (ng, tile, iNLM)
-#    if !(defined R4DVAR || defined VERIFICATION)
-        CALL obs_cost (ng, iNLM)
-#    endif
-#   endif
-      ELSE
-        ProcessObs=.FALSE.
-      END IF
-#  endif
-
-#  ifdef MODERN_OBS
+     !defined I4DVAR_ANA_SENSITIVITY && \
+     defined OBSERVATIONS
+#  if defined IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Execute the H(x) operator: If applicable, extract nonlinear model
@@ -770,6 +744,32 @@
         DO i=1,Ndatum(ng)
           ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
         END DO
+      END IF
+
+#  else
+!
+!-----------------------------------------------------------------------
+!  If appropriate, process and write model state at observation
+!  locations. Compute misfit (model-observations) cost function.
+!-----------------------------------------------------------------------
+!
+      IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
+     &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
+        ProcessObs=.TRUE.
+        CALL obs_read (ng, iNLM, .FALSE.)
+#   ifdef SP4DVAR
+        IF (iic(ng).ne.ntend(ng)+1.or.Lsadd(ng)) THEN
+          CALL obs_write (ng, tile, iNLM)
+          CALL obs_cost (ng, iNLM)
+        END IF
+#   else
+        CALL obs_write (ng, tile, iNLM)
+#    if !(defined R4DVAR || defined VERIFICATION)
+        CALL obs_cost (ng, iNLM)
+#    endif
+#   endif
+      ELSE
+        ProcessObs=.FALSE.
       END IF
 #  endif
 # endif

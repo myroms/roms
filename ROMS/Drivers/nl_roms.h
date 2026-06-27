@@ -29,7 +29,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
-#if defined VERIFICATION && defined ARCHAIC_OBS
+#ifdef VERIFICATION
       USE def_mod_mod,       ONLY : def_mod
 #endif
       USE close_io_mod,      ONLY : close_inp, close_out
@@ -43,7 +43,7 @@
 # endif
 #endif
 #ifdef VERIFICATION
-# ifdef MODERN_OBS
+# ifndef IODA_OBS
       USE roms_hofx_mod,     ONLY : hofx_finalize
 # else
       USE stats_modobs_mod,  ONLY : stats_modobs
@@ -219,7 +219,6 @@
       Nrun=1
 
 #ifdef VERIFICATION
-# ifdef ARCHAIC_OBS
 !
 !  Create NetCDF file for model solution at observation locations.
 !
@@ -232,19 +231,6 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
-# endif
-# ifdef MODERN_OBS
-!
-!  Set switches to compute and write model at observation locations.
-!
-      IF (Nrun.eq.1) THEN
-        DO ng=1,Ngrids
-          LdefMOD(ng)=.TRUE.
-          wrtNLmod(ng)=.TRUE.
-          wrtObsScale(ng)=.TRUE.
-        END DO
-      END IF
-# endif
 #endif
 #ifdef ENKF_RESTART
 !
@@ -370,7 +356,7 @@
       END IF
 #endif
 #ifdef VERIFICATION
-# ifdef MODERN_OBS
+# ifdef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Finalize model at observation locations, H(x). Then, write ouput

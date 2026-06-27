@@ -69,7 +69,7 @@
       USE rho_eos_mod,       ONLY : rho_eos
       USE set_massflux_mod,  ONLY : set_massflux
 # endif
-# if defined OBSERVATIONS && defined ARCHAIC_OBS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_initial_mod,   ONLY : obs_initial
 # endif
 # ifdef MASKING
@@ -444,7 +444,7 @@
       END IF
 # endif
 
-# if defined OBSERVATIONS && defined ARCHAIC_OBS
+# if defined OBSERVATIONS && !defined IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Initialize various variables needed for processing observations

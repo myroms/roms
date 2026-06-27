@@ -55,7 +55,7 @@
 !                NRM(3,ng)  lateral open boundary conditions           !
 !                NRM(4,ng)  surface forcing                            !
 !    NUD       Input climatology nudging coefficients                  !
-!    OBS       Input/output 4D-Var observations                        !
+!    OBS       Input 4D-Var observations file(s)                       !
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
 !    OIFA      Input Observations Impact Forcing at datum locations if !
 !                initialized from the 4D-Var Analysis (red curve)      !
@@ -294,8 +294,11 @@
 !
       integer, allocatable :: nOBSfiles(:)
 !
+#ifdef IODA_OBS
+      TYPE(T_IO), allocatable :: OBS(:,:)
+#else
       TYPE(T_IO), allocatable :: OBS(:)
-      TYPE(T_IO), allocatable :: OBS2(:,:)
+#endif
 !
 !  Error messages.
 !
@@ -451,9 +454,11 @@
       IF (.not.allocated(NUD)) THEN
         allocate ( NUD(Ngrids) )
       END IF
+#ifndef IODA_OBS
       IF (.not.allocated(OBS)) THEN
         allocate ( OBS(Ngrids) )
       END IF
+#endif
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       IF (.not.allocated(OIFA)) THEN
         allocate ( OIFA(Ngrids) )
@@ -568,7 +573,9 @@
         LCZ(ng)%ncid=-1
         LZE(ng)%ncid=-1
         NUD(ng)%ncid=-1
+#ifndef IODA_OBS
         OBS(ng)%ncid=-1
+#endif
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
         OIFA(ng)%ncid=-1
         OIFB(ng)%ncid=-1
@@ -719,9 +726,11 @@
           NUD(ng)%base(i:i)=blank
           NUD(ng)%name(i:i)=blank
 
+#ifndef IODA_OBS
           OBS(ng)%head(i:i)=blank
           OBS(ng)%base(i:i)=blank
           OBS(ng)%name(i:i)=blank
+#endif
 
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           OIFA(ng)%head(i:i)=blank

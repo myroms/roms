@@ -107,7 +107,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       USE set_pio_mod,         ONLY : set_iodecomp
 #endif
-#if defined OBSERVATIONS && defined MODERN_OBS
+#if defined OBSERVATIONS && defined IODA_OBS
       USE roms_hofx_mod,       ONLY : hofx_initialize
       USE roms_vchange_mod,    ONLY : vchange_initialize
 #endif
@@ -480,7 +480,7 @@
 !
       CALL initialize_fourdvar
 
-# ifdef MODERN_OBS
+# ifdef IODA_OBS
 !
 !  Allocate and initialize H(x) and variable change objects.
 !

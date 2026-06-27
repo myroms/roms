@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE obs_initial_mod
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR   || defined VERIFICATION) && \
+    defined OBSERVATIONS && !defined IODA_OBS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===

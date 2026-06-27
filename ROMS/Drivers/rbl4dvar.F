@@ -591,6 +591,7 @@
      &                            TRIM(string)
               END IF
             END DO
+            WRITE (stdout,'(1x)')
           END IF
 !
 !  Write out initial data penalty function to NetCDF file.
@@ -2776,6 +2777,7 @@
      &                            TRIM(string)
               END IF
             END DO
+            WRITE (stdout,'(1x)')
           END IF
 !
 !  Write out final data penalty function to NetCDF file.

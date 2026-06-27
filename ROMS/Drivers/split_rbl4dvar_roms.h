@@ -88,7 +88,7 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
-#ifdef MODERN_OBS
+#ifdef IODA_OBS
       USE roms_hofx_mod,     ONLY : hofx_finalize
 #else
       USE stats_modobs_mod,  ONLY : stats_modobs
@@ -510,7 +510,7 @@
         END DO
       END IF
 
-#ifdef MODERN_OBS
+#ifdef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Finalize model at observation locations, H(x) operators. Then, write

@@ -354,9 +354,35 @@
 !
       SourceFile=MyFile
 !
-!  Compute model at the observation locations.
+!  Initialize observations processing switch.
 !
       ProcessObs(ng)=.FALSE.
+
+# ifdef WEAK_CONSTRAINT
+!
+!  If calling from the adjoint kernel, initialize the work-forcing state
+!  arrays to zero. They will temporarily contain the contribution of the
+!  transposed H(x) operator from the observations vector "ADmodVal",
+!  which is computed by the data assimilation minimization algorithm
+!  "rpcg_lanczos" or congrad in the dual formulation. All forcing-state
+!  arrays are initialized even when there are no observations associated
+!  with a particular state variable, since their contributions are added
+!  to all adjoint state variables. See routine "ad_force_dual".
+!
+      IF (model.eq.iADM) THEN
+        OCEAN(ng)%f_zeta = 0.0_r8
+#  ifndef SOLVE3D
+        OCEAN(ng)%f_ubar = 0.0_r8
+        OCEAN(ng)%f_vbar = 0.0_r8
+#  else
+        OCEAN(ng)%f_u    = 0.0_r8
+        OCEAN(ng)%f_v    = 0.0_r8
+        OCEAN(ng)%f_t    = 0.0_r8
+#  endif
+      END IF
+# endif
+!
+!  Compute model at the observation locations.
 !
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
@@ -416,6 +442,10 @@
 # ifdef DISTRIBUTE
             CALL nlm_hofx(ng)%update (ng, model)
 # endif
+# ifndef VERIFICATION
+            CALL nlm_hofx(ng)%cost_function (obs_store, ng, model)
+# endif
+!
             IF (wrtNLmod(ng)) THEN
               IF (Nrun.eq.1) THEN
                 CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
@@ -473,6 +503,7 @@
 #  ifdef DISTRIBUTE
             CALL tlm_hofx(ng)%update (ng, model)
 #  endif
+            CALL tlm_hofx(ng)%cost_function (obs_store, ng, model)
           END DO
 # endif
 
@@ -771,7 +802,7 @@
       integer,            intent(in   ) :: model    ! kernel identifier
 !
       integer                           :: nlocs, npool, mvars
-      integer                           :: iloc, iobs, ipool, ivar
+      integer                           :: ic, iloc, iobs, ipool, ivar
       real (r8)                         :: ObsError, ObsCost, misfit
 #  ifdef DATALESS_LOOPS
       real (r8)                         :: nlmObsCost
@@ -787,8 +818,11 @@
         DO ipool=1,npool
           mvars=obs%pool(ipool)%nvars
           nlocs=obs%pool(ipool)%nlocs
-          ObsCost=0.0_r8
           DO ivar=1,mvars
+            ObsCost=0.0_r8
+#   ifdef DATALESS_LOOPS
+            nlmObsCost=0.0_r8
+#   endif
             DO iloc=1,nlocs
               iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
               ObsError=obs%pool(ipool)%error(iloc,ivar)
@@ -797,11 +831,12 @@
                 misfit=self%state(iobs)-                                &
      &                 obs%pool(ipool)%value(iloc,ivar)
                 ObsCost=ObsCost+                                        &
-     &                  misfit*misfit/(ObsError*ObsError)
+     &                  misfit*misfit/ObsError
 #   ifdef DATALESS_LOOPS
                 misfit=nlm_hofx(ng)%state(iobs)-                        &
+     &                 obs%pool(ipool)%value(iloc,ivar)
                 nlmObsCost=nlmObsCost+                                  &
-     &                     misfit*misfit/(ObsError*ObsError)
+     &                     misfit*misfit/ObsError
 #   endif
               END IF
             END DO
@@ -823,8 +858,8 @@
         DO ipool=1,npool
           mvars=obs%pool(ipool)%nvars
           nlocs=obs%pool(ipool)%nlocs
-          ObsCost=0.0_r8
           DO ivar=1,mvars
+            ObsCost=0.0_r8
             DO iloc=1,nlocs
               iobs=obs%pool(ipool)%pack_mapping(iloc,ivar)
               ObsError=obs%pool(ipool)%error(iloc,ivar)
@@ -833,7 +868,7 @@
                 misfit=self%state(iobs)-                                &
      &                 obs%pool(ipool)%value(iloc,ivar)
                 ObsCost=ObsCost+                                        &
-     &                  misfit*misfit/(ObsError*ObsError)
+     &                  misfit*misfit/ObsError
               END IF
             END DO
             self%ObsCost(ipool)%value(ivar)=ObsCost
@@ -859,7 +894,7 @@
                 misfit=self%state(iobs)-                                &
      &                 obs%pool(ipool)%value(iloc,ivar)
                 ObsCost=ObsCost+                                        &
-     &                  misfit*misfit/(ObsError*ObsError)
+     &                  0.5_r8*ObsError*(misfit*misfit)
               END IF
             END DO
             self%ObsCost(ipool)%value(ivar)=ObsCost
@@ -880,12 +915,102 @@
                 misfit=nlm_hofx(ng)%state(iobs)+self%state(iobs)-       &
      &                 obs%pool(ipool)%value(iloc,ivar)
                 ObsCost=ObsCost+                                        &
-                        misfit*misfit/(ObsError*ObsError)
+                        0.5_r8*ObsError*(misfit*misfit)
               END IF
             END DO
             self%ObsCost(ipool)%value(ivar)=ObsCost
           END DO
         END DO
+      END IF
+#  endif
+!
+!  Load coast function values into structure.
+!
+#  if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+      defined TL_R4DVAR
+      IF (model.eq.iRPM) THEN
+        ic=0
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          DO ivar=1,mvars
+            ic=ic+1
+            ObsCost=self%ObsCost(ipool)%value(ivar)
+            FOURDVAR(ng)%DataPenalty(0)=FOURDVAR(ng)%DataPenalty(0)+    &
+     &                                  ObsCost
+            FOURDVAR(ng)%DataPenalty(ic)=ObsCost
+#   ifdef DATALESS_LOOPS
+            nlmObsCost=nlm_hofx(ng)%ObsCost(ipool)%value(ivar)
+            FOURDVAR(ng)%NLPenalty(0)=FOURDVAR(ng)%NLPenalty(0)+        &
+     &                                nlmObsCost
+            FOURDVAR(ng)%NLPenalty(ic)=nlmObsCost
+#   endif
+          END DO
+        END DO
+      END IF
+
+#  elif defined RBL4DVAR || defined RBL4DVAR_ANA_SENSITIVITY || \
+        defined SP4DVAR  || defined TL_RBL4DVAR
+      IF (model.eq.iNLM) THEN
+        ic=0
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          DO ivar=1,mvars
+            ic=ic+1
+            ObsCost=self%ObsCost(ipool)%value(ivar)
+            FOURDVAR(ng)%NLPenalty(0)=FOURDVAR(ng)%NLPenalty(0)+        &
+     &                                ObsCost
+            FOURDVAR(ng)%NLPenalty(ic)=ObsCost
+          END DO
+        END DO
+      END IF
+#  else
+      IF (model.eq.iTLM) THEN
+        ic=0
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          DO ivar=1,mvars
+            ic=ic+1
+            ObsCost=self%ObsCost(ipool)%value(ivar)
+            FOURDVAR(ng)%ObsCost(0)=FOURDVAR(ng)%ObsCost(0)+            &
+     &                              ObsCost
+            FOURDVAR(ng)%ObsCost(ic)=ObsCost
+          END DO
+        END DO
+      ELSE IF (model.eq.iNLM) THEN
+        ic=0
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          DO ivar=1,mvars
+            ic=ic+1
+            ObsCost=self%ObsCost(ipool)%value(ivar)
+            FOURDVAR(ng)%NLPenalty(0)=FOURDVAR(ng)%NLPenalty(0)+        &
+     &                                ObsCost
+            FOURDVAR(ng)%NLPenalty(ic)=ObsCost
+          END DO
+        END DO
+      END IF
+#  endif
+
+#  ifndef WEAK_CONSTRAINT
+!
+!  If start of minimization, set cost function scales used to report
+!  normalized values.
+!
+      IF ((Nrun.eq.1).and.(model.eq.iTLM)) THEN
+        ic=0
+        DO ipool=1,npool
+          mvars=obs%pool(ipool)%nvars
+          DO ivar=1,mvars
+            ic=ic+1
+            FOURDVAR(ng)%CostNorm(ic)=FOURDVAR(ng)%ObsCost(ic)
+          END DO
+        END DO
+      END IF
+!
+!  Save initial inner loop cost function.
+!
+      IF ((inner.eq.0).and.(model.eq.iTLM)) THEN
+        FOURDVAR(ng)%Cost0(outer)=FOURDVAR(ng)%ObsCost(0)
       END IF
 #  endif
 !
