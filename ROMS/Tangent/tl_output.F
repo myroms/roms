@@ -319,10 +319,7 @@
 !  assimilation.
 !
       IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
-        CALL hofx_finalize (iTLM)
-!
-        nullify (TLmodVal)
-        TLmodVal => tlm_hofx(ng)%state
+        CALL hofx_finalize (ng, iTLM)
       END IF
 #  else
 !

@@ -188,7 +188,7 @@
 # endif
         PROCEDURE :: increment           => obs_hofx_increment
         PROCEDURE :: innovation          => obs_hofx_innovation
-        PROCEDURE :: nc_write            => obs_hofx_nc_write
+        PROCEDURE :: nc_write_ioda       => obs_hofx_nc_write_ioda
         PROCEDURE :: residual            => obs_hofx_residual
         PROCEDURE :: rms                 => obs_hofx_rms
         PROCEDURE :: stats               => obs_hofx_stats
@@ -241,9 +241,11 @@
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-      PUBLIC :: hofx_initialize
-      PUBLIC :: hofx_run
-      PUBLIC :: hofx_finalize
+      PUBLIC  :: hofx_initialize
+      PUBLIC  :: hofx_run
+      PUBLIC  :: hofx_finalize
+      PRIVATE :: hofx_output_dav
+      PRIVATE :: hofx_output_ioda
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -385,22 +387,38 @@
 !  Compute model at the observation locations.
 !
       SELECT CASE (model)
-        CASE (iNLM)                                  ! nonlinear
+        CASE (iNLM)
+!
+!  Interplate nonlinear model at the observation locations.
+!
           CALL nlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 
-# ifndef VERIFICATION
-        CASE (iSTD)                                  ! background error
+# if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
+                       defined VERIFICATION)
+!
+!  Interpolate background error (standard deviation) at the observation
+!  locations. It is needed for backgrouns quality control screening.
+! 
           CALL berr_hofx(ng)%extract (obs_store, VarCha(ng),            &
      &                                geom_hofx(ng), ng, model)
 # endif
+
 # if defined FOUR_DVAR && defined TLM_OBS
-        CASE (iTLM, iRPM)                            ! tangent linear
+        CASE (iTLM, iRPM)
+!
+!  Interpolate infinitesimal or perturbstion tangent linear model at
+!  the observation locations.
+!
           CALL tlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 # endif
+
 # if defined FOUR_DVAR && defined ADJOINT
-        CASE (iADM)                                  ! adjoint
+        CASE (iADM)
+!
+!  Adjoint of interpolate model at the observtion locations.
+!
           CALL adm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 # endif
@@ -411,21 +429,21 @@
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-
   10  FORMAT (/,' ROMS_HOFX::HOFX_RUN: illegal identifier, model = ',i0)
 !
       RETURN
       END SUBROUTINE hofx_run
 !
 !-----------------------------------------------------------------------
-!  It finalizes the H(x) computation.
+!  It finalizes the H(x) computation: apply parallel exchanges, compute
+!  cost functions, and writes variables into output NetCDF files.
 !
-      SUBROUTINE hofx_finalize (model)
+      SUBROUTINE hofx_finalize (ng, model)
 !
+      integer,           intent(in   ) :: ng     ! nested grid
       integer,           intent(in   ) :: model  ! kernel identifier
 !
-      integer                          :: ng
-
+      integer                          :: i
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", obs_finalize"
 !
@@ -438,73 +456,64 @@
 !
       SELECT CASE (model)
         CASE (iNLM)                                  ! nonlinear
-          DO ng=1,Ngrids
 # ifdef DISTRIBUTE
-            CALL nlm_hofx(ng)%update (ng, model)
+!
+!  Collect H(x) data from all processors.
+!
+          CALL nlm_hofx(ng)%update (ng, model)
+#  if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
+                        defined VERIFICATION)
+          CALL berr_hofx(ng)%update (ng, model)
+#  endif
 # endif
-# ifndef VERIFICATION
-            CALL nlm_hofx(ng)%cost_function (obs_store, ng, model)
+
+# if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
+                       defined VERIFICATION)
+!
+!  Review all observations for background quality and reject those that
+!  do not meet the specified criteria. Set the screening variable
+!  ("ObsVetting") to zero for each rejected observation.
+!
+          CALL nlm_hofx(ng)%background_QC (obs_store, berr_hofx(ng),    &
+     &                                     ng, model)
 # endif
 !
-            IF (wrtNLmod(ng)) THEN
-              IF (Nrun.eq.1) THEN
-                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
-# ifdef VERIFICATION
-     &                                      'hofx')
-# else
-     &                                      'hofxInitial')
-# endif
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
+!  Link the aggregated control vector to the "NLmodVal" pointer for
+!  data assimilation. Also, load the observation screening and quality
+!  control scale (0: reject, 1: accept).
 !
-                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
-     &                                      'ObsVetting')
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
-# ifdef FOUR_DVAR
+          nullify (NLmodVal)
+          NLmodVal => nlm_hofx(ng)%state
 !
-                CALL nlm_hofx(ng)%innovation (obs_store, ng, model)
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
-# endif
-              END IF
-# ifdef FOUR_DVAR
-!
-              IF (outer.eq.Nouter) THEN
-                CALL nlm_hofx(ng)%nc_write (obs_store, ng, model,       &
-     &                                      'hofxFinal')
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
-!
-                CALL nlm_hofx(ng)%increment (obs_store, ng, model)
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
-!
-                CALL nlm_hofx(ng)%residual (obs_store, ng, model)
-                IF (FoundError(exit_flag, NoError,                      &
-     &                         __LINE__, MyFile)) RETURN
-              END IF
-# endif
-            END IF
+          DO i=1,Ndatum(ng)
+            ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
           END DO
 
 # ifndef VERIFICATION
-        CASE (iSTD)                                  ! background error
-          DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-            CALL berr_hofx(ng)%update (ng, model)
-#  endif
-          END DO
+!
+!  Compute nonlinear cost function.
+!
+          CALL nlm_hofx(ng)%cost_function (obs_store, ng, model)
 # endif
 
 # if defined FOUR_DVAR && defined TLM_OBS
         CASE (iTLM, iRPM)                            ! tangent linear
-          DO ng=1,Ngrids
 #  ifdef DISTRIBUTE
-            CALL tlm_hofx(ng)%update (ng, model)
+!
+!  Collect H(x) data from all processors.
+!
+          CALL tlm_hofx(ng)%update (ng, model)
 #  endif
-            CALL tlm_hofx(ng)%cost_function (obs_store, ng, model)
-          END DO
+!
+!  Link the aggregated control vector to the "TLmodVal" pointer for
+!  data assimilation.
+!
+          nullify (TLmodVal)
+          TLmodVal => tlm_hofx(ng)%state
+!
+!  Compute tangent linear cost function.
+!
+          CALL tlm_hofx(ng)%cost_function (obs_store, ng, model)
 # endif
 
         CASE DEFAULT
@@ -514,12 +523,22 @@
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
+!  Export H(x) data to multiple IODA output files, applying the NetCDF-4
+!  schema from the input observation files.
+!
+      CALL hofx_output_ioda (ng, model)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Write aggregated H(x) observation data to a single Data Assimilation
+!  Variables (DAV) NetCDF output file.
+!
+      CALL hofx_output_dav (ng, model)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
 !  Report observation-model statistics.
 !
       IF (model.eq.iNLM) THEN
-        DO ng=1,Ngrids
-          CALL nlm_hofx(ng)%stats (obs_store, ng, model)
-        END DO
+        CALL nlm_hofx(ng)%stats (obs_store, ng, model)
       END IF
 !
   10  FORMAT (/,1x,'ROMS_HOFX - ',a,': ',                               &
@@ -529,6 +548,173 @@
 !
       RETURN
       END SUBROUTINE hofx_finalize
+!
+!-----------------------------------------------------------------------
+!  It writes aggregated H(x) and observation data to a single Data
+!  Assimilation Variables (DAV) NetCDF output file.
+!
+      SUBROUTINE hofx_output_dav (ng, model)
+!
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      integer, pointer                :: Iwork(:)
+      real (r8), pointer              :: Rwork(:)
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", hofx_output_dav"
+!
+      SourceFile=MyFile
+!
+!  Write out aggregated observation data.
+!  =====================================
+!
+      IF ((model.eq.iNLM).and.(Nrun.eq.1)) THEN
+!
+!  Observation state variable identifier.
+! 
+        CALL obs_store%aggregate_i (ng, 'stateID', Iwork)
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOtyp), Iwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation origin identifier.
+!
+        CALL obs_store%aggregate_i (ng, 'provenance', Iwork)
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOpro), Iwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation longitude.
+!
+        CALL obs_store%aggregate_r (ng, 'lon', Rwork)
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOlon), Rwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation latitude.
+!
+        CALL obs_store%aggregate_r (ng, 'lat', Rwork)
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOlat), Rwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation depth.
+!
+        CALL obs_store%aggregate_r (ng, 'depth', Rwork)
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idObsD), Rwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation value (state units) and error (squared-state units). 
+!  They were aggregated in "initialize_fourdvar".
+!
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOval), ObsVal,                  &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idOerr), ObsErr,                  &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observation screening flag. It is computed in NLM routine "output".
+!
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idObsS), ObsScale,                &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Write out aggregated H(x) data.
+!  ==============================
+!
+
+
+      RETURN
+      END SUBROUTINE hofx_output_dav
+!
+!-----------------------------------------------------------------------
+!  It writes H(x) data to multiple IODA output files, having the same
+!  NetCDF-4 schema from the input observation files.
+!
+      SUBROUTINE hofx_output_ioda (ng, model)
+!
+      integer,          intent(in   ) :: ng     ! nested grid
+      integer,          intent(in   ) :: model  ! kernel identifier
+!
+      character (len=*),    parameter :: MyFile =                       &
+     &    __FILE__//", hofx_output_ioda"
+!
+      SourceFile=MyFile
+!
+!  Write out H(x) into output IODA NetCDF-4 files.
+!
+      SELECT CASE (model)
+        CASE (iNLM)                                  ! nonlinear
+          IF (wrtNLmod(ng)) THEN
+            IF (Nrun.eq.1) THEN
+              CALL nlm_hofx(ng)%nc_write_ioda (obs_store, ng, model,    &
+# ifdef VERIFICATION
+     &                                         'hofx')
+# else
+     &                                         'hofxInitial')
+# endif
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+!
+              CALL nlm_hofx(ng)%nc_write_ioda (obs_store, ng, model,    &
+     &                                         'ObsVetting')
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+# ifdef FOUR_DVAR
+!
+              CALL nlm_hofx(ng)%innovation (obs_store, ng, model)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+# endif
+            END IF
+# ifdef FOUR_DVAR
+!
+            IF (outer.eq.Nouter) THEN
+              CALL nlm_hofx(ng)%nc_write_ioda (obs_store, ng, model,    &
+     &                                         'hofxFinal')
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+!
+              CALL nlm_hofx(ng)%increment (obs_store, ng, model)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+!
+              CALL nlm_hofx(ng)%residual (obs_store, ng, model)
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+            END IF
+# endif
+          END IF
+
+# if defined FOUR_DVAR && defined TLM_OBS
+        CASE (iTLM, iRPM)                            ! tangent linear
+# endif
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+      RETURN
+      END SUBROUTINE hofx_output_ioda
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><> CLASS OBS_FILTER <><><>
 !
@@ -3482,10 +3668,10 @@
       END SUBROUTINE obs_hofx_innovation
 !
 !-----------------------------------------------------------------------
-!  It writes generic H(x) variables into multiple output NetCDF-4 files
+!  It writes generic H(x) variables into multiple output IODA NetCDF-4 
 !  file(s).
 !
-      SUBROUTINE obs_hofx_nc_write (self, obs, ng, model, grpname)
+      SUBROUTINE obs_hofx_nc_write_ioda (self, obs, ng, model, grpname)
 !
       CLASS (obs_hofx),  intent(in   ) :: self     ! H(x) object
       CLASS (obs_pool),  intent(in   ) :: obs      ! observation depot
@@ -3500,7 +3686,7 @@
       real (r8),           allocatable :: work(:)
 !
       character (len=*),     parameter :: MyFile =                      &
-     &    __FILE__//", roms_hofx_nc_write"
+     &    __FILE__//", roms_hofx_nc_write_ioda"
 !
       SourceFile=MyFile
 !
@@ -3582,7 +3768,7 @@
      &        ' Max = ', 1p,e12.5,')   File: ',a)
 !
       RETURN
-      END SUBROUTINE obs_hofx_nc_write
+      END SUBROUTINE obs_hofx_nc_write_ioda
 !
 !-----------------------------------------------------------------------
 !  It computes and writes the residual (observations minus analysis)
@@ -3601,7 +3787,7 @@
       real (r8),          allocatable :: work(:)
 !
       character (len=*),    parameter :: MyFile =                       &
-     &    __FILE__//", roms_hofx_residual"
+     &    __FILE__//", obs_hofx_residual"
 !
       SourceFile=MyFile
 !

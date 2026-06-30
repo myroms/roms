@@ -440,12 +440,8 @@
 !  Inquire file.
 !
       IF (InpThread) THEN
-#ifdef OUT_NETCDF4
         status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id,      &
      &                      formatNum = ncformat)
-#else
-        status=nf90_inquire(my_ncid, n_dim, n_var, n_gatt, rec_id)
-#endif
         IF ((status.eq.nf90_noerr).and.(n_dim.le.Mdims)) THEN
 #if !defined PARALLEL_IO && defined DISTRIBUTE
           ibuffer(1)=n_dim

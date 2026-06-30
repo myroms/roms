@@ -1650,8 +1650,8 @@
 !  facilitate data assimilation. Arrange the data by observation pool
 !  and align it with the order of H(x) operators.
 !
-      CALL obs_store%aggregate (ng, 'value', ObsVal)
-      CALL obs_store%aggregate (ng, 'error', ObsErr)
+      CALL obs_store%aggregate_r (ng, 'value', ObsVal)
+      CALL obs_store%aggregate_r (ng, 'error', ObsErr)
 
 #  else
 !

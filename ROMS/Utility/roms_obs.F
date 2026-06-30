@@ -222,7 +222,8 @@
 !
         CONTAINS
 !
-        PROCEDURE :: aggregate        => obs_pool_aggregate
+        PROCEDURE :: aggregate_i      => obs_pool_aggregate_i
+        PROCEDURE :: aggregate_r      => obs_pool_aggregate_r
         PROCEDURE :: create           => obs_pool_create
         PROCEDURE :: destroy          => obs_pool_destroy
         PROCEDURE :: get              => obs_pool_get
@@ -724,15 +725,77 @@
 !
 !<><><><><><><><><><><><><><><><><><><><><><><><>  CLASS OBS_POOL <><><>
 !
-!  It combines observation pool data into a single vector to support
-!  minimization in data assimilation. Observations are ordered according
-!  to the observation pool, matching the H(x) operators and the
-!  "pack_mapping" index sequence. For details, please refer to the
+!  It combines observation pool integer data into a single vector to
+!  support minimization in data assimilation. Observations are ordered
+!  according to the observation pool, matching the H(x) operators and
+!  the "pack_mapping" index sequence. For details, please refer to the
 !  "obs_pool_tally" routine. This method allows integration of both
-!  legacy and modern observation operators without changes to complex
-!  data assimilation algorithms.
+!  legacy and IODA observation operators without changes to complex data
+!  assimilation algorithms.
 !
-      SUBROUTINE obs_pool_aggregate (self, ng, ObsVar, ObsData)
+      SUBROUTINE obs_pool_aggregate_i (self, ng, ObsVar, ObsData)
+!
+      CLASS (obs_pool),   intent(inout) :: self      ! observation set
+      integer,            intent(in   ) :: ng        ! nested grid
+      character (len=*),  intent(in   ) :: ObsVar    ! variable
+      integer, pointer,   intent(out  ) :: ObsData(:)
+!
+      integer                           :: nlocs, npool, nvars
+      integer                           :: my_ndatum
+      integer                           :: i, ic, j, k
+!
+!  Initialize.
+!
+      my_ndatum=self%ndatum
+      npool=SIZE(self%pool)
+      ic=0
+!
+!  Allocate pointer.
+!
+      nullify (ObsData)
+      allocate ( ObsData(my_ndatum) )
+      ObsData=0.0_r8
+!
+!  Aggregate requested observation variable.
+!
+      SELECT CASE (TRIM(ObsVar))
+        CASE ('stateID')             ! observation state variable ID
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%stateID(k)
+              END DO
+            END DO
+          END DO
+        CASE ('provenance')          ! observation origin identifier
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%provenance(j)
+              END DO
+            END DO
+          END DO
+      END SELECT
+!
+      RETURN
+      END SUBROUTINE obs_pool_aggregate_i
+!
+!-----------------------------------------------------------------------
+!  It combines observation pool floating-point data into a single
+!  vector to support minimization in data assimilation. Observations
+!  are ordered according to the observation pool, matching the H(x)
+!  operators and the "pack_mapping" index sequence. For details, please
+!  refer to the "obs_pool_tally" routine. This method allows integration
+!  of both legacy and IODA observation operators without changes to
+!  complex data assimilation algorithms.
+!
+      SUBROUTINE obs_pool_aggregate_r (self, ng, ObsVar, ObsData)
 !
       CLASS (obs_pool),   intent(inout) :: self      ! observation set
       integer,            intent(in   ) :: ng        ! nested grid
@@ -758,6 +821,17 @@
 !  Aggregate requested observation variable.
 !
       SELECT CASE (TRIM(ObsVar))
+        CASE ('depth')               ! observation depth
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%depth(j)
+              END DO
+            END DO
+          END DO
         CASE ('error')               ! observation error
           DO i=1,npool
             nlocs=self%pool(i)%nlocs
@@ -766,6 +840,28 @@
               DO j=1,nlocs
                 ic=ic+1
                 ObsData(ic)=self%pool(i)%error(j,k)
+              END DO
+            END DO
+          END DO
+        CASE ('lon')                 ! observation longitude
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%lon(j)
+              END DO
+            END DO
+          END DO
+        CASE ('lat')                 ! observation latitude
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%lat(j)
               END DO
             END DO
           END DO
@@ -783,7 +879,7 @@
       END SELECT
 !
       RETURN
-      END SUBROUTINE obs_pool_aggregate
+      END SUBROUTINE obs_pool_aggregate_r
 !
 !-----------------------------------------------------------------------
 !  It creates a set observation-type objects. A single or multiple
@@ -1601,16 +1697,9 @@
 !
 !  Inquire about input file groups.
 !
-        IF (ncformat.eq.nf90_format_netcdf4) THEN
-          CALL netcdf_get_grp (ng, model, self%pool(iobs)%ncname_inp,   &
-     &                         ncid = ncid_inp)
-          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        ELSE
-          IF (Master) WRITE (stdout,10) ncformat,                       &
-     &                                  self%pool(iobs)%ncname_inp
-          exit_flag=5
-          RETURN
-        END IF
+        CALL netcdf_get_grp (ng, model, self%pool(iobs)%ncname_inp,     &
+     &                       ncid = ncid_inp)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Inquire about the variables.
 !
@@ -1630,8 +1719,7 @@
 !  Copy NetCDF4 file schema (serial, only output thread).
 !-----------------------------------------------------------------------
 !
-        DEFINE : IF ((ncformat.eq.nf90_format_netcdf4).and.             &
-     &               OutThread) THEN
+        DEFINE : IF (OutThread) THEN
 !
 !  Create NetCDF4 file.
 !

@@ -382,10 +382,12 @@
 !
 !-----------------------------------------------------------------------
 !  Finalize model at observation locations, H(x) operators. Then, write
-!  ouput enhanced NetCDF-4 files.
+!  ouput enhanced NetCDF-4 files. HGA: Is it needed?
 !-----------------------------------------------------------------------
 !
-      CALL hofx_finalize (iNLM)
+      DO ng=1,Ngrids
+!       CALL hofx_finalize (ng, iNLM)
+      END DO
 #else
 !
 !-----------------------------------------------------------------------

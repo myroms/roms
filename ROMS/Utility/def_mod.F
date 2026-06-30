@@ -112,6 +112,9 @@
 
       integer :: i, j, lstr, nvatt, nvdim, status, varid, vindex
       integer :: OBSncid
+# ifdef IODA_OBS
+      integer :: grp, vtype
+# endif
       integer :: vardim(3)
 # ifdef DISTRIBUTE
       integer :: ibuffer(2)
@@ -120,6 +123,9 @@
       real(dp) :: Tstart, Tfinal
       real(r8) :: Aval(6)
 !
+# ifdef IODA_OBS
+      character (len=11 )    :: obsatt
+# endif
       character (len=22 )    :: str_date, end_date
       character (len=40 )    :: Aname, AttName(2)
       character (len=80 )    :: string
@@ -164,11 +170,29 @@
 !
       DEFINE : IF (LdefMOD(ng)) THEN
 
-# ifndef IODA_OBS
+# ifdef IODA_OBS
+!
+!  Open first input IODA observations NetCDF-4.
+!
+        IF (OBS(1,ng)%ncid.eq.-1) THEN
+          CALL netcdf_open (ng, iNLM, OBS(1,ng)%name, 0, OBSncid)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
+            WRITE (stdout,30) TRIM(OBS(1,ng)%name)
+            RETURN
+          END IF
+        ELSE
+          OBSncid=OBS(1,ng)%ncid
+        END IF
+!
+!  Inquire about input IODA observation NetCDF-4 groups.
+!
+        CALL netcdf_get_grp (ng, iNLM, OBS(1,ng)%name,                  &
+     &                       ncid = OBSncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# else
 !
 !  Open input observations NetCDF.
 !
-
         IF (OBS(ng)%ncid.eq.-1) THEN
           CALL netcdf_open (ng, iNLM, OBS(ng)%name, 1, OBSncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
@@ -223,9 +247,11 @@
      &                 2, recordDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+# ifndef IODA_OBS
         status=def_dim(ng, iNLM, DAV(ng)%ncid, ncname, 'survey',        &
      &                 Nsurvey(ng), surveyDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
         status=def_dim(ng, iNLM, DAV(ng)%ncid, ncname, 'state_var',     &
      &                 NobsVar(ng), stateDim)
@@ -393,7 +419,23 @@
             END IF
           END IF
 
-# ifndef IODA_OBS
+# ifdef IODA_OBS
+!
+!  Input observations file.
+!
+          IF (exit_flag.eq.NoError) THEN
+            DO i=1,nOBSfiles(ng)
+              WRITE (obsatt,'(a,i0)') 'obs_file_', i
+              status=nf90_put_att(DAV(ng)%ncid, nf90_global,            &
+     &                            TRIM(obsatt), TRIM(OBS(i,ng)%name))
+              IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+                IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            END DO
+          END IF
+# else
 !
 !  Input observations file.
 !
@@ -406,6 +448,9 @@
               ioerror=status
             END IF
           END IF
+# endif
+
+# ifndef IODA_OBS
 !
 !  State variables IDs for observations. Copy global attribute from
 !  observation file.
@@ -443,30 +488,33 @@
             END IF
           END IF
 # endif
+
+# ifdef GIT_URL
 !
-!  SVN repository information.
+!  GIT repository information.
 !
-          IF (exit_flag.eq.NoError) THEN
-            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
-     &                          'svn_url', TRIM(svn_url))
-            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              WRITE (stdout,50) 'svn_url', TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(DAV(ng)%ncid, nf90_global, 'git_url',     &
+     &                        TRIM(git_url))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) 'git_url', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
           END IF
+        END IF
+# endif
 
 # ifndef DEBUGGING
-#  ifdef SVN_REV
-          IF (exit_flag.eq.NoError) THEN
-            status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
-     &                          'svn_rev', TRIM(svn_rev))
-            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-              WRITE (stdout,50) 'svn_rev', TRIM(ncname)
-              exit_flag=3
-              ioerror=status
-            END IF
+#  ifdef GIT_REV
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(DAV(ng)%ncid, nf90_global, 'git_rev',     &
+     &                        TRIM(git_rev))
+          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) 'git_rev', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
           END IF
+        END IF
 #  endif
 
 #  ifdef ROOT_DIR
@@ -634,6 +682,7 @@
 !
 !  Define model-observation comparison statistics.
 !
+# ifndef IODA_OBS
         Vinfo( 1)='Nobs'
         Vinfo( 2)='number of observations with the same survey time'
 
@@ -641,6 +690,7 @@
      &                 1, (/surveyDim/), Aval, Vinfo, ncname,           &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 
 # ifndef I4DVAR_ANA_SENSITIVITY
 !
@@ -1187,7 +1237,105 @@
 #   endif
 # endif
 
-# ifndef IODA_OBS
+# ifdef IODA_OBS
+!
+!  Observation type.
+!
+        Vinfo(1)=TRIM(Vname(1,idOTyp))
+        Vinfo(2)=TRIM(Vname(2,idOTyp))
+        Vinfo(3)=TRIM(Vname(3,idOTyp))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOTyp),     &
+     &                 nf90_int, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations provenance.
+!
+        Vinfo(1)=TRIM(Vname(1,idOpro))
+        Vinfo(2)=TRIM(Vname(2,idOpro))
+        Vinfo(3)=TRIM(Vname(3,idOpro))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOpro),     &
+     &                 nf90_int, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations time, seconds since reference date.
+!  (IODA Group 1: MetaData/dateTime)
+!
+        grp=1
+        IF (find_string(grp_vname(:,grp),Mgvar,'dateTime',vindex)) THEN
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
+     &                         ncid = grp_id(grp),                      &
+     &                         MyVarName = 'dateTime',                  &
+     &                         nVarDim = nvdim,                         &
+     &                         nVarAtt = nvatt)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          Vinfo(1)=TRIM(Vname(1,idObsT))
+          DO i=1,nvatt
+            IF (TRIM(var_Aname(i)).eq.'long_name') THEN
+              Vinfo(2)=TRIM(var_Achar(i))
+            ELSE IF (TRIM(var_Aname(i)).eq.'units') THEN
+              Vinfo(3)=TRIM(var_Achar(i))
+            END IF
+          END DO
+          vtype=NF90_INT
+
+          status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsT),   &
+     &                   vtype, 1, (/datumDim/), Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+!
+!  Observations longitude.
+!
+        Vinfo(1)=TRIM(Vname(1,idOlon))
+        Vinfo(2)=TRIM(Vname(2,idOlon))
+        Vinfo(3)=TRIM(Vname(3,idOlon))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOlon),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations latitude.
+! 
+        Vinfo(1)=TRIM(Vname(1,idOlat))
+        Vinfo(2)=TRIM(Vname(2,idOlat))
+        Vinfo(3)=TRIM(Vname(3,idOlat))
+
+       status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOlat),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations depth.
+!
+        Vinfo(1)=TRIM(Vname(1,idObsD))
+        Vinfo(2)=TRIM(Vname(2,idObsD))
+        Vinfo(3)=TRIM(Vname(3,idObsD))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsD),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations total error (instrument + sampling + representation).
+!
+        Vinfo(1)=TRIM(Vname(1,idOerr))
+        Vinfo(2)=TRIM(Vname(2,idOerr))
+        Vinfo(3)=TRIM(Vname(3,idOerr))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOerr),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Observations value.
+!
+        Vinfo(1)=TRIM(Vname(1,idOval))
+        Vinfo(2)=TRIM(Vname(2,idOval))
+        Vinfo(3)=TRIM(Vname(3,idOval))
+
+        status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idOval),     &
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# else
 !
 !  Observations survey time.
 !
@@ -1249,13 +1397,13 @@
             END DO
           END IF
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
           ibuffer(1)=exit_flag
           ibuffer(2)=ioerror
           CALL mp_bcasti (ng, iNLM, ibuffer)
           exit_flag=ibuffer(1)
           ioerror=ibuffer(2)
-# endif
+#  endif
         END IF
 !
 !  Observations provenance.
@@ -1293,13 +1441,13 @@
             END DO
           END IF
 
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
           ibuffer(1)=exit_flag
           ibuffer(2)=ioerror
           CALL mp_bcasti (ng, iNLM, ibuffer)
           exit_flag=ibuffer(1)
           ioerror=ibuffer(2)
-# endif
+#  endif
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 !
@@ -1528,6 +1676,7 @@
      &                   NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
+# endif
 !
 !  Observations screening/normalization scale.
 !
@@ -1537,7 +1686,6 @@
         status=def_var(ng, iNLM, DAV(ng)%ncid, DAV(ng)%Vid(idObsS),     &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
 
 # if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
 !
@@ -2449,9 +2597,9 @@
       integer :: datumDim, datumDimP1
       integer :: NinnerDim, NinnerDimP1, NinnerDimP2
       integer :: NouterDim, NouterDimP1
-# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+#  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       integer :: RetaDim, RxiDim
-# endif
+#  endif
       integer :: stateDim, stateDimP1
       integer :: Fcount
 
@@ -2462,6 +2610,9 @@
       real(dp) :: Tstart, Tfinal
       real(r8) :: Aval(6)
 !
+#  ifdef IODA_OBS
+      character (len=11 )    :: obsatt
+#  endif
       character (len=22 )    :: str_date, end_date
       character (len=40 )    :: Aname, AttName(2)
       character (len=80 )    :: string
@@ -2508,6 +2659,8 @@
 !=======================================================================
 !
       DEFINE : IF (LdefMOD(ng)) THEN
+
+#  ifndef IODA_OBS
 !
 !  Open input observations NetCDF.
 !
@@ -2536,6 +2689,7 @@
         CALL pio_netcdf_get_satt (ng, iNLM, OBS(ng)%name, PIO_global,   &
      &                            AttName, AttValue, foundAtt,          &
      &                            pioFile = OBSpioFile)
+#  endif
 !
 !  Create model/observation (DAV) file
 !
@@ -2549,7 +2703,7 @@
 !  Define dimensions.
 !-----------------------------------------------------------------------
 !
-# if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+#  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'xi_rho',     &
      &                 IOBOUNDS(ng)%xi_rho, RxiDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2557,15 +2711,17 @@
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'eta_rho',    &
      &                 IOBOUNDS(ng)%eta_rho, RetaDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-# endif
+#  endif
 
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'record',     &
      &                 2, recordDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
+#  ifndef IODA_OBS
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'survey',     &
      &                 Nsurvey(ng), surveyDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'state_var',  &
      &                 NobsVar(ng), stateDim)
@@ -2579,12 +2735,12 @@
      &                 Ndatum(ng), datumDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-# ifdef FOUR_DVAR
-#  ifdef RPCG
+#  ifdef FOUR_DVAR
+#   ifdef RPCG
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'datum+1',    &
      &                 Ndatum(ng)+1, datumDimP1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'Nouter',     &
      &                 Nouter, NouterDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2601,24 +2757,24 @@
      &                 Ninner+1, NinnerDimP1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  ifdef SP4DVAR
+#   ifdef SP4DVAR
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'Ninner+2',   &
      &                 Ninner+2, NinnerDimP2)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
 
-#  ifdef I4DVAR
+#   ifdef I4DVAR
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'three',      &
      &                 3, threeDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
 
-#  if defined I4DVAR || defined BACKGROUND
+#   if defined I4DVAR || defined BACKGROUND
         status=def_dim(ng, iNLM, DAV(ng)%pioFile, ncname, 'iteration',  &
      &                 PIO_unlimited, iterDim)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#   endif
 #  endif
-# endif
 !
 !-----------------------------------------------------------------------
 !  Define global attributes.
@@ -2730,6 +2886,24 @@
             ioerror=status
           END IF
         END IF
+
+#  ifdef IODA_OBS
+!
+!  Input observations file.
+!
+        IF (exit_flag.eq.NoError) THEN
+          DO i=1,nOBSfiles(ng)
+            WRITE (obsatt,'(a,i0)') 'obs_file_', i
+            status=PIO_put_att(DAV(ng)%pioFile, PIO_global,             &
+     &                         TRIM(obsatt), TRIM(OBS(i,ng)%name))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END DO
+        END IF
+#  else
 !
 !  Input observations file.
 !
@@ -2742,6 +2916,9 @@
             ioerror=status
           END IF
         END IF
+#  endif
+
+#  ifndef IODA_OBS
 !
 !  State variables IDs for observations. Copy global attribute from
 !  observation file.
@@ -2788,26 +2965,30 @@
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
+#  endif
+
+#  ifdef GIT_URL
 !
-!  SVN repository information.
+!  GIT repository information.
 !
         IF (exit_flag.eq.NoError) THEN
           status=PIO_put_att(DAV(ng)%pioFile, PIO_global,               &
-     &                       'svn_url', TRIM(svn_url))
+     &                        'git_url', TRIM(git_url))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,50) 'svn_url', TRIM(ncname)
+            IF (Master) WRITE (stdout,20) 'git_url', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
         END IF
+#  endif
 
 #  ifndef DEBUGGING
-#   ifdef SVN_REV
+#   ifdef GIT_REV
         IF (exit_flag.eq.NoError) THEN
           status=PIO_put_att(DAV(ng)%pioFile, PIO_global,               &
-     &                       'svn_rev', TRIM(svn_rev))
+     &                       'git_rev', TRIM(svn_rev))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,50) 'svn_rev', TRIM(ncname)
+            IF (Master) WRITE (stdout,50) 'git_rev', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -2971,6 +3152,7 @@
 !
 !  Define model-observation comparison statistics.
 !
+#  ifndef IODA_OBS
         Vinfo( 1)='Nobs'
         Vinfo( 2)='number of observations with the same survey time'
 
@@ -2978,6 +3160,7 @@
      &                 1, (/surveyDim/), Aval, Vinfo, ncname,           &
      &                 SetParAccess = .FALSE.)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
 
 #  ifndef I4DVAR_ANA_SENSITIVITY
 !

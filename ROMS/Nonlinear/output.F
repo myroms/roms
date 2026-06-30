@@ -736,14 +736,7 @@
 !  control scale (0: reject, 1: accept).
 !
       IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
-        CALL hofx_finalize (iNLM)
-!
-        nullify (NLmodVal)
-        NLmodVal => nlm_hofx(ng)%state
-!
-        DO i=1,Ndatum(ng)
-          ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
-        END DO
+        CALL hofx_finalize (ng, iNLM)
       END IF
 
 #  else
