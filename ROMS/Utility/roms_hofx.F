@@ -394,11 +394,11 @@
           CALL nlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 
-# if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
-                       defined VERIFICATION)
+# if !(defined I4DVAR_ANA_SENSITIVITY || defined VERIFICATION)
 !
 !  Interpolate background error (standard deviation) at the observation
-!  locations. It is needed for backgrouns quality control screening.
+!  locations. It is needed for backgrouns quality control screening and
+!  Desroziers et al. (2005) statistics.
 ! 
           CALL berr_hofx(ng)%extract (obs_store, VarCha(ng),            &
      &                                geom_hofx(ng), ng, model)
@@ -460,9 +460,8 @@
 !
 !  Collect H(x) data from all processors.
 !
-          CALL nlm_hofx(ng)%update (ng, model)
-#  if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
-                        defined VERIFICATION)
+          CALL nlm_hofx(ng)%update (ng, model) 
+#  if !(defined I4DVAR_ANA_SENSITIVITY || defined VERIFICATION)
           CALL berr_hofx(ng)%update (ng, model)
 #  endif
 # endif
@@ -470,9 +469,10 @@
 # if defined BGQC && !(defined I4DVAR_ANA_SENSITIVITY || \
                        defined VERIFICATION)
 !
-!  Review all observations for background quality and reject those that
-!  do not meet the specified criteria. Set the screening variable
-!  ("ObsVetting") to zero for each rejected observation.
+!  Review all observations for background quality (QC) and reject
+!  those that do not meet the specified criteria. Set the screening
+!  variable ("nlm_hofx(ng)%ObsVetting") to zero for each rejected
+!  observation.
 !
           CALL nlm_hofx(ng)%background_QC (obs_store, berr_hofx(ng),    &
      &                                     ng, model)
@@ -482,12 +482,23 @@
 !  data assimilation. Also, load the observation screening and quality
 !  control scale (0: reject, 1: accept).
 !
-          nullify (NLmodVal)
-          NLmodVal => nlm_hofx(ng)%state
+          nullify (unvetted)
+          unvetted => nlm_hofx(ng)%state         ! no QC
 !
           DO i=1,Ndatum(ng)
             ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
           END DO
+!
+          nullify (NLmodVal)
+          NLmodVal => nlm_hofx(ng)%state
+          DO i=1,Ndatum(ng)                      ! Apply, QC if any
+            NLmodVal(i)=NLmodVal(i)*ObsScale(i)
+          END DO
+!
+# if !(defined I4DVAR_ANA_SENSITIVITY || defined VERIFICATION)
+          nullify (BgErr)
+          BgErr => berr_hofx(ng)%state
+# endif
 
 # ifndef VERIFICATION
 !
@@ -571,6 +582,15 @@
 !
       IF ((model.eq.iNLM).and.(Nrun.eq.1)) THEN
 !
+!  Observation time (IODA int64), seconds since reference.
+!
+        CALL obs_store%aggregate_i (ng, 'dateTime', Iwork)
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idObsT), Iwork,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
 !  Observation state variable identifier.
 ! 
         CALL obs_store%aggregate_i (ng, 'stateID', Iwork)
@@ -643,8 +663,98 @@
 !  Write out aggregated H(x) data.
 !  ==============================
 !
-
-
+      IF (wrtMisfit(ng)) THEN
+        IF (Nrun.eq.1) THEN
+!
+!  Initial, unvetted nonlinear H(x) vector.
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idNLmp), unvetted,              &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idNLmp))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Initial, quality-controlled nonlinear H(x) vector.
+! 
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idNLmi), NLmodVal,              &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idNLmi))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+      END IF
+!
+!  Prior background standard deviations H(x) vector.
+!
+      IF (wrtNLmod(ng).and.wrtObsScale(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idBgEr), BgErr,                   &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idBgEr))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Observations QC screening flag: accept or reject.
+!
+      IF (wrtNLmod(ng).and.wrtObsScale(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idObsS), ObsScale,                &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idObsS))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Nonlinear H(x) vector per outer loop.
+!
+      IF (wrtNLmod(ng).and.outer.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idNLmo), NLmodVal,                &
+     &                        (/1,outer/), (/Ndatum(ng),1/),            &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idNLmo))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  The final nonlinear H(x) written as individual variable to facilitate
+!  ERDDAP processing. Notice that it is always overwritten to avoid
+!  complicated logic with all the 4D-Var drivers. The last one written
+!  correspont to the final value.
+!
+      IF (wrtNLmod(ng).and.outer.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idNLmf), NLmodVal,                &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idNLmf))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Unvetted nonlinear H(x) per outer loop.
+!
+      IF (wrtNLmod(ng).and.outer.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idNLmu), unvetted,                &
+     &                        (/1,outer/), (/Ndatum(ng),1/),            &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idNLmu))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
+!  Tangent linear H(x) vector.
+!
+      IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idTLmo), TLmodVal,                &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idTLmo))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+!
       RETURN
       END SUBROUTINE hofx_output_dav
 !

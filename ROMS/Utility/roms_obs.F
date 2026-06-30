@@ -89,6 +89,11 @@
 !
         integer, allocatable :: provenance(:)
 !
+!  IODA time coordinate (int64) in seconds since reference time.
+!  Usually, the reference date-time is the start of the DA window.
+!
+        integer, allocatable :: dateTime(:)
+!
 !  Control vector state variable identifier.
 !
         integer, allocatable :: stateID(:)
@@ -298,6 +303,7 @@
 !
       IF (allocated(self%pack_mapping)) deallocate (self%pack_mapping)
       IF (allocated(self%provenance))   deallocate (self%provenance)
+      IF (allocated(self%dateTime))     deallocate (self%dateTime)
       IF (allocated(self%lon))          deallocate (self%lon)
       IF (allocated(self%lat))          deallocate (self%lat)
       IF (allocated(self%depth))        deallocate (self%depth)
@@ -418,6 +424,12 @@
           Loaded=.FALSE.
           SELECT CASE (TRIM(var_name(i)))
             CASE ('dateTime')
+              CALL netcdf_get_ivar (ng, model, self%ncname_inp,         &
+     &                              var_name(i), self%dateTime,         &
+     &                              GrpName = 'MetaData')
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
+!
               CALL netcdf_get_time (ng, model, self%ncname_inp,         &
      &                              var_name(i), Rclock%DateNumber,     &
      &                              self%time,                          &
@@ -759,6 +771,17 @@
 !  Aggregate requested observation variable.
 !
       SELECT CASE (TRIM(ObsVar))
+        CASE ('dateTime')            ! observation time since reference
+          DO i=1,npool
+            nlocs=self%pool(i)%nlocs
+            nvars=self%pool(i)%nvars
+            DO k=1,nvars
+              DO j=1,nlocs
+                ic=ic+1
+                ObsData(ic)=self%pool(i)%dateTime(j)
+              END DO
+            END DO
+          END DO
         CASE ('stateID')             ! observation state variable ID
           DO i=1,npool
             nlocs=self%pool(i)%nlocs
@@ -1203,6 +1226,12 @@
 !
 !  Allocate pool vector element structure, Group MetaData.
 !
+      IF (.not.allocated(self%pool(iobs)%dateTime)) THEN
+        allocate ( self%pool(iobs)%dateTime(mobs) )
+        self%pool(iobs)%dateTime = 0
+        Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+      END IF
+
       IF (.not.allocated(self%pool(iobs)%provenance)) THEN
         allocate ( self%pool(iobs)%provenance(mobs) )
         self%pool(iobs)%provenance = 0
