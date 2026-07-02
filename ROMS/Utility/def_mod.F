@@ -193,19 +193,19 @@
 !
 !  Open input observations NetCDF.
 !
-        IF (OBS(ng)%ncid.eq.-1) THEN
-          CALL netcdf_open (ng, iNLM, OBS(ng)%name, 1, OBSncid)
+        IF (OBS(1,ng)%ncid.eq.-1) THEN
+          CALL netcdf_open (ng, iNLM, OBS(1,ng)%name, 1, OBSncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
-            WRITE (stdout,30) TRIM(OBS(ng)%name)
+            WRITE (stdout,30) TRIM(OBS(1,ng)%name)
             RETURN
           END IF
         ELSE
-          OBSncid=OBS(ng)%ncid
+          OBSncid=OBS(1,ng)%ncid
         END IF
 !
 !  Inquire about input observations variables.
 !
-        CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                    &
+        CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                  &
      &                       ncid = OBSncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -215,7 +215,7 @@
         AttName(1)='state_variables'
         AttName(2)='obs_provenance'
 !
-        CALL netcdf_get_satt (ng, iNLM, OBS(ng)%name, nf90_global,      &
+        CALL netcdf_get_satt (ng, iNLM, OBS(1,ng)%name, nf90_global,    &
      &                        AttName, AttValue, foundAtt,              &
      &                        ncid = OBSncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -441,7 +441,7 @@
 !
           IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(DAV(ng)%ncid, nf90_global,              &
-     &                          'obs_file', TRIM(OBS(ng)%name))
+     &                          'obs_file', TRIM(OBS(1,ng)%name))
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               WRITE (stdout,50) 'obs_file', TRIM(ncname)
               exit_flag=3
@@ -1340,7 +1340,7 @@
 !  Observations survey time.
 !
         IF (find_string(var_name,n_var,Vname(1,idOday),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOday)),       &
      &                         nVarDim = nvdim,                         &
@@ -1365,7 +1365,7 @@
 !  Observation type.
 !
         IF (find_string(var_name,n_var,Vname(1,idOtyp),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOTyp)),       &
      &                         nVarDim = nvdim,                         &
@@ -1392,7 +1392,7 @@
                 END IF
               ELSE
                 WRITE (stdout,70) i, TRIM(Vname(1,idOpro)),             &
-     &                           TRIM(OBS(ng)%name)
+     &                           TRIM(OBS(1,ng)%name)
               END IF
             END DO
           END IF
@@ -1409,7 +1409,7 @@
 !  Observations provenance.
 !
         IF (find_string(var_name,n_var,Vname(1,idOpro),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOpro)),       &
      &                         nVarDim = nvdim,                         &
@@ -1436,7 +1436,7 @@
                 END IF
               ELSE
                 WRITE (stdout,70) i, TRIM(Vname(1,idOpro)),             &
-     &                           TRIM(OBS(ng)%name)
+     &                           TRIM(OBS(1,ng)%name)
               END IF
             END DO
           END IF
@@ -1454,7 +1454,7 @@
 !  Observations time.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsT),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsT)),       &
      &                         nVarDim = nvdim,                         &
@@ -1479,7 +1479,7 @@
 !  Observations longitude.
 !
         IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOlon)),       &
      &                         nVarDim = nvdim,                         &
@@ -1502,7 +1502,7 @@
 !  Observations latitude.
 !
         IF (find_string(var_name,n_var,Vname(1,idOlat),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOlat)),       &
      &                         nVarDim = nvdim,                         &
@@ -1525,7 +1525,7 @@
 !  Observations depth.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsD),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsD)),       &
      &                         nVarDim = nvdim,                         &
@@ -1552,7 +1552,7 @@
 !  Observations X-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsX),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsX)),       &
      &                         nVarDim = nvdim,                         &
@@ -1573,7 +1573,7 @@
 !  Observations Y-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsY),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsY)),       &
      &                         nVarDim = nvdim,                         &
@@ -1594,7 +1594,7 @@
 !  Observations Z-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsZ),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idObsZ)),       &
      &                         nVarDim = nvdim,                         &
@@ -1615,7 +1615,7 @@
 !  Observations total error (instrument + sampling + representation).
 !
         IF (find_string(var_name,n_var,Vname(1,idOerr),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOerr)),       &
      &                         nVarDim = nvdim,                         &
@@ -1637,7 +1637,7 @@
 !  Observations value.
 !
         IF (find_string(var_name,n_var,Vname(1,idOval),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOval)),       &
      &                         nVarDim = nvdim,                         &
@@ -1659,7 +1659,7 @@
 !  Observations meta value.
 !
         IF (find_string(var_name,n_var,Vname(1,idOmet),vindex)) THEN
-          CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
+          CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
      &                         ncid = OBSncid,                          &
      &                         MyVarName = TRIM(Vname(1,idOmet)),       &
      &                         nVarDim = nvdim,                         &
@@ -2262,8 +2262,8 @@
 !
 !  Close observations NetCDF.
 !
-        IF (OBS(ng)%ncid.eq.-1) THEN
-          CALL netcdf_close (ng, iNLM, OBSncid, OBS(ng)%name, .FALSE.)
+        IF (OBS(1,ng)%ncid.eq.-1) THEN
+          CALL netcdf_close (ng, iNLM, OBSncid, OBS(1,ng)%name, .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
@@ -2664,19 +2664,19 @@
 !
 !  Open input observations NetCDF.
 !
-        IF (OBS(ng)%pioFile%fh.eq.-1) THEN
-          CALL pio_netcdf_open (ng, iNLM, OBS(ng)%name, 1, OBSpioFile)
+        IF (OBS(1,ng)%pioFile%fh.eq.-1) THEN
+          CALL pio_netcdf_open (ng, iNLM, OBS(1,ng)%name, 1, OBSpioFile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,30) TRIM(OBS(ng)%name)
+            IF (Master) WRITE (stdout,30) TRIM(OBS(1,ng)%name)
             RETURN
           END IF
         ELSE
-          OBSpioFile=OBS(ng)%pioFile
+          OBSpioFile=OBS(1,ng)%pioFile
         END IF
 !
 !  Inquire about input observations variables.
 !
-        CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,                &
+        CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,              &
      &                           pioFile = OBSpioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
@@ -2686,7 +2686,7 @@
         AttName(1)='state_variables'
         AttName(2)='obs_provenance'
 !
-        CALL pio_netcdf_get_satt (ng, iNLM, OBS(ng)%name, PIO_global,   &
+        CALL pio_netcdf_get_satt (ng, iNLM, OBS(1,ng)%name, PIO_global, &
      &                            AttName, AttValue, foundAtt,          &
      &                            pioFile = OBSpioFile)
 #  endif
@@ -2909,7 +2909,7 @@
 !
         IF (exit_flag.eq.NoError) THEN
           status=PIO_put_att(DAV(ng)%pioFile, PIO_global,               &
-     &                       'obs_file', TRIM(OBS(ng)%name))
+     &                       'obs_file', TRIM(OBS(1,ng)%name))
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,50) 'obs_file', TRIM(ncname)
             exit_flag=3
@@ -2927,7 +2927,7 @@
           IF (foundAtt(1)) THEN
             CALL pio_netcdf_copy_att (ng, iNLM, 'NULL',                 &
      &                                'state_variables',                &
-     &                                TRIM(OBS(ng)%name),               &
+     &                                TRIM(OBS(1,ng)%name),             &
      &                                OBSpioFile,                       &
      &                                PIO_global,                       &
      &                                TRIM(DAV(ng)%name),               &
@@ -2950,7 +2950,7 @@
           IF (foundAtt(2)) THEN
             CALL pio_netcdf_copy_att (ng, iNLM, 'NULL',                 &
      &                                'obs_provenance',                 &
-     &                                TRIM(OBS(ng)%name),               &
+     &                                TRIM(OBS(1,ng)%name),             &
      &                                OBSpioFile,                       &
      &                                PIO_global,                       &
      &                                TRIM(DAV(ng)%name),               &
@@ -3708,7 +3708,7 @@
 !  Observations survey time.
 !
         IF (find_string(var_name,n_var,Vname(1,idOday),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOday)),   &
      &                             nVarDim = nvdim,                     &
@@ -3736,7 +3736,7 @@
 !  Observation type.
 !
         IF (find_string(var_name,n_var,Vname(1,idOtyp),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOTyp)),   &
      &                             nVarDim = nvdim,                     &
@@ -3754,7 +3754,7 @@
           CALL pio_netcdf_copy_att (ng, iNLM,                           &
      &                              TRIM(Vname(1,idOTyp)),              &
      &                              'NULL',                             &
-     &                              TRIM(OBS(ng)%name),                 &
+     &                              TRIM(OBS(1,ng)%name),               &
      &                              OBSpioFile,                         &
      &                              vindex,                             &
      &                              TRIM(DAV(ng)%name),                 &
@@ -3766,7 +3766,7 @@
 !  Observations provenance.
 !
         IF (find_string(var_name,n_var,Vname(1,idOpro),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOpro)),   &
      &                             nVarDim = nvdim,                     &
@@ -3784,7 +3784,7 @@
           CALL pio_netcdf_copy_att (ng, iNLM,                           &
      &                              TRIM(Vname(1,idOpro)),              &
      &                              'NULL',                             &
-     &                              TRIM(OBS(ng)%name),                 &
+     &                              TRIM(OBS(1,ng)%name),               &
      &                              OBSpioFile,                         &
      &                              vindex,                             &
      &                              TRIM(DAV(ng)%name),                 &
@@ -3796,7 +3796,7 @@
 !  Observations time.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsT),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idObsT)),   &
      &                             nVarDim = nvdim,                     &
@@ -3824,7 +3824,7 @@
 !  Observations longitude.
 !
         IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOlon)),   &
      &                             nVarDim = nvdim,                     &
@@ -3850,7 +3850,7 @@
 !  Observations latitude.
 !
         IF (find_string(var_name,n_var,Vname(1,idOlat),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOlat)),   &
      &                             nVarDim = nvdim,                     &
@@ -3876,7 +3876,7 @@
 !  Observations depth.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsD),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idObsD)),   &
      &                             nVarDim = nvdim,                     &
@@ -3906,7 +3906,7 @@
 !  Observations X-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsX),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idObsX)),   &
      &                             nVarDim = nvdim,                     &
@@ -3930,7 +3930,7 @@
 !  Observations Y-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsY),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idObsY)),   &
      &                             nVarDim = nvdim,                     &
@@ -3954,7 +3954,7 @@
 !  Observations Z-fractional coordinate.
 !
         IF (find_string(var_name,n_var,Vname(1,idObsZ),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idObsZ)),   &
      &                             nVarDim = nvdim,                     &
@@ -3978,7 +3978,7 @@
 !  Observations total error (instrument + sampling + representation).
 !
         IF (find_string(var_name,n_var,Vname(1,idOerr),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOerr)),   &
      &                             nVarDim = nvdim,                     &
@@ -4003,7 +4003,7 @@
 !  Observations value.
 !
         IF (find_string(var_name,n_var,Vname(1,idOval),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOval)),   &
      &                             nVarDim = nvdim,                     &
@@ -4028,7 +4028,7 @@
 !  Observations meta value.
 !
         IF (find_string(var_name,n_var,Vname(1,idOmet),vindex)) THEN
-          CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,              &
+          CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,            &
      &                             pioFile = OBSpioFile,                &
      &                             MyVarName = TRIM(Vname(1,idOmet)),   &
      &                             nVarDim = nvdim,                     &
@@ -4678,8 +4678,8 @@
 !
 !  Close observations NetCDF.
 !
-        IF (OBS(ng)%pioFile%fh.eq.-1) THEN
-          CALL pio_netcdf_close (ng, iNLM, OBSpioFile, OBS(ng)%name,    &
+        IF (OBS(1,ng)%pioFile%fh.eq.-1) THEN
+          CALL pio_netcdf_close (ng, iNLM, OBSpioFile, OBS(1,ng)%name,  &
      &                           .FALSE.)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF

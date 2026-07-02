@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE roms_hofx_mod
 
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR   || defined VERIFICATION) && \
+    defined OBSERVATIONS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -84,6 +85,10 @@
 !-----------------------------------------------------------------------
 !
       TYPE, PUBLIC :: obs_hofx
+!
+!  Internal Operator identification (like iNLM, iTLM, iADM, or iSTD).
+!
+        integer :: ID
 !
 !  Total number of aggregated observations.
 !
@@ -201,10 +206,6 @@
 !  Module variables.
 !-----------------------------------------------------------------------
 !
-!  Background error (standard deviation) identifier.
-!
-      integer, parameter :: iSTD = 10
-!
 !  H(x) operators per nested grid [1:Ngrids]: The state vector pointer
 !                                             in CLASS(obs_hofx) is
 !  associated with 4D-Var driver variables "NLmodVal", "TLmodVal", or
@@ -306,6 +307,10 @@
           CALL berr_hofx(ng)%create (ng, tile, iNLM, ntotal)
 #  endif
         END DO
+        nlm_hofx(ng)%ID=iNLM
+#  ifndef VERIFICATION
+        berr_hofx(ng)%ID=iSTD
+#  endif
       END DO
 # endif
 
@@ -321,6 +326,7 @@
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL tlm_hofx(ng)%create  (ng, tile, iTLM, ntotal)
         END DO
+        tlm_hofx(ng)%ID=iTLM
       END DO
 # endif
 
@@ -336,6 +342,7 @@
         DO tile=first_tile(ng),last_tile(ng),+1
           CALL adm_hofx(ng)%create  (ng, tile, iADM, ntotal)
         END DO
+        adm_hofx(ng)%ID=iADM
       END DO
 # endif
 !
@@ -553,7 +560,7 @@
       END IF
 !
   10  FORMAT (/,1x,'ROMS_HOFX - ',a,': ',                               &
-     &        'Finalizing H(x) Operator Computation')
+     &        'Finalizing H(x) Operator Computation:',/)
   20  FORMAT (/,' ROMS_HOFX::HOFX_FINALIZE: illegal identifier, '       &
      &        'model = ',i0)
 !
@@ -569,13 +576,25 @@
       integer,          intent(in   ) :: ng     ! nested grid
       integer,          intent(in   ) :: model  ! kernel identifier
 !
-      integer, pointer                :: Iwork(:)
-      real (r8), pointer              :: Rwork(:)
+      integer                         :: i
+      real (r8)                       :: Favg, Fmin, Fmax, Nsum
+!
+      logical, allocatable            :: Laccept(:)
+      integer, pointer                :: Iwork(:) => NULL()
+      real (r8), pointer              :: Rwork(:) => NULL()
 !
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", hofx_output_dav"
 !
       SourceFile=MyFile
+!
+!  Initialize.
+!  
+      IF (.not.allocated(Laccept)) THEN
+        allocate ( Laccept(Ndatum(ng)) )
+      END IF
+      Laccept = ObsScale.gt.0.0_r8
+      Nsum = SUM(ObsScale)
 !
 !  Write out aggregated observation data.
 !  =====================================
@@ -590,6 +609,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(REAL(Iwork, r8), MASK=Laccept)/86400   ! days
+          Fmax=MAXVAL(REAL(Iwork, r8), MASK=Laccept)/86400   ! days
+          Favg=SUM(REAL(Iwork, r8), MASK=Laccept)/Nsum/86400 ! days
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idObsT)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation state variable identifier.
 ! 
@@ -599,6 +626,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(REAL(Iwork, r8), MASK=Laccept)
+          Fmax=MAXVAL(REAL(Iwork, r8), MASK=Laccept)
+          Favg=SUM(REAL(Iwork, r8), MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOtyp)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation origin identifier.
 !
@@ -608,6 +643,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(REAL(Iwork, r8), MASK=Laccept)
+          Fmax=MAXVAL(REAL(Iwork, r8), MASK=Laccept)
+          Favg=SUM(REAL(Iwork, r8), MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOpro)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation longitude.
 !
@@ -617,6 +660,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(Rwork, MASK=Laccept)
+          Fmax=MAXVAL(Rwork, MASK=Laccept)
+          Favg=SUM(Rwork, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOlon)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation latitude.
 !
@@ -626,6 +677,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(Rwork, MASK=Laccept)
+          Fmax=MAXVAL(Rwork, MASK=Laccept)
+          Favg=SUM(Rwork, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOlat)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation depth.
 !
@@ -635,6 +694,14 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(Rwork, MASK=Laccept)
+          Fmax=MAXVAL(Rwork, MASK=Laccept)
+          Favg=SUM(Rwork, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idObsD)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
 !  Observation value (state units) and error (squared-state units). 
 !  They were aggregated in "initialize_fourdvar".
@@ -644,26 +711,58 @@
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(ObsVal, MASK=Laccept)
+          Fmax=MAXVAL(ObsVal, MASK=Laccept)
+          Favg=SUM(ObsVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOval)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
 !
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
      &                        Vname(1,idOerr), ObsErr,                  &
      &                        (/1/), (/Ndatum(ng)/),                    &
      &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-!
-!  Observation screening flag. It is computed in NLM routine "output".
-!
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
-     &                        Vname(1,idObsS), ObsScale,                &
-     &                        (/1/), (/Ndatum(ng)/),                    &
-     &                        ncid = DAV(ng)%ncid)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(ObsErr, MASK=Laccept)
+          Fmax=MAXVAL(ObsErr, MASK=Laccept)
+          Favg=SUM(ObsErr, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idOerr)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
+
+        nullify (Iwork)
+        nullify (Rwork)
       END IF
 !
 !  Write out aggregated H(x) data.
 !  ==============================
 !
+# if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
+
       IF (wrtMisfit(ng)) THEN
+!
+!  Compute initial or final model-observation misfit vector for output
+!  purposes only.
+!
+        DO i=1,Ndatum(ng)
+#  if defined I4DVAR
+          misfit(i)=ObsScale(i)*SQRT(ObsErr(i))*                        &
+     &              (NLmodVal(i)-ObsVal(i))
+#  elif defined WEAK_CONSTRAINT
+#   ifdef R4DVAR
+          misfit(i)=ObsScale(i)/SQRT(ObsErr(i))*                        &
+     &              (TLmodVal(i)-ObsVal(i))
+#   else
+          misfit(i)=ObsScale(i)/SQRT(ObsErr(i))*                        &
+     &              (NLmodVal(i)-ObsVal(i))
+#   endif
+#  endif
+        END DO
+!
         IF (Nrun.eq.1) THEN
 !
 !  Initial, unvetted nonlinear H(x) vector.
@@ -674,6 +773,14 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmp))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(unvetted, MASK=Laccept)
+            Fmax=MAXVAL(unvetted, MASK=Laccept)
+            Favg=SUM(unvetted, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmp)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
 !
 !  Initial, quality-controlled nonlinear H(x) vector.
 ! 
@@ -683,19 +790,161 @@
      &                          ncid = DAV(ng)%ncid,                    &
      &                          varid = DAV(ng)%Vid(idNLmi))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(NLmodVal, MASK=Laccept)
+            Fmax=MAXVAL(NLmodVal, MASK=Laccept)
+            Favg=SUM(NLmodVal, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmi)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+!
+!  Initial model-observation misfit vector.
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idMOMi), misfit,                &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idMOMi))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(misfit, MASK=Laccept)
+            Fmax=MAXVAL(misfit, MASK=Laccept)
+            Favg=SUM(misfit, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idMOMi)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+        ELSE
+!
+!  Final model-observation misfit vector.
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idMOMf), misfit,                &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idMOMf))
+
+          IF (Master) THEN
+            Fmin=MINVAL(misfit, MASK=Laccept)
+            Fmax=MAXVAL(misfit, MASK=Laccept)
+            Favg=SUM(misfit, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idMOMf)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
         END IF
       END IF
+# endif
+
+# if defined FOUR_DVAR && !defined I4DVAR_ANA_SENSITIVITY
+!
+!  Variables for computing the Desroziers et al. (2005) statistics.
+!
+      IF (wrtNLmod(ng)) THEN
 !
 !  Prior background standard deviations H(x) vector.
 !
-      IF (wrtNLmod(ng).and.wrtObsScale(ng)) THEN
-        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
-     &                        Vname(1,idBgEr), BgErr,                   &
-     &                        (/1/), (/Ndatum(ng)/),                    &
-     &                        ncid = DAV(ng)%ncid,                      &
-     &                        varid = DAV(ng)%Vid(idBgEr))
+        IF (wrtObsScale(ng)) THEN
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idBgEr), BgErr,                 &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idBgEr))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(BgErr, MASK=Laccept)
+            Fmax=MAXVAL(Bgerr, MASK=Laccept)
+            Favg=SUM(BgErr, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idBgEr)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+        END IF
+!
+!  Compute 4D-Var innovation vector: observation minus background. Save
+!  initial background in the NLincrement vector.
+!
+        IF (Nrun.eq.1) THEN
+          DO i=1,Ndatum(ng)
+            innovation(i)=ObsScale(i)*(ObsVal(i)-NLmodVal(i))
+            NLincrement(i)=NLmodVal(i)
+          END DO
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idInno), innovation,            &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idInno))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(innovation, MASK=Laccept)
+            Fmax=MAXVAL(innovation, MASK=Laccept)
+            Favg=SUM(innovation, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idInno)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+        END IF
+!
+!  Compute 4D-Var increment (analysis minus background) and residual
+!  (observation minus analysis).
+!
+        IF (outer.eq.Nouter) THEN
+          DO i=1,Ndatum(ng)
+            NLincrement(i)=ObsScale(i)*(NLmodVal(i)-NLincrement(i))
+            residual(i)=ObsScale(i)*(ObsVal(i)-NLmodVal(i))
+          END DO
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idIncr), NLincrement,           &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idIncr))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(NLincrement, MASK=Laccept)
+            Fmax=MAXVAL(NLincrement, MASK=Laccept)
+            Favg=SUM(NLincrement, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idIncr)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+!
+          CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
+     &                          Vname(1,idResi), residual,              &
+     &                          (/1/), (/Ndatum(ng)/),                  &
+     &                          ncid = DAV(ng)%ncid,                    &
+     &                          varid = DAV(ng)%Vid(idResi))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+          IF (Master) THEN
+            Fmin=MINVAL(residual, MASK=Laccept)
+            Fmax=MAXVAL(residual, MASK=Laccept)
+            Favg=SUM(residual, MASK=Laccept)/Nsum
+            WRITE (stdout,10) outer, inner, TRIM(Vname(1,idResi)),      &
+     &                        Fmin, Fmax, Favg
+          END IF
+        END IF
+      END IF
+# endif
+
+# if defined I4DVAR                  || defined WEAK_CONSTRAINT && \
+    !defined I4DVAR_ANA_SENSITIVITY
+!
+!  Current outer and inner loop.
+!
+      IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'outer',         &
+     &                        outer, (/0/), (/0/),                      &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+        CALL netcdf_put_ivar (ng, model, DAV(ng)%name, 'inner',         &
+     &                        inner, (/0/), (/0/),                      &
+     &                        ncid = DAV(ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
+# endif
 !
 !  Observations QC screening flag: accept or reject.
 !
@@ -706,7 +955,39 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idObsS))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(ObsScale)
+          Fmax=MAXVAL(ObsScale)
+          Favg=SUM(ObsScale, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idObsS)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
       END IF
+
+# ifndef I4DVAR_ANA_SENSITIVITY
+#  if defined VERIFICATION || defined TLM_CHECK
+!
+!  Nonlinear H(x) vector.
+!
+      IF (wrtNLmod(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        Vname(1,idNLmo), NLmodVal,                &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid,                      &
+     &                        varid = DAV(ng)%Vid(idNLmo))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+ 
+        IF (Master) THEN
+          Fmin=MINVAL(NLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(NLmodVal, MASK=Laccept)
+          Favg=SUM(NLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmo)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
+      END IF
+
+#  elif defined I4DVAR || defined WEAK_CONSTRAINT
 !
 !  Nonlinear H(x) vector per outer loop.
 !
@@ -717,7 +998,18 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(NLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(NLmodVal, MASK=Laccept)
+          Favg=SUM(NLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmo)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
       END IF
+#  endif
+
+#  ifdef FOUR_DVAR
 !
 !  The final nonlinear H(x) written as individual variable to facilitate
 !  ERDDAP processing. Notice that it is always overwritten to avoid
@@ -731,7 +1023,20 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmf))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(NLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(NLmodVal, MASK=Laccept)
+          Favg=SUM(NLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmf)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
       END IF
+#  endif
+# endif
+
+# if !defined I4DVAR_ANA_SENSITIVITY && \
+     (defined I4DVAR                 || defined WEAK_CONSTRAINT)
 !
 !  Unvetted nonlinear H(x) per outer loop.
 !
@@ -742,7 +1047,19 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmu))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(unvetted, MASK=Laccept)
+          Fmax=MAXVAL(unvetted, MASK=Laccept)
+          Favg=SUM(unvetted, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idNLmu)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
       END IF
+# endif
+
+# if defined I4DVAR          || defined I4DVAR_ANA_SENSITIVITY || \
+     defined WEAK_CONSTRAINT
 !
 !  Tangent linear H(x) vector.
 !
@@ -753,8 +1070,145 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idTLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, TRIM(Vname(1,idTLmo)),        &
+     &                      Fmin, Fmax, Favg
+        END IF
       END IF
+# endif
+
+# ifdef TLM_OBS
+#  ifdef I4DVAR_ANA_SENSITIVITY
+#   ifdef OBS_IMPACT
 !
+!  Write the total observation impact.
+!
+      IF (wrtIMPACT_TOT(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        'ObsImpact_total', TLmodVal,              &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, 'ObsImpact_total',            &
+     &                      Fmin, Fmax, Favg
+        END IF
+#   endif
+
+#   ifdef OBS_IMPACT_SPLIT
+!
+!  Write the observation impact of initial conditions.
+!
+      IF (wrtIMPACT_IC(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        'ObsImpact_IC', TLmodVal,                 &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, 'ObsImpact_IC',               &
+     &                      Fmin, Fmax, Favg
+        END IF
+      END IF
+
+#    if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Write the observation impact of surface forcing.
+!
+      IF (wrtIMPACT_FC(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        'ObsImpact_FC', TLmodVal,                 &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, 'ObsImpact_FC',               &
+     &                      Fmin, Fmax, Favg
+        END IF
+      END IF
+#    endif
+
+#    if defined ADJUST_BOUNDARY
+!
+!  Write the observation impact of boundary conditions.
+!
+      IF (wrtIMPACT_BC(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        'ObsImpact_BC', TLmodVal,                 &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, 'ObsImpact_BC',               &
+     &                      Fmin, Fmax, Favg
+        END IF
+      END IF
+#    endif
+#   endif
+#  endif
+# endif
+
+# if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+     defined TL_R4DVAR
+!
+!  Write initial representer model increments at observation locations.
+!
+      IF (Nrun.eq.1.and.wrtRPmod(ng)) THEN
+        CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
+     &                        'RPmodel_initial', TLmodVal,              &
+     &                        (/1/), (/Ndatum(ng)/),                    &
+     &                        ncid = DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+        IF (Master) THEN
+          Fmin=MINVAL(TLmodVal, MASK=Laccept)
+          Fmax=MAXVAL(TLmodVal, MASK=Laccept)
+          Favg=SUM(TLmodVal, MASK=Laccept)/Nsum
+          WRITE (stdout,10) outer, inner, 'RPmodel_initial',            &
+     &                      Fmin, Fmax, Favg
+        END IF
+      END IF
+# endif
+!
+!  Deallocate local array.
+!
+      IF (allocated(Laccept)) deallocate (Laccept)
+
+# if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
+!
+!  Synchronize NetCDF file to disk.
+!
+      IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+        CALL netcdf_sync (ng, model, DAV(ng)%name, DAV(ng)%ncid)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+# endif
+!
+ 10   FORMAT (2x,'HOFX_OUTPUT_DAV  - procesing and writing DAV ',       &
+     &        'control vector, (',i3.3,',',i3.3,'): ',a,/,t23,          &
+     &        '(Min = ',1p,e12.5,' Max = ',1p,e12.5,' Mean = ',         &
+     &        1p,e12.5')')
+! 
       RETURN
       END SUBROUTINE hofx_output_dav
 !
@@ -792,6 +1246,11 @@
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
 # ifdef FOUR_DVAR
+!
+              CALL berr_hofx(ng)%nc_write_ioda (obs_store, ng, model,   &
+     &                                          'BackgroundError')
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
 !
               CALL nlm_hofx(ng)%innovation (obs_store, ng, model)
               IF (FoundError(exit_flag, NoError,                        &
@@ -2371,7 +2830,7 @@
               dlen=SQRT(dfx*dfx+dfy*dfy)
               IF (dlen.le.dfr) THEN
                 area_sum=area_sum+geom%area(i,j)
-                IF (model.eq.iSTD) THEN     ! sum over the square values
+                IF (self%ID.eq.iSTD) THEN   ! sum over the square values
 # ifdef DISTRIBUTE
                   my_field=geom%global2d(i,j)*geom%global2d(i,j)
 # else
@@ -2394,7 +2853,7 @@
 !
           IF (area_sum.gt.0.0_r8) THEN
             self%state(iobs)=self%state(iobs)/area_sum
-            IF (model.eq.iSTD) THEN         ! take the square root
+            IF (self%ID.eq.iSTD) THEN       ! take the square root
               self%state(iobs)=SQRT(self%state(iobs))
             END IF
             self%ObsVetting(iobs)=1
@@ -2518,7 +2977,7 @@
                 dlen=SQRT(dfx*dfx+dfy*dfy)
                 IF (dlen.le.dfr) THEN
                   area_sum=area_sum+geom%area(i,j)
-                  IF (model.eq.iSTD) THEN   ! sum over the square values
+                  IF (self%ID.eq.iSTD) THEN ! sum over the square values
 # ifdef DISTRIBUTE
                     my_field=geom%global2d(i,j)*geom%global2d(i,j)
 # else
@@ -2541,7 +3000,7 @@
 !
             IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
               self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
-              IF (model.eq.iSTD) THEN         ! take the square root
+              IF (self%ID.eq.iSTD) THEN       ! take the square root
                 self%state(iobs)=SQRT(self%state(iobs))
               END IF
             END IF
@@ -2937,7 +3396,7 @@
 !  Afterwards, take the square root to convert back to standard
 !  deviations. Probably, unnecessary since it is time independent.
 !
-            IF (model.eq.iSTD) THEN         ! use squared values
+            IF (self%ID.eq.iSTD) THEN       ! use squared values
               self%state(iobs)=self%state(iobs)+                        &
      &                         Hmat(1)*field(i1,j1)*field(i1,j1)+       &
      &                         Hmat(2)*field(i2,j1)*field(i2,j1)+       &
@@ -2952,7 +3411,7 @@
             END IF
             IF (iic(ng).eq.iTend) THEN
               self%state(iobs)=self%state(iobs)/Tsteps
-              IF (model.eq.iSTD) THEN       ! take the square root
+              IF (self%ID.eq.iSTD) THEN     ! take the square root
                 self%state(iobs)=SQRT(self%state(iobs))
               END IF
             END IF
@@ -3129,7 +3588,7 @@
 !  Afterwards, take the square root to convert back to standard
 !  deviations. Probably, unnecessary since it is time independent.
 !
-              IF (model.eq.iSTD) THEN       ! use squared values
+              IF (self%ID.eq.iSTD) THEN     ! use squared values
                 self%state(iobs)=self%state(iobs)+                      &
      &                           Hmat(1)*field(i1,j1,k1)*               &
      &                                   field(i1,j1,k1)+               &
@@ -3164,7 +3623,7 @@
 #  ifdef MASKING
               IF (wsum.gt.0.0_r8) THEN
                 self%ObsVetting(iobs)=1
-                IF (model.eq.iSTD) THEN      ! take the square root
+                IF (self%ID.eq.iSTD) THEN    ! take the square root
                   self%state(iobs)=SQRT(self%state(iobs))
                 END IF
               ELSE
@@ -3872,10 +4331,10 @@
           END DO
       END SELECT
 !
- 10   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',i12,              &
-     &        ' Max = ',i12,')   File: ',a)
- 20   FORMAT (t22,'Group:',a,'::',a,/,t23,'(Min = ',1p,e12.5,         &
-     &        ' Max = ', 1p,e12.5,')   File: ',a)
+ 10   FORMAT (2x,'HOFX_OUTPUT_IODA - Group:',a,'::',a,/,t23,            &
+     &        '(Min = ',i12,' Max = ',i12,')   File: ',a)
+ 20   FORMAT (2x,'HOFX_OUTPUT_IODA - Group:',a,'::',a,/,t23,            &
+              '(Min = ',1p,e12.5,' Max = ', 1p,e12.5,')   File: ',a)
 !
       RETURN
       END SUBROUTINE obs_hofx_nc_write_ioda

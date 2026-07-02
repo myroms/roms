@@ -56,7 +56,7 @@
 !  Write out time-averaged fields according to IO type.
 !-----------------------------------------------------------------------
 !
-      SELECT CASE (OBS(ng)%IOtype)
+      SELECT CASE (OBS(1,ng)%IOtype)
         CASE (io_nf90)
           CALL obs_initial_nf90 (ng, model, backward)
 
@@ -65,7 +65,7 @@
           CALL obs_initial_pio (ng, model, backward)
 # endif
         CASE DEFAULT
-          IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+          IF (Master) WRITE (stdout,10) OBS(1,ng)%IOtype
           exit_flag=2
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -110,20 +110,20 @@
 !  the dimensions and variables.
 !-----------------------------------------------------------------------
 !
-      QUERY : IF (OBS(ng)%ncid.eq.-1) THEN
+      QUERY : IF (OBS(1,ng)%ncid.eq.-1) THEN
 !
 !  Open observations NetCDF file.
 !
-        CALL netcdf_open (ng, model, OBS(ng)%name, 1, OBS(ng)%ncid)
+        CALL netcdf_open (ng, model, OBS(1,ng)%name, 1, OBS(1,ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
-          WRITE (stdout,10) TRIM(OBS(ng)%name)
+          WRITE (stdout,10) TRIM(OBS(1,ng)%name)
           RETURN
         END IF
 !
 !  Inquire about the variables.
 !
-        CALL netcdf_inq_var (ng, model, OBS(ng)%name,                   &
-     &                       OBS(ng)%ncid)
+        CALL netcdf_inq_var (ng, model, OBS(1,ng)%name,                 &
+     &                       OBS(1,ng)%ncid)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Initialize logical switches.
@@ -138,42 +138,42 @@
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOday))) THEN
             got_var(idOday)=.TRUE.
-            OBS(ng)%Vid(idOday)=var_id(i)
+            OBS(1,ng)%Vid(idOday)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNobs))) THEN
             got_var(idNobs)=.TRUE.
-            OBS(ng)%Vid(idNobs)=var_id(i)
+            OBS(1,ng)%Vid(idNobs)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOtyp))) THEN
             got_var(idOtyp)=.TRUE.
-            OBS(ng)%Vid(idOtyp)=var_id(i)
+            OBS(1,ng)%Vid(idOtyp)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsT))) THEN
             got_var(idObsT)=.TRUE.
-            OBS(ng)%Vid(idObsT)=var_id(i)
+            OBS(1,ng)%Vid(idObsT)=var_id(i)
 # ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsD))) THEN
             got_var(idObsD)=.TRUE.
-            OBS(ng)%Vid(idObsD)=var_id(i)
+            OBS(1,ng)%Vid(idObsD)=var_id(i)
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsX))) THEN
             got_var(idObsX)=.TRUE.
-            OBS(ng)%Vid(idObsX)=var_id(i)
+            OBS(1,ng)%Vid(idObsX)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsY))) THEN
             got_var(idObsY)=.TRUE.
-            OBS(ng)%Vid(idObsY)=var_id(i)
+            OBS(1,ng)%Vid(idObsY)=var_id(i)
 # ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsZ))) THEN
             got_var(idObsZ)=.TRUE.
-            OBS(ng)%Vid(idObsZ)=var_id(i)
+            OBS(1,ng)%Vid(idObsZ)=var_id(i)
 # endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOerr))) THEN
             got_var(idOerr)=.TRUE.
-            OBS(ng)%Vid(idOerr)=var_id(i)
+            OBS(1,ng)%Vid(idOerr)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOval))) THEN
             got_var(idOval)=.TRUE.
-            OBS(ng)%Vid(idOval)=var_id(i)
+            OBS(1,ng)%Vid(idOval)=var_id(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOmet))) THEN
             got_var(idOmet)=.TRUE.
             haveObsMeta(ng)=.TRUE.
-            OBS(ng)%Vid(idOmet)=var_id(i)
+            OBS(1,ng)%Vid(idOmet)=var_id(i)
           END IF
         END DO
 !
@@ -181,65 +181,65 @@
 !
         IF (.not.got_var(idOday)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOday)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idNobs)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idNobs)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOtyp)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOtyp)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsT)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsT)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idObsD)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsD)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 # endif
         IF (.not.got_var(idObsX)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsX)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsY)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsY)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idObsZ)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsZ)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 # endif
         IF (.not.got_var(idOerr)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOerr)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOval)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOval)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
@@ -418,21 +418,21 @@
 !  the dimensions and variables.
 !-----------------------------------------------------------------------
 !
-      QUERY : IF (OBS(ng)%pioFile%fh.eq.-1) THEN
+      QUERY : IF (OBS(1,ng)%pioFile%fh.eq.-1) THEN
 !
 !  Open observations NetCDF file.
 !
-        CALL pio_netcdf_open (ng, model, OBS(ng)%name, 1,               &
-     &                        OBS(ng)%pioFile)
+        CALL pio_netcdf_open (ng, model, OBS(1,ng)%name, 1,             &
+     &                        OBS(1,ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
-          WRITE (stdout,10) TRIM(OBS(ng)%name)
+          WRITE (stdout,10) TRIM(OBS(1,ng)%name)
           RETURN
         END IF
 !
 !  Inquire about the variables.
 !
-        CALL pio_netcdf_inq_var (ng, model, OBS(ng)%name,               &
-     &                           OBS(ng)%pioFile)
+        CALL pio_netcdf_inq_var (ng, model, OBS(1,ng)%name,             &
+     &                           OBS(1,ng)%pioFile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Initialize logical switches.
@@ -447,42 +447,42 @@
         DO i=1,n_var
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOday))) THEN
             got_var(idOday)=.TRUE.
-            OBS(ng)%pioVar(idOday)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idOday)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idNobs))) THEN
             got_var(idNobs)=.TRUE.
-            OBS(ng)%pioVar(idNobs)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idNobs)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOtyp))) THEN
             got_var(idOtyp)=.TRUE.
-            OBS(ng)%pioVar(idOtyp)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idOtyp)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsT))) THEN
             got_var(idObsT)=.TRUE.
-            OBS(ng)%pioVar(idObsT)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idObsT)%vd=var_desc(i)
 #  ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsD))) THEN
             got_var(idObsD)=.TRUE.
-            OBS(ng)%pioVar(idObsD)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idObsD)%vd=var_desc(i)
 #  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsX))) THEN
             got_var(idObsX)=.TRUE.
-            OBS(ng)%pioVar(idObsX)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idObsX)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsY))) THEN
             got_var(idObsY)=.TRUE.
-            OBS(ng)%pioVar(idObsY)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idObsY)%vd=var_desc(i)
 #  ifdef SOLVE3D
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsZ))) THEN
             got_var(idObsZ)=.TRUE.
-            OBS(ng)%pioVar(idObsZ)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idObsZ)%vd=var_desc(i)
 #  endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOerr))) THEN
             got_var(idOerr)=.TRUE.
-            OBS(ng)%pioVar(idOerr)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idOerr)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOval))) THEN
             got_var(idOval)=.TRUE.
-            OBS(ng)%pioVar(idOval)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idOval)%vd=var_desc(i)
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOmet))) THEN
             got_var(idOmet)=.TRUE.
             haveObsMeta(ng)=.TRUE.
-            OBS(ng)%pioVar(idOmet)%vd=var_desc(i)
+            OBS(1,ng)%pioVar(idOmet)%vd=var_desc(i)
           END IF
         END DO
 !
@@ -490,65 +490,65 @@
 !
         IF (.not.got_var(idOday)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOday)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idNobs)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idNobs)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOtyp)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOtyp)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsT)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsT)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idObsD)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsD)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idObsX)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsX)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idObsY)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsY)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idObsZ)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idObsZ)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idOerr)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOerr)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (.not.got_var(idOval)) THEN
           IF (Master) WRITE (stdout,20) TRIM(Vname(1,idOval)),          &
-     &                                  TRIM(OBS(ng)%name)
+     &                                  TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF

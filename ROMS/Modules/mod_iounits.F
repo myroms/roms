@@ -294,11 +294,7 @@
 !
       integer, allocatable :: nOBSfiles(:)
 !
-#ifdef IODA_OBS
       TYPE(T_IO), allocatable :: OBS(:,:)
-#else
-      TYPE(T_IO), allocatable :: OBS(:)
-#endif
 !
 !  Error messages.
 !
@@ -456,7 +452,7 @@
       END IF
 #ifndef IODA_OBS
       IF (.not.allocated(OBS)) THEN
-        allocate ( OBS(Ngrids) )
+        allocate ( OBS(1,Ngrids) )
       END IF
 #endif
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
@@ -573,9 +569,6 @@
         LCZ(ng)%ncid=-1
         LZE(ng)%ncid=-1
         NUD(ng)%ncid=-1
-#ifndef IODA_OBS
-        OBS(ng)%ncid=-1
-#endif
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
         OIFA(ng)%ncid=-1
         OIFB(ng)%ncid=-1
@@ -596,7 +589,11 @@
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
+#ifdef IODA_OBS
         nOBSfiles(ng)=-1
+#else
+        nOBSfiles(ng)=1          ! single legacy observation file
+#endif
       END DO
 !
 !-----------------------------------------------------------------------
@@ -725,12 +722,6 @@
           NUD(ng)%head(i:i)=blank
           NUD(ng)%base(i:i)=blank
           NUD(ng)%name(i:i)=blank
-
-#ifndef IODA_OBS
-          OBS(ng)%head(i:i)=blank
-          OBS(ng)%base(i:i)=blank
-          OBS(ng)%name(i:i)=blank
-#endif
 
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           OIFA(ng)%head(i:i)=blank

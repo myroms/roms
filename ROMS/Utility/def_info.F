@@ -681,7 +681,7 @@
 # else
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'obs_file',            &
-     &                        TRIM(OBS(ng)%name))
+     &                        TRIM(OBS(1,ng)%name))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
             exit_flag=3
@@ -4305,7 +4305,7 @@
 #  else
       IF (exit_flag.eq.NoError) THEN
         status=PIO_put_att(pioFile, PIO_global, 'obs_file',             &
-     &                     TRIM(OBS(ng)%name))
+     &                     TRIM(OBS(1,ng)%name))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
           exit_flag=3

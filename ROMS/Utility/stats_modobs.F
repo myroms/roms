@@ -177,15 +177,15 @@
 !
 !  Inquire about input observations variables.
 !
-      CALL netcdf_inq_var (ng, iNLM, OBS(ng)%name,                      &
-     &                     ncid = OBS(ng)%ncid)
+      CALL netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                    &
+     &                     ncid = OBS(1,ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out number of observations per survey.
 !
-      CALL netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idNobs), survey_Nobs,               &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Nsurvey(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -198,10 +198,10 @@
 !
 !  Read in and write out survey time.
 !
-      CALL netcdf_get_time (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_time (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idOday),                            &
      &                      Rclock%DateNumber, survey,                  &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Nsurvey(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -214,9 +214,9 @@
 !
 !  Read in and write out observation type identifier.
 !
-      CALL netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idOtyp), obs_type,                  &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -229,9 +229,9 @@
 !
 !  Read in and write out observation provenance.
 !
-      CALL netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idOpro), provenance,                &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -244,10 +244,10 @@
 !
 !  Read in and write out observation time.
 !
-      CALL netcdf_get_time (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_time (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idObsT),                            &
      &                      Rclock%DateNumber, obs_time,                &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -261,9 +261,9 @@
 !  Read in and write out observation longitude.
 !
       IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-        CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                   &
+        CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                 &
      &                        Vname(1,idOlon), obs_work,                &
-     &                        ncid = OBS(ng)%ncid,                      &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/1/),                            &
      &                        total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -278,9 +278,9 @@
 !  Read in and write out observation latitude.
 !
       IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-        CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                   &
+        CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                 &
      &                        Vname(1,idOlat), obs_work,                &
-     &                        ncid = OBS(ng)%ncid,                      &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/1/),                            &
      &                        total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -294,18 +294,18 @@
 !
 !  Read in observation depth.
 !
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idObsD), obs_depths,                &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out X-fractional coordinate.
 !
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idObsX), obs_Xgrid,                 &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -318,9 +318,9 @@
 !
 !  Read in and write out Y-fractional coordinate.
 !
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idObsY), obs_Ygrid,                 &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -334,9 +334,9 @@
 !  Read in and write out observations total error covariance
 !  (instrument + sampling + representation).
 !
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idOerr), obs_work,                  &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -349,9 +349,9 @@
 !
 !  Read in and write out observation values.
 !
-      CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                     &
+      CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                   &
      &                      Vname(1,idOval), obs_value,                 &
-     &                      ncid = OBS(ng)%ncid,                        &
+     &                      ncid = OBS(1,ng)%ncid,                      &
      &                      start = (/1/),                              &
      &                      total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -365,9 +365,9 @@
 !  Read in and write out observation meta values.
 !
       IF (haveObsMeta(ng)) THEN
-        CALL netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                   &
+        CALL netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,                 &
      &                        Vname(1,idOmet), obs_work,                &
-     &                        ncid = OBS(ng)%ncid,                      &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/1/),                            &
      &                        total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -876,15 +876,15 @@
 !
 !  Inquire about input observations variables.
 !
-      CALL pio_netcdf_inq_var (ng, iNLM, OBS(ng)%name,                  &
-     &                         pioFile = OBS(ng)%pioFile)
+      CALL pio_netcdf_inq_var (ng, iNLM, OBS(1,ng)%name,                &
+     &                         pioFile = OBS(1,ng)%pioFile)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out number of observations per survey.
 !
-      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idNobs), survey_Nobs,           &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Nsurvey(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -897,10 +897,10 @@
 !
 !  Read in and write out survey time.
 !
-      CALL pio_netcdf_get_time (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_time (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOday),                        &
      &                          Rclock%DateNumber, survey,              &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Nsurvey(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -913,9 +913,9 @@
 !
 !  Read in and write out observation type identifier.
 !
-      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOtyp), obs_type,              &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -928,9 +928,9 @@
 !
 !  Read in and write out observation provenance.
 !
-      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_ivar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOpro), provenance,            &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -943,10 +943,10 @@
 !
 !  Read in and write out observation time.
 !
-      CALL pio_netcdf_get_time (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_time (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idObsT),                        &
      &                          Rclock%DateNumber, obs_time,            &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -960,9 +960,9 @@
 !  Read in and write out observation longitude.
 !
       IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,               &
+        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,             &
      &                            Vname(1,idOlon), obs_work,            &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/1/),                        &
      &                            total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -977,9 +977,9 @@
 !  Read in and write out observation latitude.
 !
       IF (find_string(var_name,n_var,Vname(1,idOlon),vindex)) THEN
-        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,               &
+        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,             &
      &                            Vname(1,idOlat), obs_work,            &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/1/),                        &
      &                            total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -993,18 +993,18 @@
 !
 !  Read in observation depth.
 !
-      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idObsD), obs_depths,            &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in and write out X-fractional coordinate.
 !
-      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idObsX), obs_Xgrid,             &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1017,9 +1017,9 @@
 !
 !  Read in and write out Y-fractional coordinate.
 !
-      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idObsY), obs_Ygrid,             &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1033,9 +1033,9 @@
 !  Read in and write out observations total error covariance
 !  (instrument + sampling + representation).
 !
-      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOerr), obs_work,              &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1048,9 +1048,9 @@
 !
 !  Read in and write out observation values.
 !
-      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,                 &
+      CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOval), obs_value,             &
-     &                          pioFile = OBS(ng)%pioFile,              &
+     &                          pioFile = OBS(1,ng)%pioFile,            &
      &                          start = (/1/),                          &
      &                          total = (/Ndatum(ng)/))
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1064,9 +1064,9 @@
 !  Read in and write out observation meta values.
 !
       IF (haveObsMeta(ng)) THEN
-        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(ng)%name,               &
+        CALL pio_netcdf_get_fvar (ng, iNLM, OBS(1,ng)%name,             &
      &                            Vname(1,idOmet), obs_work,            &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/1/),                        &
      &                            total = (/Ndatum(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

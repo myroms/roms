@@ -657,7 +657,7 @@
 #endif
 !
 !  Set nonlinear, tangent linear, representer (finite-amplitude tangent
-!  linear) and adjoint models identifiers.
+!  linear) and adjoint kernel identifiers.
 !
       integer, parameter :: iNLM = 1   ! nonlinear
       integer, parameter :: iTLM = 2   ! perturbation tangent linear

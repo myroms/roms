@@ -123,7 +123,7 @@
 # endif 
 !
 !  Set NetCDF library to process reading and writing the observation
-!  vectors. Since the input OBS(ng)%name file can be rewritten, we
+!  vectors. Since the input OBS(:,ng)%name file can be rewritten, we
 !  need to ensure that the output DAV(ng)%name is processed with the
 !  same library.
 !
@@ -1367,9 +1367,9 @@
      &                      nOBSfiles(1), inp_lib, OBS)
 #  else
             CASE ('OBSname')
-              label='OBS - data assimilation observations'
+              label='OBS - data assimilation legacy observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, obs_lib, OBS)
+     &                      Ngrids, Nfiles, out_lib, OBS(1,:))
 #  endif
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
@@ -2621,7 +2621,7 @@
           END IF
         END DO
 #    else
-        fname=OBS(ng)%name
+        fname=OBS(1,ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
@@ -2645,7 +2645,7 @@
 #  endif
 #  if !defined CORRELATION
 #   ifdef VERIFICATION
-        fname=OBS(ng)%name
+        fname=OBS(1,ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE

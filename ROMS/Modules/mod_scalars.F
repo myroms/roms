@@ -1288,6 +1288,10 @@
 !
         integer :: MstateVar
 !
+!  Background error (standard deviation) H(x) identifier.
+!
+        integer, parameter :: iSTD = 10
+!
 !  State variable names.
 !
 # if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES

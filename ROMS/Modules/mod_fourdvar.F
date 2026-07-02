@@ -1664,15 +1664,15 @@
 !  "survey" dimension.
 !
       DO ng=1,Ngrids
-        SELECT CASE (OBS(ng)%IOtype)
+        SELECT CASE (OBS(1,ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
+            CALL netcdf_get_dim (ng, iNLM, TRIM(OBS(1,ng)%name))
 #   if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
-            CALL pio_netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
+            CALL pio_netcdf_get_dim (ng, iNLM, TRIM(OBS(1,ng)%name))
 #   endif
           CASE DEFAULT
-            IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+            IF (Master) WRITE (stdout,10) OBS(1,ng)%IOtype
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1689,12 +1689,12 @@
           END IF
         END DO
         IF (Ndatum(ng).eq.0) THEN
-          WRITE (stdout,20) 'datum', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'datum', TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (Nsurvey(ng).eq.0) THEN
-          WRITE (stdout,20) 'survey', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'survey', TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
@@ -2010,16 +2010,16 @@
 !  Read in number of observations available per survey and the time of
 !  each observation survey.
 !
-        SELECT CASE (OBS(ng)%IOtype)
+        SELECT CASE (OBS(1,ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),         &
+            CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(1,ng)%name),       &
      &                            TRIM(Vname(1,idNobs)),                &
      &                            FOURDVAR(ng)%NobsSurvey,              &
      &                            start = (/1/),                        &
      &                            total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-            CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),         &
+            CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(1,ng)%name),       &
      &                            TRIM(Vname(1,idOday)),                &
      &                            FOURDVAR(ng)%SurveyTime,              &
      &                            start = (/1/),                        &
@@ -2028,14 +2028,14 @@
 
 #   if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
-            CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),     &
+            CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(1,ng)%name),   &
      &                                TRIM(Vname(1,idNobs)),            &
      &                                FOURDVAR(ng)%NobsSurvey,          &
      &                                start = (/1/),                    &
      &                                total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-            CALL pio_netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),     &
+            CALL pio_netcdf_get_fvar (ng, iNLM, TRIM(OBS(1,ng)%name),   &
      &                                TRIM(Vname(1,idOday)),            &
      &                                FOURDVAR(ng)%SurveyTime,          &
      &                                start = (/1/),                    &

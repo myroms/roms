@@ -388,7 +388,7 @@
           CALL close_file (ng, iNLM, OBS(i,ng), OBS(i,ng)%name, .FALSE.)
         END DO
 #else
-        CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name, .FALSE.)
+        CALL close_file (ng, iNLM, OBS(1,ng), OBS(1,ng)%name, .FALSE.)
 #endif
         CALL close_file (ng, iNLM, SSF(ng), SSF(ng)%name, .FALSE.)
         CALL close_file (ng, iNLM, TIDE(ng), TIDE(ng)%name, .FALSE.)

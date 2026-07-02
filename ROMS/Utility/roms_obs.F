@@ -1,7 +1,8 @@
 #include "cppdefs.h"
       MODULE roms_obs_mod
 
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR   || defined VERIFICATION) && \
+    defined OBSERVATIONS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
