@@ -41,6 +41,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_mod_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -97,7 +98,7 @@
 !
 !  Local variable declarations.
 !
-      logical, dimension(NV) :: got_var(NV)
+      logical, dimension(NV) :: got_var
       logical :: foundAtt(2), foundit
 !
       integer :: iterDim, recordDim, surveyDim, threeDim
@@ -1296,7 +1297,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Observations latitude.
-! 
+!
         Vinfo(1)=TRIM(Vname(1,idOlat))
         Vinfo(2)=TRIM(Vname(2,idOlat))
         Vinfo(3)=TRIM(Vname(3,idOlat))

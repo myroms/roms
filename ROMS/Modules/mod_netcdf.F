@@ -119,19 +119,74 @@
         MODULE PROCEDURE netcdf_put_svar_3d
       END INTERFACE netcdf_put_svar
 !
-      PUBLIC :: netcdf_check_dim        ! checks dimensions
-      PUBLIC :: netcdf_check_var        ! checks variables
-      PUBLIC :: netcdf_close            ! closes file
-      PUBLIC :: netcdf_create           ! creates file
-      PUBLIC :: netcdf_enddef           ! ends definition mode
-      PUBLIC :: netcdf_get_dim          ! reads dimension names/values
-      PUBLIC :: netcdf_get_grp          ! gets group ids/names/variables
-      PUBLIC :: netcdf_get_satt         ! reads string attributes
-      PUBLIC :: netcdf_inq_var          ! inquires variables
-      PUBLIC :: netcdf_inq_varid        ! inquires variable ID
-      PUBLIC :: netcdf_open             ! opens file
-      PUBLIC :: netcdf_redef            ! puts file in definition mode
-      PUBLIC :: netcdf_sync             ! synchronizes file
+      PUBLIC  :: netcdf_check_dim       ! checks dimensions
+      PUBLIC  :: netcdf_check_var       ! checks variables
+      PUBLIC  :: netcdf_close           ! closes file
+      PUBLIC  :: netcdf_create          ! creates file
+      PUBLIC  :: netcdf_enddef          ! ends definition mode
+      PUBLIC  :: netcdf_get_dim         ! reads dimension names/values
+      PUBLIC  :: netcdf_get_grp         ! gets group ids/names/variables
+      PUBLIC  :: netcdf_get_satt        ! reads string attributes
+      PUBLIC  :: netcdf_inq_var         ! inquires variables
+      PUBLIC  :: netcdf_inq_varid       ! inquires variable ID
+      PUBLIC  :: netcdf_open            ! opens file
+      PUBLIC  :: netcdf_redef           ! puts file in definition mode
+      PUBLIC  :: netcdf_sync            ! synchronizes file
+!
+      PRIVATE :: netcdf_copy_fvar_1d
+      PRIVATE :: netcdf_copy_ivar_1d
+#ifdef SINGLE_PRECISION
+      PRIVATE :: netcdf_get_fatt_dp
+#endif
+      PRIVATE :: netcdf_get_fatt_r8
+#ifdef SINGLE_PRECISION
+      PRIVATE :: netcdf_get_fvar_0dp
+      PRIVATE :: netcdf_get_fvar_1dp
+      PRIVATE :: netcdf_get_fvar_2dp
+      PRIVATE :: netcdf_get_fvar_3dp
+#endif
+      PRIVATE :: netcdf_get_fvar_0d
+      PRIVATE :: netcdf_get_fvar_1d
+      PRIVATE :: netcdf_get_fvar_2d
+      PRIVATE :: netcdf_get_fvar_3d
+      PRIVATE :: netcdf_get_fvar_4d
+      PRIVATE :: netcdf_get_fvar_5d
+      PRIVATE :: netcdf_get_ivar_0d
+      PRIVATE :: netcdf_get_ivar_1d
+      PRIVATE :: netcdf_get_ivar_2d
+      PRIVATE :: netcdf_get_lvar_0d
+      PRIVATE :: netcdf_get_lvar_1d
+      PRIVATE :: netcdf_get_svar_0d
+      PRIVATE :: netcdf_get_svar_1d
+      PRIVATE :: netcdf_get_svar_2d
+      PRIVATE :: netcdf_get_svar_3d
+      PRIVATE :: netcdf_get_time_0d
+      PRIVATE :: netcdf_get_time_1d
+#ifdef SINGLE_PRECISION
+      PRIVATE :: netcdf_put_fvar_0dp
+      PRIVATE :: netcdf_put_fvar_1dp
+      PRIVATE :: netcdf_put_fvar_2dp
+      PRIVATE :: netcdf_put_fvar_3dp
+#endif
+      PRIVATE :: netcdf_put_fvar_0d
+      PRIVATE :: netcdf_put_fvar_1d
+      PRIVATE :: netcdf_put_fvar_2d
+      PRIVATE :: netcdf_put_fvar_3d
+      PRIVATE :: netcdf_put_fvar_4d
+      PRIVATE :: netcdf_put_fvar_5d
+      PRIVATE :: netcdf_put_ivar_0d
+      PRIVATE :: netcdf_put_ivar_1d
+      PRIVATE :: netcdf_put_ivar_2d
+      PRIVATE :: netcdf_put_lvar_0d
+      PRIVATE :: netcdf_put_lvar_1d
+      PRIVATE :: netcdf_put_lvar_2d
+      PRIVATE :: netcdf_put_svar_0d
+      PRIVATE :: netcdf_put_svar_1d
+      PRIVATE :: netcdf_put_svar_2d
+      PRIVATE :: netcdf_put_svar_3d
+      PRIVATE :: netcdf_put_svar
+!
+      PUBLIC
 !
 !  Switch to debug creating, opening, and closing of NetCDF file IDs
 !  to monitor 'Too many open files' error. In the Unix environment
@@ -638,7 +693,7 @@
         END DO
       END DO
       DO i=1,Mgrps
-        DO j=1,Mgvar        
+        DO j=1,Mgvar
           DO k=1,LEN(grp_vname(1,1))
             grp_vname(j,i)(k:k)=' '
           END DO
@@ -1890,7 +1945,7 @@
           status=nf90_inq_ncid(my_inpncid, TRIM(GrpName), my_inpgrpid)
           nfrid=my_inpgrpid
         ELSE
-          nfrid=my_inpncid 
+          nfrid=my_inpncid
         END IF
         status=nf90_inq_varid(nfrid, TRIM(myVarName), my_inpvarid)
         IF (status.eq.nf90_noerr) THEN
@@ -1918,7 +1973,7 @@
           status=nf90_inq_ncid(my_outncid, TRIM(GrpName), my_outgrpid)
           nfwid=my_outgrpid
         ELSE
-          nfwid=my_outncid 
+          nfwid=my_outncid
         END IF
 !
         IF (.not.PRESENT(varid)) THEN
@@ -2045,7 +2100,7 @@
           status=nf90_inq_ncid(my_inpncid, TRIM(GrpName), my_inpgrpid)
           nfrid=my_inpgrpid
         ELSE
-          nfrid=my_inpncid 
+          nfrid=my_inpncid
         END IF
         status=nf90_inq_varid(nfrid, TRIM(myVarName), my_inpvarid)
         IF (status.eq.nf90_noerr) THEN
@@ -2073,7 +2128,7 @@
           status=nf90_inq_ncid(my_outncid, TRIM(GrpName), my_outgrpid)
           nfwid=my_outgrpid
         ELSE
-          nfwid=my_outncid 
+          nfwid=my_outncid
         END IF
 !
         IF (.not.PRESENT(varid)) THEN
@@ -3408,7 +3463,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -3611,7 +3666,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -3869,7 +3924,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -4136,7 +4191,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -5400,7 +5455,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -5909,7 +5964,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6093,7 +6148,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6275,7 +6330,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6420,7 +6475,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6565,7 +6620,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6720,7 +6775,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -6871,7 +6926,7 @@
           nfid=my_grpid
         ELSE
           nfid=my_ncid
-        END IF 
+        END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
           IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -7019,7 +7074,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         status=nf90_inq_varid(nfid, TRIM(myVarName), varid)
         IF (status.eq.nf90_noerr) THEN
@@ -7292,8 +7347,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: JulianOffset = .FALSE.
-      logical :: Ldebug = .FALSE.
+      logical :: JulianOffset, Ldebug
 
       logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
@@ -7318,6 +7372,9 @@
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", netcdf_get_time_0d"
+!
+      JulianOffset=.FALSE.
+      Ldebug=.FALSE.
 !
 !-----------------------------------------------------------------------
 !  Read in a floating-point scalar variable.
@@ -7613,8 +7670,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: JulianOffset = .FALSE.
-      logical :: Ldebug = .FALSE.
+      logical :: JulianOffset, Ldebug
 
       logical, dimension(1) :: got_units
       logical, dimension(2) :: foundit
@@ -7640,6 +7696,9 @@
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", netcdf_get_time_1d"
+!
+      JulianOffset=.FALSE.
+      Ldebug=.FALSE.
 !
 !-----------------------------------------------------------------------
 !  Read in a time 1D-array variable.
@@ -7979,7 +8038,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8129,7 +8188,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8274,7 +8333,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8419,7 +8478,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8567,7 +8626,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8717,7 +8776,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -8862,7 +8921,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9007,7 +9066,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9152,7 +9211,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9423,7 +9482,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9573,7 +9632,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9718,7 +9777,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -9869,7 +9928,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10033,7 +10092,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10194,7 +10253,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10362,7 +10421,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10522,7 +10581,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10677,7 +10736,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -10832,7 +10891,7 @@
           END IF
           nfid=my_grpid
         ELSE
-          nfid=my_ncid 
+          nfid=my_ncid
         END IF
         IF (.not.PRESENT(varid)) THEN
           status=nf90_inq_varid(nfid, TRIM(myVarName), my_varid)
@@ -11097,7 +11156,7 @@
         my_cmode=ncmode
       ELSE
         my_cmode=CMODE
-      END IF        
+      END IF
 
 #if defined PARALLEL_IO && defined DISTRIBUTE
 

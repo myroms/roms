@@ -225,20 +225,20 @@
 !  is acceptable, provided it is applied consistently across all 4D-Var
 !  drivers.
 !
-      TYPE (obs_hofx), allocatable :: nlm_hofx(:)     ! nonlinear
+      TYPE (obs_hofx), public, allocatable :: nlm_hofx(:)  ! nonlinear
 # ifdef ADJOINT
-      TYPE (obs_hofx), allocatable :: adm_hofx(:)     ! adjoint
+      TYPE (obs_hofx), public, allocatable :: adm_hofx(:)  ! adjoint
 # endif
 # ifndef VERIFICATION
-      TYPE (obs_hofx), allocatable :: berr_hofx(:)    ! background error
+      TYPE (obs_hofx), public, allocatable :: berr_hofx(:) ! background
 # endif
 # if defined TANGENT || defined TL_IOMS
-      TYPE (obs_hofx), allocatable :: tlm_hofx(:)     ! tangent linear
+      TYPE (obs_hofx), public, allocatable :: tlm_hofx(:)  ! tangent
 # endif
 !
 !  Geometry for area-averaged observations.
 !
-      TYPE (obs_filter), allocatable :: geom_hofx(:)
+      TYPE (obs_filter), public, allocatable :: geom_hofx(:)
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -247,6 +247,7 @@
       PUBLIC  :: hofx_finalize
       PRIVATE :: hofx_output_dav
       PRIVATE :: hofx_output_ioda
+      PRIVATE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
@@ -398,6 +399,11 @@
 !
 !  Interplate nonlinear model at the observation locations.
 !
+          IF (iic(ng).eq.ntstart(ng)) THEN
+            nlm_hofx(ng)%ObsCount=0
+            nlm_hofx(ng)%ObsReject=0
+          END IF
+!
           CALL nlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 
@@ -406,7 +412,12 @@
 !  Interpolate background error (standard deviation) at the observation
 !  locations. It is needed for backgrouns quality control screening and
 !  Desroziers et al. (2005) statistics.
-! 
+!
+          IF (iic(ng).eq.ntstart(ng)) THEN
+            berr_hofx(ng)%ObsCount=0
+            berr_hofx(ng)%ObsReject=0
+          END IF
+!
           CALL berr_hofx(ng)%extract (obs_store, VarCha(ng),            &
      &                                geom_hofx(ng), ng, model)
 # endif
@@ -417,6 +428,11 @@
 !  Interpolate infinitesimal or perturbstion tangent linear model at
 !  the observation locations.
 !
+          IF (iic(ng).eq.ntstart(ng)) THEN
+            tlm_hofx(ng)%ObsCount=0
+            tlm_hofx(ng)%ObsReject=0
+          END IF
+!
           CALL tlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
 # endif
@@ -425,6 +441,11 @@
         CASE (iADM)
 !
 !  Adjoint of interpolate model at the observtion locations.
+!
+          IF (iic(ng).eq.ntstart(ng)) THEN
+            adm_hofx(ng)%ObsCount=0
+            adm_hofx(ng)%ObsReject=0
+          END IF
 !
           CALL adm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
@@ -467,7 +488,7 @@
 !
 !  Collect H(x) data from all processors.
 !
-          CALL nlm_hofx(ng)%update (ng, model) 
+          CALL nlm_hofx(ng)%update (ng, model)
 #  if !(defined I4DVAR_ANA_SENSITIVITY || defined VERIFICATION)
           CALL berr_hofx(ng)%update (ng, model)
 #  endif
@@ -579,9 +600,9 @@
       integer                         :: i
       real (r8)                       :: Favg, Fmin, Fmax, Nsum
 !
-      logical, allocatable            :: Laccept(:)
-      integer, pointer                :: Iwork(:) => NULL()
-      real (r8), pointer              :: Rwork(:) => NULL()
+      logical,            allocatable :: Laccept(:)
+      integer,          pointer, save :: Iwork(:) => NULL()
+      real (r8),        pointer, save :: Rwork(:) => NULL()
 !
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", hofx_output_dav"
@@ -589,7 +610,7 @@
       SourceFile=MyFile
 !
 !  Initialize.
-!  
+!
       IF (.not.allocated(Laccept)) THEN
         allocate ( Laccept(Ndatum(ng)) )
       END IF
@@ -619,7 +640,7 @@
         END IF
 !
 !  Observation state variable identifier.
-! 
+!
         CALL obs_store%aggregate_i (ng, 'stateID', Iwork)
         CALL netcdf_put_ivar (ng, model, DAV(ng)%name,                  &
      &                        Vname(1,idOtyp), Iwork,                   &
@@ -703,7 +724,7 @@
      &                      Fmin, Fmax, Favg
         END IF
 !
-!  Observation value (state units) and error (squared-state units). 
+!  Observation value (state units) and error (squared-state units).
 !  They were aggregated in "initialize_fourdvar".
 !
         CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                  &
@@ -783,7 +804,7 @@
           END IF
 !
 !  Initial, quality-controlled nonlinear H(x) vector.
-! 
+!
           CALL netcdf_put_fvar (ng, model, DAV(ng)%name,                &
      &                          Vname(1,idNLmi), NLmodVal,              &
      &                          (/1/), (/Ndatum(ng)/),                  &
@@ -977,7 +998,7 @@
      &                        ncid = DAV(ng)%ncid,                      &
      &                        varid = DAV(ng)%Vid(idNLmo))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
- 
+
         IF (Master) THEN
           Fmin=MINVAL(NLmodVal, MASK=Laccept)
           Fmax=MAXVAL(NLmodVal, MASK=Laccept)
@@ -1208,7 +1229,7 @@
      &        'control vector, (',i3.3,',',i3.3,'): ',a,/,t23,          &
      &        '(Min = ',1p,e12.5,' Max = ',1p,e12.5,' Mean = ',         &
      &        1p,e12.5')')
-! 
+!
       RETURN
       END SUBROUTINE hofx_output_dav
 !
@@ -1810,6 +1831,7 @@
         mvars=MAXVAL(obs%pool(:)%nvars)
         IF (.not.allocated(tally)) THEN
           allocate ( tally(2*mvars) )
+          tally=0
         END IF
         IF (.not.allocated(op_handle)) THEN
           allocate ( op_handle(2*mvars) )
@@ -1828,7 +1850,7 @@
           IF ((obs%pool(iobs)%NstrObs.gt.0).and.                        &
      &        (obs%pool(iobs)%NendObs.gt.0)) THEN
             nvars=obs%pool(iobs)%nvars
-            tally=0         
+            tally=0
 !
             SELECT CASE (obs%pool(iobs)%name)
               CASE ('ADT', 'SSH')
@@ -1951,7 +1973,7 @@
       integer                           :: itrc
 # endif
 !
-      real (r8),                pointer :: field(:,:) => NULL()
+      real (r8),          pointer, save :: field(:,:) => NULL()
 
       character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_extract2d"
@@ -4237,7 +4259,7 @@
       END SUBROUTINE obs_hofx_innovation
 !
 !-----------------------------------------------------------------------
-!  It writes generic H(x) variables into multiple output IODA NetCDF-4 
+!  It writes generic H(x) variables into multiple output IODA NetCDF-4
 !  file(s).
 !
       SUBROUTINE obs_hofx_nc_write_ioda (self, obs, ng, model, grpname)

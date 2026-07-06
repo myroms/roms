@@ -120,7 +120,7 @@
 # ifdef SOLVE3D
       delta2T=0
       delta3T=0
-# endif 
+# endif
 !
 !  Set NetCDF library to process reading and writing the observation
 !  vectors. Since the input OBS(:,ng)%name file can be rewritten, we
@@ -412,21 +412,21 @@
                 DO i=1,2
                   Dirac(i,isFsur,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isUbar)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta2) 
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isUbar,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVbar)')
               Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isVbar,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
 #  ifdef SOLVE3D
             CASE ('Dirac(isUvel)')
               Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
@@ -434,14 +434,14 @@
                 DO i=1,3
                   Dirac(i,isUvel,ng)=delta3(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVvel)')
               Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
               DO ng=1,Ngrids
                 DO i=1,3
                   Dirac(i,isVvel,ng)=delta3(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isTvar)')
               Npts=load_i(Nval, Rval, 3, MT, Ngrids, delta3T)
               DO ng=1,Ngrids
@@ -460,14 +460,14 @@
                 DO i=1,2
                   Dirac(i,isUstr,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVstr)')
               Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isVstr,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
             CASE ('Dirac(isTsur)')
@@ -1337,7 +1337,7 @@
      &                      Ngrids, Nfiles, 4, 4, inp_lib, NRM)
 #  ifdef IODA_OBS
             CASE ('NOBSFILES')
-              Npts=load_i(Nval, Rval, Ngrids, nOBSfiles)              
+              Npts=load_i(Nval, Rval, Ngrids, nOBSfiles)
               DO ng=1,Ngrids
                 IF (nOBSfiles(ng).le.0) THEN
                   IF (Master) WRITE (out,250) 'NOBSFILES',              &
@@ -2113,7 +2113,7 @@
           END DO
 #     endif
 #    endif
-#    ifdef SOLVE3D      
+#    ifdef SOLVE3D
           WRITE (out,120) Vdecay(1,isUvel,ng), 'VdecayI(isUvel)',       &
      &            'IC Error decorrelation V-scale (m), 3D U-momentum.'
           WRITE (out,120) Vdecay(1,isVvel,ng), 'VdecayI(isVvel)',       &

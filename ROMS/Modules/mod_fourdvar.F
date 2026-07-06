@@ -142,6 +142,7 @@
         PUBLIC :: allocate_fourdvar
         PUBLIC :: deallocate_fourdvar
         PUBLIC :: initialize_fourdvar
+        PUBLIC
 !
 # ifdef OBSERVATIONS
 !-----------------------------------------------------------------------
@@ -1596,12 +1597,12 @@
 !  files separate control-vector variables, observation types, complex
 !  operators, and area- or time-averaged filters. Determine the total
 !  number of observations, allocate the observation CLASS object
-!  "obs_pool", read the observations, and load the data into the 
+!  "obs_pool", read the observations, and load the data into the
 !  "obs_store" object to support processing by the "obs_hofx" operators.
 !
-!  Unlike legacy ROMS observation operators, this modern approach reads 
-!  observations once and stores the values in memory. This reduces 
-!  frequent I/O operations and collective distributed-memory 
+!  Unlike legacy ROMS observation operators, this modern approach reads
+!  observations once and stores the values in memory. This reduces
+!  frequent I/O operations and collective distributed-memory
 !  communications, which often create bottlenecks in large, multi-
 !  processor applications.
 !-----------------------------------------------------------------------
@@ -2301,7 +2302,7 @@
 !  during the minimization in the "increment" phase.
 #    endif
 !
-#    ifndef SPLIT_EXECUTABLE 
+#    ifndef SPLIT_EXECUTABLE
       IF (.not.associated(TLmodVal_S)) THEN
         allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)

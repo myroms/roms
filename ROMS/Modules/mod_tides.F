@@ -75,15 +75,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_tides
-        PUBLIC :: deallocate_tides
-        PUBLIC :: initialize_tides
+        PUBLIC  :: allocate_tides
+        PUBLIC  :: deallocate_tides
+        PUBLIC  :: initialize_tides
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_TIDES structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_TIDES
+        TYPE, PUBLIC :: T_TIDES
 
           real(r8), pointer :: Tperiod(:)
 # if defined AVERAGES && defined AVERAGES_DETIDE
@@ -130,7 +131,7 @@
 
         END TYPE T_TIDES
 !
-        TYPE (T_TIDES), allocatable :: TIDES(:)
+        TYPE (T_TIDES), public, allocatable :: TIDES(:)
 !
       CONTAINS
 !

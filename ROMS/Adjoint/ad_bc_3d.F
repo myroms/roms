@@ -39,6 +39,11 @@
 !
       implicit none
 !
+      PUBLIC :: ad_bc_r3d_tile
+      PUBLIC :: ad_bc_u3d_tile
+      PUBLIC :: ad_bc_v3d_tile
+      PUBLIC :: ad_bc_w3d_tile
+!
       CONTAINS
 !
 !***********************************************************************

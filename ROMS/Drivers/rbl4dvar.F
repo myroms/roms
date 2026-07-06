@@ -707,7 +707,7 @@
       real(dp) :: stime
 # endif
 !
-      character (len=8 ) :: driver = 'rbl4dvar'
+      character (len=8 ), parameter :: driver = 'rbl4dvar'
       character (len=10) :: suffix
 
       character (len=*), parameter :: MyFile =                          &

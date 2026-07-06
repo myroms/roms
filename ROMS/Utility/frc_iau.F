@@ -197,7 +197,7 @@
 !  Initialize Incremental Analysis Update (IAU) forcing terms used in
 !  the nonlinear model. The cummulative increment from 4D-Var outer
 !  loop is stored in the work "d_*" arrays, and it is gradually added
-!  over the specified time interval. 
+!  over the specified time interval.
 !
 !  The "d_*" arrays are overwritten by the fractional increment to be
 !  added during time-stepping until the end filtering period.

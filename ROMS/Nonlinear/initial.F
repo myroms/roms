@@ -84,8 +84,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: update = .FALSE.
-!
       integer :: Fcount
       integer :: ng, thread, tile
 #ifdef NESTING

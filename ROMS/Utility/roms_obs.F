@@ -2047,7 +2047,7 @@
       integer,            intent(in   ) :: model    ! kernel identifier
 !
       logical                           :: got_units, is2d_obs
-      integer                           :: DD, MM, YY, hi, mi, si 
+      integer                           :: DD, MM, YY, hi, mi, si
       integer                           :: ngroups, npool
       integer                           :: grpid, ncid_out
       integer                           :: varid, vdims, vtype
@@ -2064,19 +2064,19 @@
       character (len=80)                :: string
       character (len=256)               :: ncname, vlong
 !
-      character (len=15), dimension(3)  :: DimName =                    &
+      character (len=15), parameter, dimension(3)  :: DimName =         &
      &                                     (/ 'Location       ',        &
      &                                        'nvars          ',        &
      &                                        'survey         ' /)
 # ifdef VERIFICATION
-      character (len=15), dimension(5)  :: FileGroups =                 &
+      character (len=15), parameter, dimension(5)  :: FileGroups =      &
      &                                     (/ 'MetaData       ',        &
      &                                        'ObsError       ',        &
      &                                        'ObsValue       ',        &
      &                                        'ObsVetting     ',        &
      &                                        'hofx           ' /)
 # else
-      character (len=15), dimension(10) :: FileGroups =                 &
+      character (len=15), parameter, dimension(10) :: FileGroups =      &
      &                                     (/ 'MetaData       ',        &
      &                                        'ObsError       ',        &
      &                                        'ObsValue       ',        &
@@ -2088,7 +2088,7 @@
      &                                        'Increment      ',        &
      &                                        'Residual       ' /)
 # endif
-      character (len=15), dimension(11) :: MetaDataVars =               &
+      character (len=15), parameter, dimension(11) :: MetaDataVars =    &
      &                                     (/ 'dateTime       ',        &
      &                                        'depth          ',        &
      &                                        'latitude       ',        &
@@ -2114,7 +2114,7 @@
      &                         h_i=hi, m_i=mi, s_i=si)
       CALL datenum (self%ref_datetime, YY, MM, DD, 0, 0, 0.0_r8)
       WRITE (YYMMDD, '(i4.4,2(i2.2))') YY, MM, DD
-      WRITE (epoch, 10) YY, MM, DD, hi, mi, si 
+      WRITE (epoch, 10) YY, MM, DD, hi, mi, si
 !
       FILE_LOOP : DO iobs=1,npool
 !
@@ -2158,7 +2158,7 @@
                 IF (is2d_obs.and.((TRIM(myVarName).eq.'depth').or.      &
      &                            (TRIM(myVarName).eq.'z_grid'))) CYCLE
                 mvars=mvars+1
-                lstr=MAX(lstr, LEN_TRIM(myVarName)) 
+                lstr=MAX(lstr, LEN_TRIM(myVarName))
               END DO
 !
               self%pool(iobs)%group(k)%nvars=mvars
@@ -2326,7 +2326,7 @@
      &                                      'units', TRIM(units)),      &
      &                       nf90_noerr, __LINE__, MyFile)) EXIT DEFINE
                 END IF
-! 
+!
                 IF (TRIM(myVarName).eq.'depth') THEN
                   IF (nc_error(nf90_put_att(grpid, varid,               &
      &                                      'negative', 'downwards'),   &
@@ -3281,9 +3281,9 @@
 !
 !  If velocity observations, myStateID=4 and myStateID=5, adjust the
 !  "nvars" values because vector components are stored in the same pool
-!  vector element since they share the same location and time coordinates.
-!  Note that stateID=45 indicates that the element now contains the
-!  velocity vector components.
+!  vector element since they share the same location and time
+!  coordinates. Note that stateID=45 indicates that the element now
+!  contains the velocity vector components.
 !
       DO nf=1,nfiles
         IF (ANY(StateID(:,nf).eq.4).and.ANY(StateID(:,nf).eq.5)) THEN

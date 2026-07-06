@@ -69,6 +69,13 @@
 #endif
       END INTERFACE inquiry
 !
+      PUBLIC  :: inquiry
+      PRIVATE :: inquiry_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: inquiry_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

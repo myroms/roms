@@ -84,6 +84,13 @@
 #endif
       END INTERFACE nf_fwrite4d
 !
+      PUBLIC  :: nf_fwrite4d
+      PRIVATE :: nf90_fwrite4d
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: pio_fwrite4d
+#endif
+      PRIVATE
+!
       CONTAINS
 
 #if defined PARALLEL_IO && defined DISTRIBUTE

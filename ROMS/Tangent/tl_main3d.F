@@ -178,7 +178,7 @@
 !
           CALL ntimesteps (iTLM, RunInterval, nl, Nsteps, Rsteps)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-          IF ((nl.le.0).or.(nl.gt.NestLayers)) EXIT
+          IF ((nl.le.0).or.(nl.gt.NestLayers)) EXIT NEST_LAYER
 !
 !  Time-step governing equations for Nsteps.
 !

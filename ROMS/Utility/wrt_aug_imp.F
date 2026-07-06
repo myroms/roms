@@ -35,6 +35,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_aug_imp_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

@@ -36,6 +36,8 @@
 # endif
       USE tracer_index_mod, ONLY : tracer_index
 !
+      implicit none
+!
 !-----------------------------------------------------------------------
 !  Observation Variable Change Operator: CLASS(obs_VarCha)
 !-----------------------------------------------------------------------
@@ -198,7 +200,7 @@
       ke=N(ng)
 !
 !  Set generic variable change array, VarCha%field2d, for the state
-!  variable associated with the observations. Then, compute the 
+!  variable associated with the observations. Then, compute the
 !  appropriate variable change(s), if any. Otherwise, the default is
 !  the identity operator.
 !
@@ -373,7 +375,8 @@
           itrc=tracer_index(varname)
           IF (model.eq.iNLM) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%t(is:ie,js:je,       &
-     &                                               ks:ke,NOUT,itrc)
+     &                                               ks:ke,NOUT,        &
+     &                                               itrc)
 #  ifdef ADJOINT
           ELSE IF (model.eq.iADM) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%f_t(is:ie,js:je,     &
@@ -382,7 +385,8 @@
 #  ifdef TLM_OBS
           ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%tl_t(is:ie,js:je,    &
-     &                                                  ks:ke,NOUT,itrc)
+     &                                                  ks:ke,NOUT,     &
+     &                                                  itrc)
 #  endif
 #  ifndef VERIFICATION
           ELSE IF (model.eq.iSTD) THEN
@@ -411,7 +415,7 @@
       character (len=*),  intent(in   ) :: varname
 !
       integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: i, j, nz
+      integer                           :: i, j, k, nz
 !
       real (r8),    target, allocatable :: ad_field(:,:,:)
       real (r8),            allocatable :: Zeven(:)
@@ -633,6 +637,7 @@
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
       integer                           :: IstrR, IendR, JstrR, JendR
+      integer                           :: IminS, ImaxS, JminS, JmaxS
       integer                           :: i, j, k
 !
       real (r8),            allocatable :: Urho(:,:), Vrho(:,:)
@@ -740,7 +745,7 @@
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
-      integer                           :: IstrR, IendR, JstrE, JendR
+      integer                           :: IstrR, IendR, JstrR, JendR
       integer                           :: i, j, k
 !
       real (r8)                         :: UaCosA, UaSinA, VaCosA, VaSinA
@@ -853,7 +858,7 @@
 !
       integer                           :: Istr, Iend, Jstr, Jend
       integer                           :: IstrR, IendR, JstrR, JendR
-      integer                           :: i, iz, j, k, k1, k2
+      integer                           :: i, iz, i1, j, j1, k, k1, k2
       real (r8)                         :: Zbot, Ztop, dz, r1, r2
 !
 !  Initialize.
@@ -935,6 +940,7 @@
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
       integer                           :: IstrR, IendR, JstrR, JendR
+      integer                           :: IminS, ImaxS, JminS, JmaxS
       integer                           :: i, j, k
 !
       real (r8),            allocatable :: ad_Urho(:,:), ad_Vrho(:,:)
@@ -1079,7 +1085,7 @@
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
-      integer                           :: IstrR, IendR, JstrE, JendR
+      integer                           :: IstrR, IendR, JstrR, JendR
       integer                           :: i, j, k
 !
       real (r8)                         :: adfac

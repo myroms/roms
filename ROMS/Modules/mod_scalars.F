@@ -13,9 +13,12 @@
         USE netcdf
 #endif
 !
+        implicit none
+!
         PUBLIC :: allocate_scalars
         PUBLIC :: deallocate_scalars
         PUBLIC :: initialize_scalars
+        PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Multiple grid structure.
@@ -774,7 +777,7 @@
 !  fraction is absorbed by the bed (effectively modifying bottom
 !  tracer flux).
 !
-        real(dp), allocatable :: bot_albedo(:) 
+        real(dp), allocatable :: bot_albedo(:)
 !
 !  Grid r-factor (non-dimensional).
 !
@@ -1347,13 +1350,13 @@
 ! free-surface contribution:
 !
 !      [0] Integrate from local bottom to the surface
-!      [1] Integrate from LNM_depth to surface or integrate from local bottom
-!          if shallower than LNM_depth
+!      [1] Integrate from LNM_depth to surface or integrate from local
+!          bottom if shallower than LNM_depth
 !
         integer :: LNM_flag
 !
-! Balance operator logical switches for state variables to consider in the
-! error covariance multivariate constraints.
+! Balance operator logical switches for state variables to consider in
+! the error covariance multivariate constraints.
 !
         logical, allocatable :: balance(:)
 !
@@ -3561,9 +3564,11 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param, ONLY : Ngrids
+!
 !  Imported variable declarations.
 !
-      integer :: ng
+      integer, intent(in) :: ng
 
 #ifdef SUBOBJECT_DEALLOCATION
 !

@@ -36,6 +36,10 @@
 !
       implicit none
 !
+      PUBLIC :: ad_bc_r2d_tile
+      PUBLIC :: ad_bc_u2d_tile
+      PUBLIC :: ad_bc_v2d_tile
+!
       CONTAINS
 !
 !***********************************************************************

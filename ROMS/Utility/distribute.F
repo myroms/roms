@@ -71,6 +71,8 @@
      &                            mp_exchange3d_xtr
 # endif
 !
+      implicit none
+!
       INTERFACE mp_assemble
         MODULE PROCEDURE mp_assemblef_1d
         MODULE PROCEDURE mp_assemblef_2d
@@ -128,6 +130,44 @@
         MODULE PROCEDURE mp_reduce_0d
         MODULE PROCEDURE mp_reduce_1d
       END INTERFACE mp_reduce
+!
+      PUBLIC  :: mp_aggregate2d
+      PUBLIC  :: mp_aggregate3d
+      PUBLIC  :: mp_assemble
+      PUBLIC  :: mp_barrier
+      PUBLIC  :: mp_bcastf
+      PUBLIC  :: mp_bcastl
+      PUBLIC  :: mp_bcasti
+      PUBLIC  :: mp_bcasts
+      PUBLIC  :: mp_bcast_struc
+      PUBLIC  :: mp_boundary
+      PUBLIC  :: mp_dump
+      PUBLIC  :: mp_collect
+      PUBLIC  :: mp_gather2d
+# ifdef GRID_EXTRACT
+      PUBLIC  :: mp_gather2d_xtr
+# endif
+      PUBLIC  :: mp_gather3d
+# ifdef GRID_EXTRACT
+      PUBLIC  :: mp_gather3d_xtr
+# endif
+      PUBLIC  :: mp_gather_state
+      PUBLIC  :: mp_ncread1d
+      PUBLIC  :: mp_ncread2d
+      PUBLIC  :: mp_ncwrite1d
+      PUBLIC  :: mp_ncwrite2d
+      PUBLIC  :: mp_reduce
+      PUBLIC  :: mp_reduce2
+      PUBLIC  :: mp_scatter2d
+# ifdef GRID_EXTRACT
+      PUBLIC  :: mp_scatter2d_xtr
+# endif
+      PUBLIC  :: mp_scatter3d
+# ifdef GRID_EXTRACT
+      PUBLIC  :: mp_scatter3d_xtr
+# endif
+      PUBLIC  :: mp_scatter_state
+      PRIVATE
 !
       CONTAINS
 !
@@ -4983,7 +5023,7 @@
       logical :: LandFill
 !
 # endif
-      integer :: Cgrid, ghost, rank
+      integer :: Cgrid, Ntasks, ghost, rank
       integer :: Io, Ie, Jo, Je, Ioff, Joff, Koff
       integer :: Imin, Imax, Jmin, Jmax
       integer :: iLB, iUB, jLB, jUB
@@ -5402,7 +5442,7 @@
       logical :: LandFill
 !
 #  endif
-      integer :: Cgrid, ghost, rank
+      integer :: Cgrid, Ntasks, ghost, rank
       integer :: Io, Ie, Jo, Je, Ioff, Joff, Koff
       integer :: Imin, Imax, Jmin, Jmax
       integer :: iLB, iUB, jLB, jUB
@@ -10125,8 +10165,7 @@
 !
 !  Local variable declarations.
 !
-      common /counter/ nc
-      integer :: nc
+      integer, save :: nc
 !
       logical, save :: first = .TRUE.
 !

@@ -55,7 +55,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ClosedState = -1
+      integer, parameter :: ClosedState = -1
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", close_file_nf90"

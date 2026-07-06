@@ -222,15 +222,15 @@
       NM1 = N - 1
 !
    10 CONTINUE
-      IF (L1 .GT. N) GO TO 160
+      IF (L1 .GT. N) GOTO 160
       IF (L1 .GT. 1) E(L1-1) = ZERO
       IF (L1 .LE. NM1) THEN
         DO M = L1, NM1
           TST = ABS(E(M))
-          IF (TST .EQ. ZERO) GO TO 30
+          IF (TST .EQ. ZERO) GOTO 30
           IF (TST .LE. (SQRT(ABS(D(M)))*SQRT(ABS(D(M+1))))*EPS) THEN
             E(M) = ZERO
-            GO TO 30
+            GOTO 30
           END IF
         END DO
       END IF
@@ -242,13 +242,13 @@
       LEND = M
       LENDSV = LEND
       L1 = M + 1
-      IF (LEND .EQ. L) GO TO 10
+      IF (LEND .EQ. L) GOTO 10
 !
 !  Scale submatrix in rows and columns L to LEND.
 !
       ANORM = DLANST('I', LEND-L+1, D(L), E(L))
       ISCALE = 0
-      IF (ANORM .EQ. ZERO) GO TO 10
+      IF (ANORM .EQ. ZERO) GOTO 10
       IF (ANORM .GT. SSFMAX) THEN
         ISCALE = 1
         CALL DLASCL ('G', 0, 0, ANORM, SSFMAX, LEND-L+1, 1, D(L), N,    &
@@ -281,7 +281,7 @@
           LENDM1 = LEND - 1
           DO M = L, LENDM1
             TST = ABS(E(M))**2
-            IF (TST .LE. (EPS2*ABS(D(M)))*ABS(D(M+1))+SAFMIN) GO TO 60
+            IF (TST .LE. (EPS2*ABS(D(M)))*ABS(D(M+1))+SAFMIN) GOTO 60
           END DO
         END IF
 !
@@ -290,7 +290,7 @@
    60   CONTINUE
         IF (M .LT. LEND) E(M) = ZERO
         P = D(L)
-        IF (M .EQ. L) GO TO 80
+        IF (M .EQ. L) GOTO 80
 !
 !    If remaining matrix is 2-by-2, use DLAE2 or SLAEV2
 !    to compute its eigensystem.
@@ -309,11 +309,11 @@
           D(L+1) = RT2
           E(L) = ZERO
           L = L + 2
-          IF (L .LE. LEND) GO TO 40
-          GO TO 140
+          IF (L .LE. LEND) GOTO 40
+          GOTO 140
         END IF
 !
-        IF (JTOT .EQ. NMAXIT) GO TO 140
+        IF (JTOT .EQ. NMAXIT) GOTO 140
         JTOT = JTOT + 1
 !
 !    Form shift.
@@ -358,7 +358,7 @@
 !
         D(L) = D( L ) - P
         E(L) = G
-        GO TO 40
+        GOTO 40
 !
 !    Eigenvalue found.
 !
@@ -366,8 +366,8 @@
         D(L) = P
  !
         L = L + 1
-        IF (L .LE. LEND) GO TO 40
-        GO TO 140
+        IF (L .LE. LEND) GOTO 40
+        GOTO 140
 !
       ELSE
 !
@@ -380,7 +380,7 @@
           LENDP1 = LEND + 1
           DO M = L, LENDP1, -1
             TST = ABS(E( M-1))**2
-            IF (TST .LE. (EPS2*ABS(D(M)))*ABS(D(M-1))+SAFMIN) GO TO 110
+            IF (TST .LE. (EPS2*ABS(D(M)))*ABS(D(M-1))+SAFMIN) GOTO 110
           END DO
         END IF
 !
@@ -389,7 +389,7 @@
   110   CONTINUE
         IF (M .GT. LEND) E(M-1) = ZERO
         P = D(L)
-        IF (M .EQ. L) GO TO 130
+        IF (M .EQ. L) GOTO 130
 !
 !    If remaining matrix is 2-by-2, use DLAE2 or SLAEV2
 !    to compute its eigensystem.
@@ -408,11 +408,11 @@
           D(L) = RT2
           E(L-1) = ZERO
           L = L - 2
-          IF (L .GE. LEND) GO TO 90
-          GO TO 140
+          IF (L .GE. LEND) GOTO 90
+          GOTO 140
         END IF
 !
-        IF (JTOT .EQ. NMAXIT) GO TO 140
+        IF (JTOT .EQ. NMAXIT) GOTO 140
         JTOT = JTOT + 1
 !
 !    Form shift.
@@ -457,7 +457,7 @@
 !
         D(L) = D(L) - P
         E(LM1) = G
-        GO TO 90
+        GOTO 90
 !
 !    Eigenvalue found.
 !
@@ -465,8 +465,8 @@
         D(L) = P
 !
         L = L - 1
-        IF (L .GE. LEND) GO TO 90
-        GO TO 140
+        IF (L .GE. LEND) GOTO 90
+        GOTO 140
 !
       END IF
 !
@@ -488,11 +488,11 @@
 !  Check for no convergence to an eigenvalue after a total
 !  of N*MAXIT iterations.
 !
-      IF (JTOT .LT. NMAXIT) GO TO 10
+      IF (JTOT .LT. NMAXIT) GOTO 10
       DO I = 1, N - 1
         IF (E(I) .NE. ZERO) INFO = INFO + 1
       END DO
-      GO TO 190
+      GOTO 190
 !
 !  Order eigenvalues and eigenvectors.
 !
@@ -1407,7 +1407,7 @@
       IF (TRY .LE. (-EMIN)) THEN
         LEXP = TRY
         EXBITS = EXBITS + 1
-        GO TO 10
+        GOTO 10
       END IF
 #endif
       IF (LEXP .EQ. -EMIN) THEN
@@ -1873,7 +1873,7 @@
           F1 = F1*SAFMN2
           G1 = G1*SAFMN2
           SCALE = MAX(ABS(F1), ABS(G1))
-          IF (SCALE .GE. SAFMX2) GO TO 10
+          IF (SCALE .GE. SAFMX2) GOTO 10
           R = SQRT(F1**2 + G1**2)
           CS = F1 / R
           SN = G1 / R
@@ -1904,7 +1904,7 @@
           F1 = F1*SAFMX2
           G1 = G1*SAFMX2
           SCALE = MAX(ABS(F1), ABS(G1))
-          IF (SCALE .LE. SAFMN2) GO TO 30
+          IF (SCALE .LE. SAFMN2) GOTO 30
           R = SQRT(F1**2 + G1**2)
           CS = F1 / R
           SN = G1 / R
@@ -2796,15 +2796,15 @@
    60       CONTINUE
    70       CONTINUE
             J = J - 1
-            IF (D(J) .LT. DMNMX) GO TO 70
+            IF (D(J) .LT. DMNMX) GOTO 70
    80       CONTINUE
             I = I + 1
-            IF (D(I) .GT. DMNMX) GO TO 80
+            IF (D(I) .GT. DMNMX) GOTO 80
             IF (I .LT. J) THEN
               TMP = D(I)
               D(I) = D(J)
               D(J) = TMP
-              GO TO 60
+              GOTO 60
             END IF
 #endif
             IF (J-START .GT. ENDD-J-1) THEN
@@ -2853,15 +2853,15 @@
    90       CONTINUE
   100       CONTINUE
             J = J - 1
-            IF (D(J) .GT. DMNMX) GO TO 100
+            IF (D(J) .GT. DMNMX) GOTO 100
   110       CONTINUE
             I = I + 1
-            IF (D(I) .LT. DMNMX) GO TO 110
+            IF (D(I) .LT. DMNMX) GOTO 110
             IF (I .LT. J) THEN
               TMP = D(I)
               D(I) = D(J)
               D(J) = TMP
-              GO TO 90
+              GOTO 90
             END IF
 #endif
             IF (J-START .GT. ENDD-J-1) THEN

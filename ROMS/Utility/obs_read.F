@@ -35,6 +35,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: obs_read_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

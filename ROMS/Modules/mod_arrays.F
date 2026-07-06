@@ -117,6 +117,7 @@
       PUBLIC :: ROMS_allocate_arrays
       PUBLIC :: ROMS_deallocate_arrays
       PUBLIC :: ROMS_initialize_arrays
+      PUBLIC
 !
 #if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \

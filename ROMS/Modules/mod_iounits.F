@@ -141,6 +141,7 @@
 !
       PUBLIC :: allocate_iounits
       PUBLIC :: deallocate_iounits
+      PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Define derived type structure, T_IO, used to store information about
@@ -251,7 +252,7 @@
 #endif
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
-      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation 
+      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
 #if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
       TYPE(T_IO), allocatable :: SVC(:)     ! correlation length scales
 #endif
@@ -321,7 +322,7 @@
       character (len=256) :: fposnam        ! floats positions
       character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
-      character (len=256) :: vegname         ! vegetation model parameters
+      character (len=256) :: vegname        ! vegetation parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
 !

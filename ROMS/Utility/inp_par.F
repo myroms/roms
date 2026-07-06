@@ -48,6 +48,7 @@
       implicit none
 !
       PUBLIC  :: inp_par
+      PRIVATE
 !
       CONTAINS
 !

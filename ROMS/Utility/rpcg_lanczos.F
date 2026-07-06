@@ -67,6 +67,7 @@
 # endif
       PRIVATE :: RPevecs
       PRIVATE :: rprecond
+      PRIVATE
 !
       CONTAINS
 !
@@ -273,7 +274,8 @@
 !
 !  Selime's code: t1=GDG'*z1=TLmodVal.
 !
-!  Complete the computation of the Lanczos vector from previous inner-loop
+!  Complete the computation of the Lanczos vector from previous inner
+!  loop.
 !
           IF (innLoop.EQ.1) THEN
             cg_Gnorm_v(outLoop)=0.0_dp
@@ -586,7 +588,7 @@
                 zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
                 zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
-              ENDIF
+              END IF
             END DO
 !
 !  AUGMENTED.
@@ -779,7 +781,7 @@
             WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
      &                        innLoop
             exit_flag=8
-            GO TO 10
+            EXIT MASTER_THREAD
           END IF
 !
 !  Selime code: w=w-alpha*v1
@@ -800,7 +802,7 @@
               zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
             ELSE
               zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
-            ENDIF
+            END IF
           END DO
 !
 !  Selime's code: cg_dla=pgrad*HBH'*v1=pgrad*TLmodVal_S/zfact
@@ -983,7 +985,7 @@
               WRITE (stdout,*) ' RPCG_LANCZOS - Error in DSTEQR:',      &
      &                         ' info = ',info
               exit_flag=8
-              GO TO 10
+              EXIT MASTER_THREAD
             END IF
 !
             DO j=1,Ninner
@@ -1006,7 +1008,7 @@
                 WRITE (stdout,*) ' RPCG_LANCZOS - negative Ritz value', &
      &                           ' found.'
                 exit_flag=8
-                GO TO 10
+                EXIT MASTER_THREAD
               END IF
             END DO
 !
@@ -1049,7 +1051,6 @@
 !  Come here if not a possite definite algorithm.
 !-----------------------------------------------------------------------
 !
- 10   CONTINUE
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, model, exit_flag)
 # endif
@@ -1236,7 +1237,7 @@
                 zfact=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
                 zfact=1.0_dp/cg_beta(jkk,outLoop)
-              ENDIF
+              END IF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jkk,outLoop)*                   &
      &                  zfact+                                          &
@@ -1347,7 +1348,7 @@
                 zfact=1.0_dp/cg_Gnorm_v(nol)
               ELSE
                 zfact=1.0_dp/cg_beta(jk,nol)
-              ENDIF
+              END IF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jk,nol)*                        &
      &                  zfact+                                          &

@@ -138,15 +138,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_average
-        PUBLIC :: deallocate_average
-        PUBLIC :: initialize_average
+        PUBLIC  :: allocate_average
+        PUBLIC  :: deallocate_average
+        PUBLIC  :: initialize_average
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_AVERAGE structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_AVERAGE
+        TYPE, PRIVATE :: T_AVERAGE
 !
 !  Time-averaged state variables.
 !
@@ -348,7 +349,7 @@
 
         END TYPE T_AVERAGE
 !
-        TYPE (T_AVERAGE), allocatable :: AVERAGE(:)
+        TYPE (T_AVERAGE), public, allocatable :: AVERAGE(:)
 !
       CONTAINS
 !

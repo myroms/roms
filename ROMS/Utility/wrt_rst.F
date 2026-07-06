@@ -55,6 +55,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_rst_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !

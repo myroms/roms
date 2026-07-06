@@ -35,7 +35,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -339,7 +339,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -680,7 +680,7 @@
 !  solver using parabolic splines or inverting a tridiagonal matrix.
 !  Note that error correlations are considered separable in the
 !  horizontal and vertical directions.
-! 
+!
       SUBROUTINE multiscale_Vdiff_u3d_tl (self, ng, tile, model,        &
      &                                    ifield, NVsteps,              &
      &                                    LBi, UBi, LBj, UBj,           &
@@ -691,7 +691,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -990,7 +990,7 @@
 !  solver using parabolic splines or inverting a tridiagonal matrix.
 !  Note that error correlations are considered separable in the
 !  horizontal and vertical directions.
-! 
+!
       SUBROUTINE multiscale_Vdiff_u3d_ad (self, ng, tile, model,        &
      &                                    ifield, NVsteps,              &
      &                                    LBi, UBi, LBj, UBj,           &
@@ -1001,7 +1001,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -1348,7 +1348,7 @@
 !  solver using parabolic splines or inverting a tridiagonal matrix.
 !  Note that error correlations are considered separable in the
 !  horizontal and vertical directions.
-! 
+!
       SUBROUTINE multiscale_Vdiff_v3d_tl (self, ng, tile, model,        &
      &                                    ifield, NVsteps,              &
      &                                    LBi, UBi, LBj, UBj,           &
@@ -1359,7 +1359,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -1661,7 +1661,7 @@
 !  solver using parabolic splines or inverting a tridiagonal matrix.
 !  Note that error correlations are considered separable in the
 !  horizontal and vertical directions.
-! 
+!
       SUBROUTINE multiscale_Vdiff_v3d_ad (self, ng, tile, model,        &
      &                                    ifield, NVsteps,              &
      &                                    LBi, UBi, LBj, UBj,           &
@@ -1672,7 +1672,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: NVsteps   ! integration steps
       integer,            intent(in   ) :: LBi, UBi, LBj, UBj
       integer,            intent(in   ) :: IminS, ImaxS, JminS, JmaxS
@@ -2030,7 +2030,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: NVsteps   ! integration steps
@@ -2549,7 +2549,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: NVsteps   ! integration steps

@@ -171,7 +171,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: backward = .TRUE.
+      logical, parameter :: backward = .TRUE.
       logical :: ad_advance
       logical :: DoNestLayer, Time_Step
       integer :: Nsteps, Rsteps
@@ -262,7 +262,7 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
-          IF ((nl.le.0).or.(nl.gt.NestLayers)) EXIT
+          IF ((nl.le.0).or.(nl.gt.NestLayers)) EXIT NEST_LAYER
 !
 !  Time-step governing equations for Nsteps.
 !

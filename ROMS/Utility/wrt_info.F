@@ -58,6 +58,13 @@
 #endif
       END INTERFACE wrt_info
 !
+      PUBLIC  :: wrt_info
+      PRIVATE :: wrt_info_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: wrt_info_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

@@ -213,17 +213,20 @@
       LBj = BOUNDS(ng)%LBj(tile)
       UBj = BOUNDS(ng)%UBj(tile)
 !
-      IF (.not.allocated(self%Adst))                                    &
+      IF (.not.allocated(self%Adst)) THEN
         allocate ( self%Adst(LBi:UBi,LBj:UBj) )
-      self%Adst = 0.0_r8
+        self%Adst = 0.0_r8
+      END IF
 
-      IF (.not.allocated(self%Idst))                                    &
+      IF (.not.allocated(self%Idst)) THEN
         allocate ( self%Idst(LBi:UBi,LBj:UBj) )
-      self%Idst = 0.0_r8
+        self%Idst = 0.0_r8
+      END IF
 
-      IF (.not.allocated(self%Jdst))                                    &
+      IF (.not.allocated(self%Jdst)) THEN
         allocate ( self%Jdst(LBi:UBi,LBj:UBj) )
-      self%Jdst = 0.0_r8
+        self%Jdst = 0.0_r8
+      END IF
 !
       self%LBI_d = LBi
       self%UBI_d = UBi
@@ -371,7 +374,7 @@
             self%Idst(i,j) = xFrac
             self%Jdst(i,j) = yFrac
           END DO
-        END DO                
+        END DO
       END IF
 #else
 !
@@ -509,7 +512,7 @@
               RETURN
             END IF
           END IF
-        END IF 
+        END IF
 !
         CALL netcdf_inq_var (ng, kernel, self%ncname,                   &
      &                       ncid = self%ncid)
@@ -759,7 +762,7 @@
         RETURN
 
       END IF QUERY
-!  
+!
   10  FORMAT (/,' ROMS_INTERP::read_nf90 - unable to open file: ',      &
               /,26x,a)
   20  FORMAT (/,' ROMS_INTERP::read_nf90 - equal source and ',          &
@@ -847,7 +850,7 @@
               RETURN
             END IF
           END IF
-        END IF 
+        END IF
 !
         CALL pio_netcdf_inq_var (ng, kernel, self%ncname,               &
      &                           pioFile = self%pioFile)
@@ -1521,7 +1524,7 @@
 !
       DO i=1,nvars
         IF (i.gt.1) THEN           ! avoid inquiring about source file
-          SELECT CASE (inp_lib)    
+          SELECT CASE (inp_lib)
             CASE (io_nf90)
               self%Cvars(i)%ncid = self%Cvars(1)%ncid
 #if defined PIO_LIB && defined DISTRIBUTE

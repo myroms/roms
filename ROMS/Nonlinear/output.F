@@ -57,7 +57,7 @@
 # if defined OBSERVATIONS && defined IODA_OBS
       USE roms_hofx_mod,   ONLY : hofx_finalize,                        &
      &                            hofx_run,                             &
-     &                            iSTD, nlm_hofx
+     &                            nlm_hofx
 # endif
       USE strings_mod,     ONLY : FoundError
 # ifdef AVERAGES

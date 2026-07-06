@@ -277,9 +277,9 @@
       real(r8), dimension(0:9) :: C
       real(r8), dimension(0:9) :: tl_C
 #  ifdef EOS_TDERIVATIVE
-      real(r8), dimension(0:9) :: dCdT(0:9)
-      real(r8), dimension(0:9) :: tl_dCdT(0:9)
-      real(r8), dimension(0:9) :: d2Cd2T(0:9)
+      real(r8), dimension(0:9) :: dCdT
+      real(r8), dimension(0:9) :: tl_dCdT
+      real(r8), dimension(0:9) :: d2Cd2T
 
       real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDS
       real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDT

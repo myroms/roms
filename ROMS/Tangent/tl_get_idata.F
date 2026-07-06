@@ -40,18 +40,19 @@
 !
       logical, save :: recordless = .TRUE.
 
-      logical, dimension(3) :: update =                                 &
-     &         (/ .FALSE., .FALSE., .FALSE. /)
+      logical, dimension(3) :: update
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: itrc, is
 !
-      real(r8) :: time_save = 0.0_r8
+      real(r8) :: time_save
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
 !
       SourceFile=MyFile
+      update=.FALSE.
+      time_save=0.0_r8
 !
 !  Lower and upper bounds for tiled arrays.
 !

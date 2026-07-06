@@ -103,6 +103,7 @@
       PUBLIC :: allocate_param
       PUBLIC :: deallocate_param
       PUBLIC :: initialize_param
+      PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Grid nesting parameters.

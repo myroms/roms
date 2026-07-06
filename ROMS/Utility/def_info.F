@@ -46,7 +46,7 @@
 !    DimIDs(32) => Number of sediment tracers                          !
 !    DimIDs(33) => Number of light spectral bands                      !
 !    DimIDs(34) => Number constant depth slices in 'extract_slice'     !
-!    DimIDs(35) => Number of submerged acuatic vegetation types        !                     
+!    DimIDs(35) => Number of submerged acuatic vegetation types        !
 !    DimIDs(36) => Number of correlation functions to be combined      !
 !                                                                      !
 !=======================================================================
@@ -78,6 +78,13 @@
         MODULE PROCEDURE def_info_pio
 #endif
       END INTERFACE def_info
+!
+      PUBLIC  :: def_info
+      PRIVATE :: def_info_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: def_info_pio
+#endif
+      PRIVATE
 !
       CONTAINS
 !

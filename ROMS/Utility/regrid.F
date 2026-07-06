@@ -89,10 +89,11 @@
 !
 !  Interface for same name routine overloading.
 !
-      PUBLIC :: regrid_nf90
+      PUBLIC  :: regrid_nf90
 #if defined PIO_LIB && defined DISTRIBUTE
-      PUBLIC :: regrid_pio
+      PUBLIC  :: regrid_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !

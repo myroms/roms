@@ -93,8 +93,6 @@
 !
 !  Local variable declarations.
 !
-      logical :: update = .FALSE.
-!
       integer :: Fcount, IniRec, Tindex
       integer :: thread, tile
 !
