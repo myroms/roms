@@ -723,7 +723,7 @@
 !  Exchange boundary data.
 !
       CALL mp_exchange3d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj, 1, N(g),                  &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
      &                    EWperiodic(ng), NSperiodic(ng),               &
      &                    self%Uc, self%Vc)

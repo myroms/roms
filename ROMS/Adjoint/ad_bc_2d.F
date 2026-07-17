@@ -34,11 +34,25 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_boundary
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_scalars
+!
+      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile,              &
+     &                               ad_exchange_u2d_tile,              &
+     &                               ad_exchange_v2d_tile
+!
       implicit none
 !
-      PUBLIC :: ad_bc_r2d_tile
-      PUBLIC :: ad_bc_u2d_tile
-      PUBLIC :: ad_bc_v2d_tile
+      PUBLIC  :: ad_bc_r2d_tile
+      PUBLIC  :: ad_bc_u2d_tile
+      PUBLIC  :: ad_bc_v2d_tile
+      PUBLIC  :: ad_dabc_r2d_tile
+      PUBLIC  :: ad_dabc_u2d_tile
+      PUBLIC  :: ad_dabc_v2d_tile
+      PRIVATE
 !
       CONTAINS
 !
@@ -47,13 +61,6 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
 !
 !  Imported variable declarations.
 !
@@ -204,14 +211,6 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_u2d_tile
 !
 !  Imported variable declarations.
 !
@@ -431,14 +430,6 @@
      &                           ad_A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_v2d_tile
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -656,13 +647,6 @@
      &                             ad_A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -812,14 +796,6 @@
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_u2d_tile
 !
 !  Imported variable declarations.
 !
@@ -971,14 +947,6 @@
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_2d_mod, ONLY : ad_exchange_v2d_tile
 !
 !  Imported variable declarations.
 !

@@ -45,7 +45,11 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
-      USE lapack_mod,     ONLY : DSTEQR
+# ifdef DSTEQR_SOLVER
+      USE lapack_mod,     ONLY : DSTEQR      ! legacy tridagonal solver
+# else
+      USE lapack_mod,     ONLY : DSTEVR      ! modern tridagonal solver
+# endif
 # ifdef IODA_OBS
       USE roms_hofx_mod,  ONLY : adm_hofx
 # endif
@@ -85,8 +89,20 @@
 !
       logical :: Ltrans, Laug
 !
-      integer :: i, ic, j, iobs, ivec, Lscale, info
+      integer :: Lscale, Nrank
+# ifndef DSTEQR_SOLVER
+      integer :: Liwork, Lwork
+# endif
+      integer :: i, ic, j, iobs, ivec, info
+# ifndef DSTEQR_SOLVER
+      integer :: Meigen
+      integer, dimension(2*(NinnLoop))  :: isuppz
+      integer, dimension(10*(NinnLoop)) :: iwork
+# endif
 !
+# ifndef DSTEQR_SOLVER
+      real(dp), parameter :: zero = 0.0_dp
+# endif
       real(dp) :: zbet, eps, preducv, preducy
       real(dp) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
 !
@@ -96,7 +112,13 @@
       real(dp), dimension(Ndatum(ng)+1) :: px, pgrad, zw, zt
       real(dp), dimension(Ndatum(ng)+1) :: zhv, zht, zd
       real(dp), dimension(Ninner,3) :: zwork
+# ifndef DSTEQR_SOLVER
+      real(dp), dimension(20*(NinnLoop)) :: work
+      real(dp), dimension(NinnLoop) :: zdia
+      real(dp), dimension(NinnLoop) :: zge
+# else
       real(dp), dimension(2*(NinnLoop-1)) :: work
+# endif
       real(dp), dimension(Ninner,Ninner) :: zgv
 !
       character (len=13) :: string
@@ -143,9 +165,17 @@
       eps=0.0_dp
       preducv=0.0_dp
       preducy=0.0_dp
+      work=0.0_dp
       zwork=0.0_dp
       zgv=0.0_dp
-
+# ifndef DSTEVR_SOLVER
+      zdia=0.0_dp
+      zge=0.0_dp
+!
+      Meigen=0
+      isuppz=0
+      iwork=0
+# endif
 !
       MASTER_THREAD : IF (Master) THEN
 !
@@ -969,18 +999,34 @@
         IF (innLoop.eq.NinnLoop) THEN
           IF (LhessianEV.or.Lprecond) THEN
             DO ivec=1,innLoop-1
+# ifdef DSTEQR_SOLVER
               cg_Ritz(ivec,outLoop)=cg_delta(ivec,outLoop)
+# else
+              zdia(ivec)=cg_delta(ivec,outLoop)
+# endif
             END DO
+
             DO ivec=1,innLoop-2
               zwork(ivec,1)=cg_beta(ivec+1,outLoop)
             END DO
 !
-!  Use the LAPACK routine DSTEQR to compute the eigenvectors and
-!  eigenvalues of the tridiagonal matrix. If applicable, the
-!  eigenpairs are computed by master thread only.
+!  The LAPACK routine DSTEQR (legacy) or DSTEVR (modern alternative) is
+!  used to compute the eigenvalues and eigenvectors of the tridiagonal
+!  matrix. These computations are performed exclusively by the master
+!  thread.
 !
-            CALL DSTEQR ('I', innLoop-1, cg_Ritz(1,outLoop), zwork(1,1),&
+            Nrank=innLoop-1
+# ifdef DSTEQR_SOLVER
+            CALL DSTEQR ('I', Nrank, cg_Ritz(:,outLoop), zwork(:,1),    &
      &                   zgv, Ninner, work, info)
+# else
+            Liwork=10*NinnLoop
+            Lwork=20*NinnLoop
+            CALL DSTEVR ('V', 'I', Nrank, zdia, zwork(:,1),             &
+     &                   zero, zero, 1, Nrank, zero,                    &
+     &                   Meigen, zge, zgv, Ninner,                      &
+     &                   isuppz, work, Lwork, iwork, Liwork, info)
+# endif
             IF (info.ne.0) THEN
               WRITE (stdout,*) ' RPCG_LANCZOS - Error in DSTEQR:',      &
      &                         ' info = ',info
@@ -988,9 +1034,14 @@
               EXIT MASTER_THREAD
             END IF
 !
+# ifndef DSTEQR_SOLVER
+            DO i=1,Meigen
+              cg_Ritz(i,outLoop)=zge(i)         ! load eigenvalues
+            END DO
+# endif
             DO j=1,Ninner
               DO i=1,Ninner
-                cg_zv(i,j,outLoop)=zgv(i,j)
+                cg_zv(i,j,outLoop)=zgv(i,j)     ! load eigenvectors
               END DO
             END DO
 !

@@ -1090,6 +1090,21 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' DRENNAN,'
 #endif
+#if defined FOUR_DVAR
+# ifdef DSTEQR_SOLVER
+      IF (Master) WRITE (stdout,20) 'DSTEQR_SOLVER',                    &
+     &   'Using LAPACK legacy/archaic DSTEQR tridiagonal solver'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' DSTEQR_SOLVER,'
+# else
+      IF (Master) WRITE (stdout,20) '!DSTEQR_SOLVER',                   &
+     &   'Using LAPACK modern DSTEVR tridiagonal MRRR solver'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' !DSTEQR_SOLVER,'
+# endif
+#endif
+
+
 #ifdef ECB
 !
       IF (Master) WRITE (stdout,20) 'ECB',                              &
