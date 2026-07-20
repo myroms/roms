@@ -510,21 +510,27 @@
 !  data assimilation. Also, load the observation screening and quality
 !  control scale (0: reject, 1: accept).
 !
-          nullify (unvetted)
+          IF (associated(unvetted)) THEN
+            nullify (unvetted)
+          END IF
           unvetted => nlm_hofx(ng)%state         ! no QC
 !
           DO i=1,Ndatum(ng)
             ObsScale(i)=REAL(nlm_hofx(ng)%ObsVetting(i), r8)
           END DO
 !
-          nullify (NLmodVal)
+          IF (associated(NLmodVal)) THEN
+            nullify (NLmodVal)
+          END IF
           NLmodVal => nlm_hofx(ng)%state
           DO i=1,Ndatum(ng)                      ! Apply, QC if any
             NLmodVal(i)=NLmodVal(i)*ObsScale(i)
           END DO
 !
 # if !(defined I4DVAR_ANA_SENSITIVITY || defined VERIFICATION)
-          nullify (BgErr)
+          IF (associated(BgErr)) THEN
+            nullify (BgErr)
+          END IF
           BgErr => berr_hofx(ng)%state
 # endif
 
@@ -547,7 +553,9 @@
 !  Link the aggregated control vector to the "TLmodVal" pointer for
 !  data assimilation.
 !
-          nullify (TLmodVal)
+          IF (associated(TLmodVal)) THEN
+            nullify (TLmodVal)
+          END IF
           TLmodVal => tlm_hofx(ng)%state
 !
 !  Compute tangent linear cost function.
@@ -755,8 +763,8 @@
      &                      Fmin, Fmax, Favg
         END IF
 
-        nullify (Iwork)
-        nullify (Rwork)
+        IF (associated(Iwork)) nullify (Iwork)
+        IF (associated(Rwork)) nullify (Rwork)
       END IF
 !
 !  Write out aggregated H(x) data.
@@ -4544,9 +4552,14 @@
               CC(ic)=CC(ic)+cff1*cff2
             END IF
           END DO
-          mod_std(ic)=SQRT(mod_std(ic)/REAL(Ncount(ic)-1,r8))
-          obs_std(ic)=SQRT(obs_std(ic)/REAL(Ncount(ic)-1,r8))
-          CC(ic)=(CC(ic)/REAL(Ncount(ic),r8))/(mod_std(ic)*obs_std(ic))
+          mod_std(ic)=SQRT(mod_std(ic)/REAL(MAX(1,Ncount(ic)-1),r8))
+          obs_std(ic)=SQRT(obs_std(ic)/REAL(MAX(1,Ncount(ic)-1),r8))
+          IF (Ncount(ic).gt.1) THEN
+            CC(ic)=(CC(ic)/REAL(Ncount(ic),r8))/                        &
+     &             (mod_std(ic)*obs_std(ic))
+          ELSE
+            CC(ic)=1.0_r8
+          END IF
 !
 !  Compute model bias (MB), standard deviation error (SDE), and mean
 !  squared error (MSE).

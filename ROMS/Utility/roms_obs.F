@@ -765,7 +765,7 @@
 !
 !  Allocate pointer.
 !
-      nullify (ObsData)
+      IF (associated(ObsData)) nullify (ObsData)
       allocate ( ObsData(my_ndatum) )
       ObsData=0.0_r8
 !
@@ -838,7 +838,7 @@
 !
 !  Allocate pointer.
 !
-      nullify (ObsData)
+      IF (associated(ObsData)) nullify (ObsData)
       allocate ( ObsData(my_ndatum) )
       ObsData=0.0_r8
 !

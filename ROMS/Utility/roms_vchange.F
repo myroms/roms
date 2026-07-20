@@ -322,7 +322,8 @@
      &                            is, ie, js, je,                       &
      &                            varname, Zeven,                       &
      &                            self%Va, field)
-            nullify (self%mask, self%depth)
+            IF (associated(self%depth)) nullify (self%depth)
+            IF (associated(self%mask))  nullify (self%mask)
           END IF
 !
           self%field2d(is:ie,js:je)=field(is:ie,js:je,1)

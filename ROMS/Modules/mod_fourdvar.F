@@ -1188,7 +1188,11 @@
       END IF
 
       IF (associated(ObsErr)) THEN
+#  ifdef IODA_OBS
+        nullify (ObsErr)
+#  else
         deallocate (ObsErr)
+#  endif
       END IF
 
       IF (associated(ObsMeta)) THEN
@@ -1210,7 +1214,11 @@
       END IF
 
       IF (associated(ObsVal)) THEN
+#  ifdef IODA_OBS
+        nullify (ObsVal)
+#  else
         deallocate (ObsVal)
+#  endif
       END IF
 
       IF (associated(Tobs)) THEN
@@ -1232,11 +1240,19 @@
 #  endif
 
       IF (associated(ADmodVal)) THEN
+#  ifdef IODA_OBS
+        nullify (ADmodVal)
+#  else
         deallocate (ADmodVal)
+#  endif
       END IF
 
       IF (associated(NLmodVal)) THEN
+#  ifdef IODA_OBS
+        nullify (NLmodVal)
+#  else
         deallocate (NLmodVal)
+#  endif
       END IF
 
       IF (associated(misfit)) THEN
@@ -1244,7 +1260,11 @@
       END IF
 
       IF (associated(unvetted)) THEN
+#  ifdef IODA_OBS
+        nullify (unvetted)
+#  else
         deallocate (unvetted)
+#  endif
       END IF
 
       IF (associated(uradial)) THEN
@@ -1256,7 +1276,11 @@
       END IF
 
       IF (associated(BgErr)) THEN
+#  ifdef IODA_OBS
+        nullify (BgErr)
+#  else
         deallocate (BgErr)
+#  endif
       END IF
 
       IF (associated(uBgErr)) THEN
@@ -1289,7 +1313,11 @@
 
 #  ifdef TLM_OBS
       IF (associated(TLmodVal)) THEN
+#   ifdef IODA_OBS
+        nullify (TLmodVal)
+#   else
         deallocate (TLmodVal)
+#   endif
       END IF
 
 #   if defined ARRAY_MODES       || defined CLIPPING    || \

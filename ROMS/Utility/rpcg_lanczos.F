@@ -1154,7 +1154,7 @@
 !
 !  Update HofX adjout structure.
 !
-      nullify (adm_hofx(ng)%state)
+      IF (associated(adm_hofx(ng)%state)) nullify (adm_hofx(ng)%state)
       adm_hofx(ng)%state => ADmodVal
 # endif
 !
