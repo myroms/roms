@@ -359,6 +359,8 @@
       integer,            intent(in   ) :: tile   ! domain partition
       integer,            intent(in   ) :: model  ! kernel identifier
 !
+      integer,               parameter :: Ivalue = 0
+      real (r8),             parameter :: Rvalue = 0.0_r8
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", hofx_run"
 !
@@ -402,7 +404,9 @@
           IF (iic(ng).eq.ntstart(ng)) THEN
             nlm_hofx(ng)%ObsCount=0
             nlm_hofx(ng)%ObsReject=0
-          END IF
+            nlm_hofx(ng)%state=Rvalue          ! initalize for parallel
+            nlm_hofx(ng)%ObsVetting=Ivalue     ! collective (%update)
+          END IF                               ! communications
 !
           CALL nlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)
@@ -416,7 +420,9 @@
           IF (iic(ng).eq.ntstart(ng)) THEN
             berr_hofx(ng)%ObsCount=0
             berr_hofx(ng)%ObsReject=0
-          END IF
+            berr_hofx(ng)%state=Rvalue         ! initalize for parallel
+            berr_hofx(ng)%ObsVetting=Ivalue    ! collective (%update)
+          END IF                               ! communications
 !
           CALL berr_hofx(ng)%extract (obs_store, VarCha(ng),            &
      &                                geom_hofx(ng), ng, model)
@@ -431,7 +437,9 @@
           IF (iic(ng).eq.ntstart(ng)) THEN
             tlm_hofx(ng)%ObsCount=0
             tlm_hofx(ng)%ObsReject=0
-          END IF
+            tlm_hofx(ng)%state=Rvalue          ! initalize for parallel
+            tlm_hofx(ng)%ObsVetting=Ivalue     ! collective (%update)
+          END IF                               ! communications
 !
           CALL tlm_hofx(ng)%extract (obs_store, VarCha(ng),             &
      &                               geom_hofx(ng), ng, model)

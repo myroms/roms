@@ -88,9 +88,7 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
-#ifdef IODA_OBS
-      USE roms_hofx_mod,     ONLY : hofx_finalize
-#else
+#ifndef IODA_OBS
       USE stats_modobs_mod,  ONLY : stats_modobs
 #endif
       USE stdinp_mod,        ONLY : getpar_i, getpar_s
@@ -510,15 +508,7 @@
         END DO
       END IF
 
-#ifdef IODA_OBS
-!
-!-----------------------------------------------------------------------
-!  Finalize model at observation locations, H(x) operators. Then, write
-!  ouput enhanced NetCDF-4 files.
-!-----------------------------------------------------------------------
-!
-      CALL hofx_finalize (iNLM)
-#else
+#ifndef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Compute and report model-observation comparison statistics.

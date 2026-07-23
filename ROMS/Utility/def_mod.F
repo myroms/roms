@@ -466,8 +466,6 @@
                 exit_flag=3
                 ioerror=status
               END IF
-              IF (FoundError(exit_flag, NoError,                        &
-     &                       __LINE__, MyFile)) RETURN
             END IF
           END IF
 !
@@ -484,8 +482,6 @@
                 exit_flag=3
                 ioerror=status
               END IF
-              IF (FoundError(exit_flag, NoError,                        &
-     &                       __LINE__, MyFile)) RETURN
             END IF
           END IF
 # endif
@@ -2307,12 +2303,14 @@
 !  switches for required variables.
 !
         DO i=1,n_var
-          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOday))) THEN
-            got_var(idOday)=.TRUE.
-            DAV(ng)%Vid(idOday)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOTyp))) THEN
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOTyp))) THEN
             got_var(idOTyp)=.TRUE.
             DAV(ng)%Vid(idOTyp)=var_id(i)
+# ifndef IODA_OBS
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOday))) THEN
+            got_var(idOday)=.TRUE.
+            DAV(ng)%Vid(idOday)=var_id(i)
+# endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOpro))) THEN
             got_var(idOpro)=.TRUE.
             DAV(ng)%Vid(idOpro)=var_id(i)
@@ -2328,6 +2326,7 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsD))) THEN
             got_var(idObsD)=.TRUE.
             DAV(ng)%Vid(idObsD)=var_id(i)
+# ifndef IODA_OBS
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsX))) THEN
             got_var(idObsX)=.TRUE.
             DAV(ng)%Vid(idObsX)=var_id(i)
@@ -2337,6 +2336,7 @@
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idObsZ))) THEN
             got_var(idObsZ)=.TRUE.
             DAV(ng)%Vid(idObsZ)=var_id(i)
+# endif
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idOerr))) THEN
             got_var(idOerr)=.TRUE.
             DAV(ng)%Vid(idOerr)=var_id(i)
@@ -2395,12 +2395,14 @@
 !
 !  Check if needed variables are available.
 !
+# ifndef IODA_OBS
         IF (.not.got_var(idOday)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOday)),          &
      &                                  TRIM(DAV(ng)%name)
           exit_flag=2
           RETURN
         END IF
+# endif
         IF (.not.got_var(idOpro)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOpro)),          &
      &                                  TRIM(DAV(ng)%name)
@@ -2431,6 +2433,7 @@
           exit_flag=2
           RETURN
         END IF
+# ifndef IODA_OBS
         IF (.not.got_var(idObsX)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idObsX)),          &
      &                                  TRIM(DAV(ng)%name)
@@ -2443,6 +2446,7 @@
           exit_flag=2
           RETURN
         END IF
+# endif
         IF (.not.got_var(idOerr)) THEN
           IF (Master) WRITE (stdout,90) TRIM(Vname(1,idOerr)),          &
      &                                  TRIM(DAV(ng)%name)
@@ -2591,7 +2595,7 @@
 !
 !  Local variable declarations.
 !
-      logical, dimension(NV) :: got_var(NV)
+      logical, dimension(NV) :: got_var
       logical :: foundAtt(2), foundit
 !
       integer :: iterDim, recordDim, surveyDim, threeDim
@@ -2940,7 +2944,6 @@
               exit_flag=3
               ioerror=status
             END IF
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
 !
@@ -2963,7 +2966,6 @@
               exit_flag=3
               ioerror=status
             END IF
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
 #  endif
