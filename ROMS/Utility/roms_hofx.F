@@ -3015,9 +3015,9 @@
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(i).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(i).le.time(ng)).and.                           &
-     &      (time(ng).lt.obs%TimeEnd(i))) THEN
+     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
+     &      (obs%TimeStr(m).le.time(ng)).and.                           &
+     &      (time(ng).lt.obs%TimeEnd(m))) THEN
 !
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
@@ -3295,9 +3295,9 @@
         IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
             (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
      &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(i).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(i).le.time(ng)).and.                           &
-     &      (time(ng).lt.obs%TimeEnd(i))) THEN
+     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
+     &      (obs%TimeStr(m).le.time(ng)).and.                           &
+     &      (time(ng).lt.obs%TimeEnd(m))) THEN
 !
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
