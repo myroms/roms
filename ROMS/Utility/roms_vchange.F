@@ -176,12 +176,14 @@
 !  applies the necessary nonlinear or linear variable changes. If no
 !  variable changes, the transformation is an identity operator.
 !
-      SUBROUTINE var_change_apply2d (self, ng, tile, model, varname)
+      SUBROUTINE var_change_apply2d (self, ng, tile, model, hofxID,     &
+     &                               varname)
 !
       CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
       character (len=*),  intent(in   ) :: varname  ! state variable
 !
       integer                           :: is, ie, js, je, ks, ke
@@ -219,20 +221,20 @@
 !
           self%field2d => NULL()
 !
-          IF (model.eq.iNLM) THEN
+          IF (hofxID.eq.iNLM) THEN
             self%field2d(is:,js:) => OCEAN(ng)%zeta(is:ie,js:je,        &
      &                                              KOUT)
 # ifdef ADJOINT
-          ELSE IF (model.eq.iADM) THEN
+          ELSE IF (hofxID.eq.iADM) THEN
             self%field2d => OCEAN(ng)%f_zeta
 # endif
 # ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+          ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
             self%field2d(is:,js:) => OCEAN(ng)%tl_zeta(is:ie,js:je,     &
      &                                                 KOUT)
 # endif
 # ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
+          ELSE IF (hofxID.eq.iSTD) THEN
             self%field2d(is:,js:) => OCEAN(ng)%e_zeta(is:ie,js:je,1)
 # endif
           END IF
@@ -244,21 +246,21 @@
           self%field2d => NULL()
 !
           itrc=tracer_index(varname)
-          IF (model.eq.iNLM) THEN
+          IF (hofxID.eq.iNLM) THEN
             self%field2d(is:,js:) => OCEAN(ng)%t(is:ie,js:je,           &
      &                                           N(ng),NOUT,itrc)
 #  ifdef ADJOINT
-          ELSE IF (model.eq.iADM) THEN
+          ELSE IF (hofxID.eq.iADM) THEN
             self%field2d(is:,js:) => OCEAN(ng)%f_t(is:ie,js:je,         &
      &                                             N(ng),itrc)
 #  endif
 #  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+          ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
             self%field2d(is:,js:) => OCEAN(ng)%tl_t(is:ie,js:je,        &
      &                                              N(ng),NOUT,itrc)
 #  endif
 #  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
+          ELSE IF (hofxID.eq.iSTD) THEN
             self%field2d(is:,js:) => OCEAN(ng)%e_t(is:ie,js:je,         &
      &                                             N(ng),1,itrc)
 #  endif
@@ -281,13 +283,13 @@
             self%Uc => NULL()
             self%Vc => NULL()
 !
-            IF (model.eq.iNLM) THEN
+            IF (hofxID.eq.iNLM) THEN
               self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%u(is:ie,js:je,       &
      &                                               ks:ke,NOUT)
               self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%v(is:ie,js:je,       &
      &                                               ks:ke,NOUT)
 #  ifdef TLM_OBS
-            ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+            ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
               self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_u(is:ie,js:je,    &
      &                                                  ks:ke,NOUT)
               self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_v(is:ie,js:je,    &
@@ -343,12 +345,14 @@
 !  applies the necessary nonlinear or linear variable changes. If no
 !  variable changes, the transformation is an identity operator.
 !
-      SUBROUTINE var_change_apply3d (self, ng, tile, model, varname)
+      SUBROUTINE var_change_apply3d (self, ng, tile, model, hofxID,     &
+     &                               varname)
 !
       CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
       character (len=*),  intent(in   ) :: varname
 !
       integer                           :: is, ie, js, je, ks, ke
@@ -374,23 +378,23 @@
           self%field3d => NULL()
 !
           itrc=tracer_index(varname)
-          IF (model.eq.iNLM) THEN
+          IF (hofxID.eq.iNLM) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%t(is:ie,js:je,       &
      &                                               ks:ke,NOUT,        &
      &                                               itrc)
 #  ifdef ADJOINT
-          ELSE IF (model.eq.iADM) THEN
+          ELSE IF (hofxID.eq.iADM) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%f_t(is:ie,js:je,     &
      &                                                 ks:ke,itrc)
 #  endif
 #  ifdef TLM_OBS
-          ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
+          ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%tl_t(is:ie,js:je,    &
      &                                                  ks:ke,NOUT,     &
      &                                                  itrc)
 #  endif
 #  ifndef VERIFICATION
-          ELSE IF (model.eq.iSTD) THEN
+          ELSE IF (hofxID.eq.iSTD) THEN
             self%field3d(is:,js:,ks:) => OCEAN(ng)%e_t(is:ie,js:je,     &
      &                                                 ks:ke,1,itrc)
 #  endif
@@ -407,12 +411,13 @@
 !  Adjoint of applying the necessary linear 2D variable changes.
 !
       SUBROUTINE var_change_apply2d_ad (ad_self, ng, tile, model,       &
-     &                                  varname)
+     &                                  hofxID, varname)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
       character (len=*),  intent(in   ) :: varname
 !
       integer                           :: LBi, UBi, LBj, UBj
@@ -462,22 +467,22 @@
 !  Zeven = -2m.
 !
           IF (TRIM(varname).eq.'Ucodar') THEN
-!>          CALL self%interp_k2z (ng, tile, model,                      &
+!>          CALL self%interp_k2z (ng, tile, model,                     &
 !>   &                            LBi, UBi, LBj, UBj,                   &
 !>   &                            varname, Zeven,                       &
 !>   &                            self%Ua, field)
 !>
-            CALL ad_self%interp_k2z_ad (ng, tile, model,                &
+            CALL ad_self%interp_k2z_ad (ng, tile, model,               &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  varname, Zeven,                 &
      &                                  ad_self%Ua, ad_field)
           ELSE IF (TRIM(varname).eq.'Vcodar') THEN
-!>          CALL self%interp_k2z (ng, tile, model,                      &
+!>          CALL self%interp_k2z (ng, tile, model,                     &
 !>   &                            LBi, UBi, LBj, UBj,                   &
 !>   &                            varname, Zeven,                       &
 !>   &                            self%Va, field)
 !>
-            CALL ad_self%interp_k2z_ad (ng, tile, model,                &
+            CALL ad_self%interp_k2z_ad (ng, tile, model,               &
      &                                  LBi, UBi, LBj, UBj,             &
      &                                  varname, Zeven,                 &
      &                                  ad_self%Va, ad_field)
@@ -514,13 +519,14 @@
 !-----------------------------------------------------------------------
 !  Adjoint of applying the necessary linear 3D variable changes.
 !
-      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,       &
-     &                                  varname)
+      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,      &
+     &                                  hofxID, varname)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
       character (len=*),  intent(in   ) :: varname
 !
       integer                           :: itrc
