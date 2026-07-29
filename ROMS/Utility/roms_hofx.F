@@ -99,7 +99,8 @@
 !
         integer :: tile                              ! domain partition
         integer :: LBi,   UBi,   LBj,   UBj          ! array bounds
-        integer :: IstrR, IendR, JstrR, JendR        ! partition bounds
+        integer :: Istr,  Iend,  Jstr,  Jend         ! interior bounds
+        integer :: IstrR, IendR, JstrR, JendR        ! full bounds
 !
 !  Tally of processed observations.
 !
@@ -1486,6 +1487,11 @@
       self%LBj=BOUNDS(ng)%LBj(tile)
       self%UBj=BOUNDS(ng)%UBj(tile)
 !
+      self%Istr =BOUNDS(ng)%Istr (tile)
+      self%Iend =BOUNDS(ng)%Iend (tile)
+      self%Jstr =BOUNDS(ng)%Jstr (tile)
+      self%Jend =BOUNDS(ng)%Jend (tile)
+!
       self%IstrR=BOUNDS(ng)%IstrR(tile)
       self%IendR=BOUNDS(ng)%IendR(tile)
       self%JstrR=BOUNDS(ng)%JstrR(tile)
@@ -1882,7 +1888,7 @@
           END DO
         END IF
         ObsSum=0
-        ObsReject=0       
+        ObsReject=0
 !
         ProcessObs(ng)=.TRUE.
         Lcensus=.FALSE.
@@ -2811,12 +2817,13 @@
 !
 !  It computes 2D state variables at the area-averaged observation
 !  locations. The 2D state variable is area-averaged according to the
-!  "spatialAverage" half-length scale, LS, specified in the IODA-type
+!  "spatialAverage" radius scale, RS, specified in the IODA-type
 !  observation file. Area-averaged observations are assumed to be at
 !  RHO-points (A-grid).
 !
 !  The state variable area-average computed below is over a square
-!  region of 2*LS by 2*LS.
+!  region of 2*RS by 2*RS. It is computed by the Master thread because
+!  it involves grid area averaging.
 !
 !                             4____________3  (i2,j2)
 !                             |            |
@@ -2867,11 +2874,8 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
-      DO m=obs%NstrObs,obs%NendObs
-        IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
-            (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
-     &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng))) THEN
+      MASTER_THREAD : IF (Master) THEN
+        DO m=obs%NstrObs,obs%NendObs
 !
           mc=1+(ivar-1)*2                          ! count/reject index
           tally(mc)=tally(mc)+1                    ! obs counted
@@ -2880,7 +2884,10 @@
           j1=INT(obs%Ygrid(m))
 !
 !  Set the area of influence in grid units using the local average grid
-!  resolution. On input, obs%spatialAverage is the half-length.
+!  resolution. The input, obs%spatialAverage (m), is the half-length or
+!  radius. In this context, "nscope" refers to the radius of influence
+!  measured in grid units, and the averaging is performed over a square
+!  area measuring 2 times nscope by 2 times nscope.
 !
           resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
           nscope=INT(obs%spatialAverage(ivar)/resol)
@@ -2941,8 +2948,8 @@
             self%ObsVetting(iobs)=0
             tally(mc+1)=tally(mc+1)+1              ! obs rejected
           END IF
-        END IF
-      END DO
+        END DO
+      END IF MASTER_THREAD
 !
   10  FORMAT (/,' ROMS_HOFX::AREA_AVG2d: Cannot find name = ',a,2x,     &
      &        'in obs%data observation depot object.')
@@ -2953,13 +2960,14 @@
 !-----------------------------------------------------------------------
 !  It computes 2D state variables at the area-averaged and time-averaged
 !  observation locations. The 2D state variable is area-averaged using
-!  the "spatialAverage" half-length scale, LS, and then time-averaged
+!  the "spatialAverage" radius scale, RS, and then time-averaged
 !  over the specified period, as defined in the IODA observation file.
 !  Area- and time-averaged observations are assumed to be at RHO points
 !  (A-grid).
 !
 !  The state variable area-average computed below is over a square
-!  region of 2*LS by 2*LS.
+!  region of 2*RS by 2*RS. It is computed by the Master thread because
+!  it involves grid area averaging.
 !
 !                             4____________3  (i2,j2)
 !                             |            |
@@ -2989,7 +2997,7 @@
       integer                           :: iTstr, iTend
       real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: Tsteps, area_sum, resol
-      real (r8)                         :: my_field
+      real (r8)                         :: Fvalue
 !
       character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_area_time_avg2d"
@@ -3011,37 +3019,39 @@
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
 !
-      DO m=obs%NstrObs,obs%NendObs
-        IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
-            (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
-     &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(m).le.time(ng)).and.                           &
-     &      (time(ng).lt.obs%TimeEnd(m))) THEN
+      MASTER_THREAD : IF (Master) THEN
+        DO m=obs%NstrObs,obs%NendObs
+          IF ((obs%TimeStr(m).le.time(ng)).and.                         &
+     &        (time(ng).lt.obs%TimeEnd(m))) THEN
 !
-          mc=1+(ivar-1)*2                          ! count/reject index
-          tally(mc)=tally(mc)+1                    ! obs counted
-          iobs=obs%pack_mapping(m,ivar)            ! index mapping
+            mc=1+(ivar-1)*2                        ! count/reject index
+            tally(mc)=tally(mc)+1                  ! obs counted
+            iobs=obs%pack_mapping(m,ivar)          ! index mapping
 !
-          i1=INT(obs%Xgrid(m))
-          j1=INT(obs%Ygrid(m))
+            i1=INT(obs%Xgrid(m))
+            j1=INT(obs%Ygrid(m))
 !
 !  Set the area of influence in grid units using the local average grid
-!  resolution. On input, obs%spatialAverage is the half-length.
+!  resolution. The input, obs%spatialAverage (m), is the half-length or
+!  radius. In this context, "nscope" refers to the radius of influence
+!  measured in grid units, and the averaging is performed over a square
+!  area measuring 2 times nscope by 2 times nscope.
 !
-          resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
-          nscope=INT(obs%spatialAverage(ivar)/resol)
-          dfr=REAL(nscope, r8)
-          is=MAX(geom%Imin, i1-nscope)
-          ie=MIN(i1+nscope, geom%Imax)
-          js=MAX(geom%Jmin, j1-nscope)
-          je=MIN(j1+nscope, geom%Jmax)
+            resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
+            nscope=INT(obs%spatialAverage(ivar)/resol)
+            dfr=REAL(nscope, r8)
+            is=MAX(geom%Imin, i1-nscope)
+            ie=MIN(i1+nscope, geom%Imax)
+            js=MAX(geom%Jmin, j1-nscope)
+            je=MIN(j1+nscope, geom%Jmax)
 !
-          iTstr=MAX(ntstart(ng),                                        &
-     &              INT((obs%TimeStr(m)-dstart*day2sec)/dt(ng))+1)
-          iTend=MIN(ntend(ng),                                          &
-     &              INT((obs%TimeEnd(m)-dstart*day2sec)/dt(ng)))
-          Tsteps=REAL(iTend-iTstr, r8)
+!  Set time averaging start and end timesteps.
+!
+            iTstr=MAX(ntstart(ng),                                      &
+     &                INT((obs%TimeStr(m)-dstart*day2sec)/dt(ng))+1)
+            iTend=MIN(ntend(ng),                                        &
+     &                INT((obs%TimeEnd(m)-dstart*day2sec)/dt(ng)))
+            Tsteps=REAL(iTend-iTstr, r8)
 !
 !  Accumulate state variable over the area of influence and time window.
 !
@@ -3049,49 +3059,50 @@
 !  variances. Afterwards, take the square root to convert back to
 !  standard deviations.
 !
-          nvalues=0
-          area_sum=0.0_r8
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
+            nvalues=0
+            area_sum=0.0_r8
+            DO j=js,je
+              dfy=REAL(j-j1, r8)
+              DO i=is,ie
 # ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+                IF (geom%mask(i,j).lt.1.0_r8) CYCLE
 # endif
-              dfx=REAL(i-i1, r8)
-              dlen=SQRT(dfx*dfx+dfy*dfy)
-              IF (dlen.le.dfr) THEN
-                nvalues=nvalues+1
-                area_sum=area_sum+geom%area(i,j)
-                IF (self%ID.eq.iSTD) THEN   ! sum over the square values
+                dfx=REAL(i-i1, r8)
+                dlen=SQRT(dfx*dfx+dfy*dfy)
+                IF (dlen.le.dfr) THEN
+                  nvalues=nvalues+1
+                  area_sum=area_sum+geom%area(i,j)
+                  IF (self%ID.eq.iSTD) THEN ! sum over the square values
 # ifdef DISTRIBUTE
-                  my_field=geom%global2d(i,j)*geom%global2d(i,j)
+                    Fvalue=geom%global2d(i,j)*geom%global2d(i,j)
 # else
-                  my_field=field(i,j)*field(i,j)
+                    Fvalue=field(i,j)*field(i,j)
 # endif
-                ELSE
+                  ELSE
 # ifdef DISTRIBUTE
-                  my_field=geom%global2d(i,j)
+                    Fvalue=geom%global2d(i,j)
 # else
-                  my_field=field(i,j)
+                    Fvalue=field(i,j)
 # endif
+                  END IF
+                  self%state(iobs)=self%state(iobs)+                    &
+     &                             Fvalue*geom%area(i,j)
                 END IF
-                self%state(iobs)=self%state(iobs)+                      &
-     &                           geom%area(i,j)*my_field
-              END IF
+              END DO
             END DO
-          END DO
 !
 !  Compute area-weighted average.
 !
-          IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
-            self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
-            IF (self%ID.eq.iSTD) THEN         ! take the square root
-              self%state(iobs)=SQRT(self%state(iobs))
+            IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
+              self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
+              IF (self%ID.eq.iSTD) THEN         ! take the square root
+                self%state(iobs)=SQRT(self%state(iobs))
+              END IF
             END IF
+            self%ObsVetting(iobs)=1
           END IF
-          self%ObsVetting(iobs)=1
-        END IF
-      END DO
+        END DO
+      END IF MASTER_THREAD
 !
 !  Clear/reset global array.
 !
@@ -3108,12 +3119,12 @@
 !-----------------------------------------------------------------------
 !  Adjoint of computing 2D state variables at the area-averaged
 !  observation locations. The 2D state variable is area-averaged
-!  according to the "spatialAverage" half-length scale, LS, specified
+!  according to the "spatialAverage" radius scale, RS, specified
 !  in the IODA-type observation file. Area-averaged observations are
 !  assumed to be at RHO-points (A-grid).
 !
 !  The state variable area-average computed below is over a square
-!  region of 2*LS by 2*LS.
+!  region of 2*RS by 2*RS.
 !
 !                             4____________3  (i2,j2)
 !                             |            |
@@ -3152,88 +3163,86 @@
 !  observation locations.
 !
       DO m=obs%NstrObs,obs%NendObs
-        IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
-            (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
-     &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng))) THEN
 !
-          mc=1+(ivar-1)*2                          ! count/reject index
-          tally(mc)=tally(mc)+1                    ! obs counted
-          iobs=obs%pack_mapping(m,ivar)            ! index mapping
+        mc=1+(ivar-1)*2                            ! count/reject index
+        tally(mc)=tally(mc)+1                      ! obs counted
+        iobs=obs%pack_mapping(m,ivar)              ! index mapping
 !
-          i1=INT(obs%Xgrid(m))
-          j1=INT(obs%Ygrid(m))
+        i1=INT(obs%Xgrid(m))
+        j1=INT(obs%Ygrid(m))
 !
 !  Set the area of influence in grid units using the local average grid
-!  resolution. On input, obs%spatialAverage is the half-length.
+!  resolution. The input, obs%spatialAverage (m), is the half-length or
+!  radius. In this context, "nscope" refers to the radius of influence
+!  measured in grid units, and the averaging is performed over a square
+!  area measuring 2 times nscope by 2 times nscope.
 !
-          resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
-          nscope=INT(obs%spatialAverage(ivar)/resol)
-          dfr=REAL(nscope, r8)
-          is=MAX(geom%Imin, i1-nscope)
-          ie=MIN(i1+nscope, geom%Imax)
-          js=MAX(geom%Jmin, j1-nscope)
-          je=MIN(j1+nscope, geom%Jmax)
+        resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
+        nscope=INT(obs%spatialAverage(ivar)/resol)
+        dfr=REAL(nscope, r8)
+        is=MAX(geom%Imin, i1-nscope)
+        ie=MIN(i1+nscope, geom%Imax)
+        js=MAX(geom%Jmin, j1-nscope)
+        je=MIN(j1+nscope, geom%Jmax)
 !
 !  Adjoint of average state variable over the area of influence.
 !
-          mvalues=0
-          area_sum=0.0_r8               ! compute area weights
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
+        mvalues=0
+        area_sum=0.0_r8                 ! compute area weights
+        DO j=js,je
+          dfy=REAL(j-j1, r8)
+          DO i=is,ie
 #  ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+            IF (geom%mask(i,j).lt.1.0_r8) CYCLE
 #  endif
-              dfx=REAL(i-i1, r8)
-              dlen=SQRT(dfx*dfx+dfy*dfy)
-              IF (dlen.le.dfr) THEN
-                mvalues=mvalues+1
-                area_sum=area_sum+geom%area(i,j)
-              END IF
-            END DO
+            dfx=REAL(i-i1, r8)
+            dlen=SQRT(dfx*dfx+dfy*dfy)
+            IF (dlen.le.dfr) THEN
+              mvalues=mvalues+1
+              area_sum=area_sum+geom%area(i,j)
+            END IF
           END DO
+        END DO
 !
-          IF (area_sum.gt.0.0_r8) THEN
-!>          self%state(iobs)=ad_self%state(iobs)/area_sum
-!>          self%ObsVetting(iobs)=1
+        IF (area_sum.gt.0.0_r8) THEN
+!>        self%state(iobs)=ad_self%state(iobs)/area_sum
+!>        self%ObsVetting(iobs)=1
 !>
-            ad_self%state(iobs)=ad_self%state(iobs)/area_sum
-            ad_self%ObsVetting(iobs)=1
-          ELSE
-!>          ad_self%ObsVetting(iobs)=0
+          ad_self%state(iobs)=ad_self%state(iobs)/area_sum
+          ad_self%ObsVetting(iobs)=1
+        ELSE
+!>        ad_self%ObsVetting(iobs)=0
 !>
-            ad_self%ObsVetting(iobs)=0
-            tally(mc+1)=tally(mc+1)+1              ! obs rejected
-          END IF
-!
-          nvalues=0
-          DO j=js,je
-            dfy=REAL(j-j1, r8)
-            DO i=is,ie
-#  ifdef MASKING
-              IF (geom%mask(i,j).lt.1.0_r8) CYCLE
-#  endif
-              dfx=REAL(i-i1, r8)
-              dlen=SQRT(dfx*dfx+dfy*dfy)
-              IF (dlen.le.dfr) THEN
-                nvalues=nvalues+1
-!>              self%state(iobs)=self%state(iobs)+                      &
-!>   &                           geom%area(i,j)*geom%global2d(i,j)
-!>
-                geom%global2d(i,j)=geom%global2d(i,j)+                  &
-     &                             geom%area(i,j)*ad_self%state(iobs)
-              END IF
-            END DO
-          END DO
-          ad_self%state(iobs)=0.0_r8
+          ad_self%ObsVetting(iobs)=0
+          tally(mc+1)=tally(mc+1)+1                ! obs rejected
         END IF
+!
+        nvalues=0
+        DO j=js,je
+          dfy=REAL(j-j1, r8)
+          DO i=is,ie
+#  ifdef MASKING
+            IF (geom%mask(i,j).lt.1.0_r8) CYCLE
+#  endif
+            dfx=REAL(i-i1, r8)
+            dlen=SQRT(dfx*dfx+dfy*dfy)
+            IF (dlen.le.dfr) THEN
+              nvalues=nvalues+1
+!>            self%state(iobs)=self%state(iobs)+                        &
+!>   &                         geom%area(i,j)*geom%global2d(i,j)
+!>
+              geom%global2d(i,j)=geom%global2d(i,j)+                    &
+     &                           geom%area(i,j)*ad_self%state(iobs)
+            END IF
+          END DO
+        END DO
+        ad_self%state(iobs)=0.0_r8
       END DO
 !
 !  Add contribution to 2D state adjoint variable.
 !
-      DO j=ad_self%JstrR,ad_self%JendR
-        DO i=ad_self%JstrR,ad_self%JendR
+      DO j=ad_self%Jstr,ad_self%Jend
+        DO i=ad_self%Istr,ad_self%Iend
           ad_field(i,j)=geom%global2d(i,j)
           geom%global2d(i,j)=0.0_r8
         END DO
@@ -3245,13 +3254,13 @@
 !-----------------------------------------------------------------------
 !  Adjoint of computing 2D state variables at the area-averaged and
 !  time-averaged observation locations. The 2D state variable is
-!  area-averaged using the "spatialAverage" half-length scale, LS, and
+!  area-averaged using the "spatialAverage" radius scale, RS, and
 !  then time-averaged over the specified period, as defined in the IODA
 !  observation file. Area- and time-averaged observations are assumed
 !  to be at RHO points (A-grid).
 !
 !  The state variable area-average computed below is over a square
-!  region of 2*LS by 2*LS.
+!  region of 2*RS by 2*RS.
 !
 !                             4____________3  (i2,j2)
 !                             |            |
@@ -3292,11 +3301,7 @@
 !  observation locations.
 !
       DO m=obs%NstrObs,obs%NendObs
-        IF ((rXmin(ng).le.obs%Xgrid(m)).and.                            &
-            (obs%Xgrid(m).lt.rXmax(ng)).and.                            &
-     &      (rYmin(ng).le.obs%Ygrid(m)).and.                            &
-     &      (obs%Ygrid(m).lt.rYmax(ng)).and.                            &
-     &      (obs%TimeStr(m).le.time(ng)).and.                           &
+        IF ((obs%TimeStr(m).le.time(ng)).and.                           &
      &      (time(ng).lt.obs%TimeEnd(m))) THEN
 !
           mc=1+(ivar-1)*2                          ! count/reject index
@@ -3307,7 +3312,10 @@
           j1=INT(obs%Ygrid(m))
 !
 !  Set the area of influence in grid units using the local average grid
-!  resolution. On input, obs%spatialAverage is the half-length.
+!  resolution. The input, obs%spatialAverage (m), is the half-length or
+!  radius. In this context, "nscope" refers to the radius of influence
+!  measured in grid units, and the averaging is performed over a square
+!  area measuring 2 times nscope by 2 times nscope.
 !
           resol=0.5_r8*(geom%dx(i1,j1)+geom%dy(i1,j1))
           nscope=INT(obs%spatialAverage(ivar)/resol)
@@ -3317,7 +3325,8 @@
           js=MAX(geom%Jmin, j1-nscope)
           je=MIN(j1+nscope, geom%Jmax)
 !
-!  In the adjoint,the values of "ntstart" and "ntend" are reversed
+!  Set time averaging start and end timesteps. In the adjoint, the
+!  values of "ntstart" and "ntend" are reversed
 !
           iTstr=MAX(ntend(ng),                                          &
      &              INT((obs%TimeStr(m)-dstart*day2sec)/dt(ng))+1)
@@ -3371,15 +3380,18 @@
               END IF
             END DO
           END DO
-          ad_self%state(iobs)=0.0_r8
+!
+          IF (iic(ng).eq.iTstr) THEN
+             ad_self%state(iobs)=0.0_r8
+          END IF
         END IF
       END DO
 !
 !  Add contribution to 2D state adjoint variable.
 !
-      DO j=ad_self%JstrR,ad_self%JendR
-        DO i=ad_self%JstrR,ad_self%JendR
-          ad_field(i,j)=geom%global2d(i,j)
+      DO j=ad_self%Jstr,ad_self%Jend
+        DO i=ad_self%Istr,ad_self%Iend
+          ad_field(i,j)=ad_field(i,j)+geom%global2d(i,j)
           geom%global2d(i,j)=0.0_r8
         END DO
       END DO
