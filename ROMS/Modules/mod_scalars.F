@@ -1238,10 +1238,21 @@
         integer, allocatable :: Hcount(:)
 #endif
 !
+!  Maximum number of model state variables to process.
+!
+        integer :: MstateVar
+!
 !  State variable names. The associated with the state variable metadata
 !  indices, and are specified in "mod_necparam".
 !
         character (len=40), allocatable :: StateVarName(:)
+
+# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+!
+!  State spatially varying correlation scale variable names.
+!
+        character (len=40), allocatable :: BscaleVarName(:)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Adjoint sensitivity parameters.
@@ -1287,19 +1298,9 @@
 !  Background/model error covariance parameters.
 !------------------------------------------------------------------------
 !
-!  Maximum number of model state variables to process.
-!
-        integer :: MstateVar
-!
 !  Background error (standard deviation) H(x) identifier.
 !
         integer, parameter :: iSTD = 10
-!
-!  State variable names.
-!
-# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
-        character (len=40), allocatable :: BscaleVarName(:)
-# endif
 !
 !  Logical switch to compute initial conditions, model and surface
 !  forcing error covariance normalization factors.
@@ -2092,24 +2093,21 @@
 !  Allocate variables.
 !-----------------------------------------------------------------------
 !
-#if defined FOUR_DVAR || defined VERIFICATION
       MstateVar=6+MT
-# if defined GLS_MIXING || defined MY25_MIXING
+#if defined GLS_MIXING || defined MY25_MIXING
       MstateVar=MstateVar+1
-# endif
-# ifdef WEC
+#endif
+#ifdef WEC
       MstateVar=MstateVar+2
-#  if defined SOLVE3D
-      MstateVar=MstateVar+2
-#  endif
-# endif
-# ifdef ADJUST_WSTRESS
+# if defined SOLVE3D
       MstateVar=MstateVar+2
 # endif
-# ifdef ADJUST_STFLUX
+#endif
+#ifdef ADJUST_WSTRESS
+      MstateVar=MstateVar+2
+#endif
+#ifdef ADJUST_STFLUX
       MstateVar=MstateVar+MT
-# endif
-!
 #endif
 
 #ifdef T_PASSIVE
@@ -3270,14 +3268,13 @@
       END IF
 #endif
 
-#if defined FOUR_DVAR || defined VERIFICATION
-
-# if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
+#if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
       IF (.not.allocated(BscaleVarName)) THEN
         allocate ( BscaleVarName(MstateVar) )
       END IF
-# endif
+#endif
 
+#if defined FOUR_DVAR || defined VERIFICATION
       IF (.not.allocated(Cnorm)) THEN
         allocate ( Cnorm(2,MstateVar) )
         Dmem(1)=Dmem(1)+2.0_r8*REAL(MstateVar,r8)
