@@ -86,6 +86,17 @@
         PROCEDURE :: apply3d_ad     => var_change_apply3d_ad
 #  endif
 # endif
+
+# ifdef SOLVE3D
+!
+!  Special variable change operators.
+!
+        PROCEDURE :: HF_radar       => var_change_HF_radar
+#  ifdef ADJOINT
+        PROCEDURE :: HF_radar_ad    => var_change_HF_radar_ad
+#  endif
+# endif
+
 # ifdef SOLVE3D
 !
 !  Vertical interpolation: k-level to constant depth.
@@ -190,7 +201,6 @@
       integer                           :: itrc, nz
 !
       real (r8),    target, allocatable :: field(:,:,:)
-      real (r8),            allocatable :: Zeven(:)
 !
 !  Initialize.
 !
@@ -205,15 +215,6 @@
 !  variable associated with the observations. Then, compute the
 !  appropriate variable change(s), if any. Otherwise, the default is
 !  the identity operator.
-!
-# ifdef SOLVE3D
-      IF (TRIM(varname).eq.'Ucodar') THEN
-        self%Ua => NULL()
-        self%Va => NULL()
-        self%Uc => NULL()
-        self%Vc => NULL()
-      END IF
-# endif
 !
       SELECT CASE (TRIM(varname))
 !
@@ -270,64 +271,8 @@
 !
           self%field2d => NULL()
 !
-!  Transform u- and v-momentum component from C-grid to A-grid. The
-!  A-grid velocities are computed once during the "Ucodar" case.
-!
-          IF (TRIM(varname).eq.'Ucodar') THEN
-!
-            self%Ua => NULL()
-            self%Va => NULL()
-            allocate ( self%Ua(is:ie, js:je, ks:ke) )
-            allocate ( self%Va(is:ie, js:je, ks:ke) )
-!
-            self%Uc => NULL()
-            self%Vc => NULL()
-!
-            IF (hofxID.eq.iNLM) THEN
-              self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%u(is:ie,js:je,       &
-     &                                               ks:ke,NOUT)
-              self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%v(is:ie,js:je,       &
-     &                                               ks:ke,NOUT)
-#  ifdef TLM_OBS
-            ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
-              self%Uc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_u(is:ie,js:je,    &
-     &                                                  ks:ke,NOUT)
-              self%Vc(is:ie,js:je,ks:ke)=OCEAN(ng)%tl_v(is:ie,js:je,    &
-     &                                                  ks:ke,NOUT)
-#  endif
-            END IF
-            CALL self%uv_c2a (ng, tile, model)
-          END IF
-!
-!  Interpolate A-grid u-component to constant depth, Zeven = -2m.
-!
-          nz=1
-!
-          IF (.not.allocated(field)) THEN
-            allocate ( field(is:ie, js:je, nz) )
-            field=0.0_r8
-          END IF
-          IF (.not.allocated(Zeven)) THEN
-            allocate ( Zeven(nz) )
-            Zeven=-2.0_r8
-          END IF
-!
-          IF (TRIM(varname).eq.'Ucodar') THEN
-            self%mask  => GRID(ng)%rmask
-            self%depth => GRID(ng)%z_r
-            CALL self%interp_k2z (ng, tile, model,                      &
-     &                            is, ie, js, je,                       &
-     &                            varname, Zeven,                       &
-     &                            self%Ua, field)
-          ELSE IF (TRIM(varname).eq.'Vcodar') THEN
-            CALL self%interp_k2z (ng, tile, model,                      &
-     &                            is, ie, js, je,                       &
-     &                            varname, Zeven,                       &
-     &                            self%Va, field)
-            IF (associated(self%depth)) nullify (self%depth)
-            IF (associated(self%mask))  nullify (self%mask)
-          END IF
-!
+          CALL self%HF_radar (ng, tile, model, hofxID, varname,        &
+     &                        field)
           self%field2d(is:ie,js:je)=field(is:ie,js:je,1)
           deallocate (field)
 # endif
@@ -420,18 +365,25 @@
       integer,            intent(in   ) :: hofxID   ! H(x) identifier
       character (len=*),  intent(in   ) :: varname
 !
-      integer                           :: LBi, UBi, LBj, UBj
-      integer                           :: i, j, k, nz
-!
+      integer                           :: is, ie, js, je, ks, ke
+      integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: i, j
+      integer,                parameter :: nz = 1
       real (r8),    target, allocatable :: ad_field(:,:,:)
-      real (r8),            allocatable :: Zeven(:)
 !
 !  Initialize.
 !
-      LBi=BOUNDS(ng)%LBi(tile)
-      UBi=BOUNDS(ng)%UBi(tile)
-      LBj=BOUNDS(ng)%LBj(tile)
-      UBj=BOUNDS(ng)%UBj(tile)
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
+!
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
 !
 !  Set pointer (ad_self%field2d) to state variable associated with the
 !  observations. Compute the appropriate variable  change(s), if any.
@@ -444,71 +396,32 @@
 !
 !  Adjoint of pointer association.
 !
-          nz=1
-!
           IF (.not.allocated(ad_field)) THEN
-            allocate ( ad_field(LBi:UBi, LBj:UBj, nz) )
+            allocate ( ad_field(is:ie, js:je, nz) )
             ad_field=0.0_r8
           END IF
-          IF (.not.allocated(Zeven)) THEN
-            allocate ( Zeven(nz) )
-            Zeven=-2.0_r8
-          END IF
 !
-          DO j=LBj,UBj
-            DO i=LBi,UBi
-!>            self%field2d(i,j)=field(i,j,1)
-!>
-              ad_field(i,j,1)=ad_field(i,j,1)+ad_self%field2d(i,j)
+!^        DO j=js,je
+!^          DO i=is,ie
+!^
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!^            self%field2d(i,j)=field(i,j,1)
+!^
+              ad_field(i,j,1)=ad_field(i,j,1)+                          &
+     &                        ad_self%field2d(i,j)
             END DO
           END DO
-!
-!  Adjoint of interpolating A-grid components to constant depth,
-!  Zeven = -2m.
-!
-          IF (TRIM(varname).eq.'Ucodar') THEN
-!>          CALL self%interp_k2z (ng, tile, model,                     &
-!>   &                            LBi, UBi, LBj, UBj,                   &
-!>   &                            varname, Zeven,                       &
-!>   &                            self%Ua, field)
-!>
-            CALL ad_self%interp_k2z_ad (ng, tile, model,               &
-     &                                  LBi, UBi, LBj, UBj,             &
-     &                                  varname, Zeven,                 &
-     &                                  ad_self%Ua, ad_field)
-          ELSE IF (TRIM(varname).eq.'Vcodar') THEN
-!>          CALL self%interp_k2z (ng, tile, model,                     &
-!>   &                            LBi, UBi, LBj, UBj,                   &
-!>   &                            varname, Zeven,                       &
-!>   &                            self%Va, field)
-!>
-            CALL ad_self%interp_k2z_ad (ng, tile, model,               &
-     &                                  LBi, UBi, LBj, UBj,             &
-     &                                  varname, Zeven,                 &
-     &                                  ad_self%Va, ad_field)
-          END IF
-          deallocate (ad_field)
 !
 !  Adjoint of transforming u- and v-momentum component from C-grid to
 !  A-grid.
 !
-!>        IF (TRIM(varname).eq.'Ucodar') THEN
-!>
-          IF (TRIM(varname).eq.'Vcodar') THEN
-!>          CALL self%uv_c2a (ng, tile, model)
-!>
-            CALL ad_self%uv_c2a_ad (ng, tile, model)
-!
-            DO k=1,N(ng)
-              DO j=LBj,UBj
-                DO i=LBi,UBi
-                  ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+ad_self%Uc(i,j,k)
-                  ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+ad_self%Vc(i,j,k)
-                END DO
-              END DO
-            END DO
-          END IF
+          CALL ad_self%HF_radar_ad (ng, tile, model, hofxID, varname,   &
+     &                              ad_field)
 #  endif
+!
+        CASE DEFAULT
+!
       END SELECT
 !
       RETURN
@@ -519,7 +432,7 @@
 !-----------------------------------------------------------------------
 !  Adjoint of applying the necessary linear 3D variable changes.
 !
-      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,      &
+      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,       &
      &                                  hofxID, varname)
 !
       CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
@@ -550,7 +463,257 @@
 
 # ifdef SOLVE3D
 !
+! <><><> CLASS OBS_VARCHA:  Special Operators <><><><><><><><><><><><><>
+!
+!  It transforms the u- and v-momentum components from a C-grid to an
+!  A-grid. This variable change includes rotating the velocities from
+!  computational coordinates to geographical Eastward and Northward
+!  directions. Afterward, the resulting velocities are interpolated
+!  to a constant depth of 2 meters. Typically, the input CODAR data
+!  are gridded and are situated at a depth of -2 meters.
+!
+      SUBROUTINE var_change_HF_radar (self, ng, tile, model, hofxID,    &
+     &                                varname, field)
+!
+      CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
+      character (len=*),  intent(in   ) :: varname
+      real (r8), target, allocatable, intent(inout) :: field(:,:,:)
+!
+      logical                           :: LcomputeC2A
+      integer                           :: is, ie, js, je, ks, ke
+      integer,                parameter :: nz = 1
+      real (r8),            allocatable :: Zeven(:)
+!
+!  Initialize.
+!
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
+!
+      IF (.not.allocated(field)) THEN
+        allocate ( field(is:ie, js:je, nz) )
+        field=0.0_r8
+      END IF
+      IF (.not.allocated(Zeven)) THEN
+        allocate ( Zeven(nz) )
+        Zeven=-2.0_r8
+      END IF
+!
+      self%mask  => GRID(ng)%rmask
+      self%depth => GRID(ng)%z_r
+!
+      LcomputeC2A=varname.eq.'Ucodar'
+!
+!  Transform u- and v-momentum components from C-grid to A-grid.
+!
+      IF (LcomputeC2A) THEN
+        self%Ua => NULL()
+        self%Va => NULL()
+        allocate ( self%Ua(is:ie, js:je, ks:ke) )
+        allocate ( self%Va(is:ie, js:je, ks:ke) )
+!
+!  Assign kernel state (u, v) variables to temporary pointers.
+!
+        self%Uc => NULL()
+        self%Vc => NULL()
+!
+        IF (hofxID.eq.iNLM) THEN
+          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%u(is:ie,js:je,        &
+     &                                              ks:ke,NOUT)
+          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%v(is:ie,js:je,        &
+     &                                              ks:ke,NOUT)
+#  ifdef TLM_OBS
+        ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
+          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je,     &
+     &                                                 ks:ke,NOUT)
+          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je,     &
+     &                                                 ks:ke,NOUT)
+#  endif
+#  ifndef VERIFICATION
+        ELSE IF (hofxID.eq.iSTD) THEN
+          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%e_u(is:ie,js:je,      &
+     &                                                ks:ke,1)
+          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%e_v(is:ie,js:je,      &
+     &                                                ks:ke,1)
+#  endif
+        END IF
+!
+!  Compute (self%Ua, self%Va) from (self%Uc, self%Vc).
+!
+        CALL self%uv_c2a (ng, tile, model, hofxID)
+      END IF
+!
+!  Interpolate (self%Ua, self%Va) to depth Zeven = -2 m.
+!
+      SELECT CASE (TRIM(varname))      
+!
+        CASE ('Ucodar')
+          CALL self%interp_k2z (ng, tile, model,                        &
+     &                          is, ie, js, je,                         &
+     &                          varname, Zeven, self%Ua, field)
+!
+        CASE ('Vcodar')
+!                                            
+          CALL self%interp_k2z (ng, tile, model,                        &
+     &                          is, ie, js, je,                         &
+     &                          varname, Zeven, self%Va, field)
+!
+        CASE DEFAULT
+!
+      END SELECT
+!
+!  Nullify pointers.
+!
+      IF (associated(self%depth)) nullify (self%depth)
+      IF (associated(self%mask))  nullify (self%mask)
+!
+      RETURN
+      END SUBROUTINE var_change_HF_radar 
+
+#  ifdef ADJOINT
+!
 !-----------------------------------------------------------------------
+!  Adjoint of transforming the u- and v-momentum components from a
+!  C-grid to an A-grid. This variable change includes rotating the
+!  velocities from computational coordinates to geographical Eastward
+!  and Northward directions. Afterward, the resulting velocities are
+!  interpolated to a constant depth of 2 meters. Typically, the input
+!  CODAR data are gridded and are situated at a depth of -2 meters.
+!
+      SUBROUTINE var_change_HF_radar_ad (ad_self, ng, tile, model,      &
+     &                                   hofxID, varname, ad_field)
+!
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
+      character (len=*),  intent(in   ) :: varname  ! observation name
+      real (r8), target, allocatable, intent(inout) :: ad_field(:,:,:)
+!
+      logical                           :: LcomputeC2A
+      integer                           :: is, ie, js, je, ks, ke
+      integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: i, j, k
+      integer,                parameter :: nz = 1
+      real (r8),            allocatable :: Zeven(:)
+!
+!  Initialize.
+!
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
+!
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (.not.allocated(Zeven)) THEN
+        allocate ( Zeven(nz) )
+        Zeven=-2.0_r8
+      END IF
+!
+      LcomputeC2A=varname.eq.'Ucodar'
+!
+!  Adjoint of interpolate (self%Ua, self%Va) to depth Zeven = -2 m.
+!
+      SELECT CASE (TRIM(varname))   
+!
+        CASE ('Ucodar')
+!
+!>        CALL self%interp_k2z (ng, tile, model,                        &
+!>   &                          is, ie, js, je,                         &
+!>   &                          varname, Zeven, self%Ua, field)
+!>
+          CALL ad_self%interp_k2z_ad (ng, tile, model,                  &
+     &                                is, ie, js, je,                   &
+     &                                varname, Zeven,                   &
+     &                                ad_self%Ua, ad_field)
+!
+        CASE ('Vcodar')
+!
+!>        CALL self%interp_k2z (ng, tile, model,                        &
+!>   &                          is, ie, js, je,                         &
+!>   &                          varname, Zeven, self%Va, field)
+!>
+          CALL ad_self%interp_k2z_ad (ng, tile, model,                  &
+     &                                is, ie, js, je,                   &
+     &                                varname, Zeven,                   &
+     &                                ad_self%Va, ad_field)
+!
+        CASE DEFAULT
+!
+      END SELECT
+!
+!  Adjoint of transform u- and v-momentum components from C-grid to
+!  A-grid. In the tangent linear kernel forward solution, the routine
+!  "self%uv_c2a" is executed in the "Ucodar" case. This is because it
+!  involves a vector operation that requires both velocity components
+!  to be transformed simultaneously. However, in the adjoint kernel
+!  backward solution, we need to execute "self%uv_c2a_ad" in the
+!  "Vcodar" case, where LcomputeC2A = .FALSE.
+!
+!^    IF (LcomputeC2A) THEN
+!^
+      IF (.not.LcomputeC2A) THEN
+!
+!  Adjoint of compute (self%Ua, self%Va) from (self%Uc, self%Vc).
+!
+!>      CALL self%uv_c2a (ng, tile, model, hofxID)
+!>
+        CALL ad_self%uv_c2a_ad (ng, tile, model, hofxID)
+!
+!  Adjoint of assign kernel state variables to temporary pointers.
+!  Note that the values are assigned to the adjoint forcing arrays
+!  (f_u, f_v) instead of (ad_u, ad_v).
+!
+        DO k=ks,ke
+!^        DO j=js,je
+!^          DO i=is,ie
+!^
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+!>            self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je, &
+!>   &                                                     ks:ke,NOUT)
+!>            self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je, &
+!>   &                                                     ks:ke,NOUT)
+!>
+              OCEAN(ng)%f_v(i,j,k)=OCEAN(ng)%f_v(i,j,k)+                &
+     &                             ad_self%Vc(i,j,k)
+              ad_self%Vc(i,j,k)=0.0_r8
+!
+              OCEAN(ng)%f_u(i,j,k)=OCEAN(ng)%f_u(i,j,k)+                &
+     &                             ad_self%Uc(i,j,k)
+              ad_self%Uc(i,j,k)=0.0_r8
+            END DO
+          END DO
+        END DO
+!
+!  Nullify pointers.
+!
+        IF (associated(ad_self%Ua)) nullify (ad_self%Ua)
+        IF (associated(ad_self%Va)) nullify (ad_self%Va)
+        IF (associated(ad_self%Uc)) nullify (ad_self%Uc)
+        IF (associated(ad_self%Vc)) nullify (ad_self%Vc)
+      END IF
+!
+      RETURN
+      END SUBROUTINE var_change_HF_radar_ad
+#  endif
+!
+! <><><> CLASS OBS_VARCHA:  Utility <><><><><><><><><><><><><><><><><><>
+!
 !  It vertically interpolates a 3D terrain-following field to specied
 !  constant depth or depths.
 !
@@ -634,12 +797,13 @@
 !  It transforms vector components from A-grid (cell center) to
 !  staggered Arakawa C-grid.
 !
-      SUBROUTINE var_change_uv_a2c (self, ng, tile, model)
+      SUBROUTINE var_change_uv_a2c (self, ng, tile, model, hofxID)
 !
       CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
       integer,            intent(in   ) :: ng       ! nested grid
       integer,            intent(in   ) :: tile     ! domain partition
       integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
@@ -743,12 +907,13 @@
 !  It transforms vector components from staggered Arakawa C-grid to
 !  A-grid (cell center).
 !
-      SUBROUTINE var_change_uv_c2a (self, ng, tile, model)
+      SUBROUTINE var_change_uv_c2a (self, ng, tile, model, hofxID)
 !
-      CLASS (obs_VarCha), intent(inout) :: self   ! VarChan object
-      integer,            intent(in   ) :: ng     ! nested grid
-      integer,            intent(in   ) :: tile   ! domain partition
-      integer,            intent(in   ) :: model  ! kernel identifier
+      CLASS (obs_VarCha), intent(inout) :: self     ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
@@ -809,7 +974,7 @@
           END DO
         END DO
 !
-!  Rotate from computational to gegraphical Eastward and Northward
+!  Rotate from computational to geographical Eastward and Northward
 !  directions.
 !
         DO j=JstrR,JendR
@@ -937,12 +1102,13 @@
 !  Adjoint of transforming vector components from A-grid (cell center)
 !  to staggered Arakawa C-grid.
 !
-      SUBROUTINE var_change_uv_a2c_ad (ad_self, ng, tile, model)
+      SUBROUTINE var_change_uv_a2c_ad (ad_self, ng, tile, model, hofxID)
 !
-      CLASS (obs_VarCha), intent(inout) :: ad_self ! VarChan object
-      integer,            intent(in   ) :: ng      ! nested grid
-      integer,            intent(in   ) :: tile    ! domain partition
-      integer,            intent(in   ) :: model   ! kernel identifier
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
@@ -1083,12 +1249,13 @@
 !  Adjoint of transforming vector components from staggered Arakawa
 !  C-grid to A-grid (cell center).
 !
-      SUBROUTINE var_change_uv_c2a_ad (ad_self, ng, tile, model)
+      SUBROUTINE var_change_uv_c2a_ad (ad_self, ng, tile, model, hofxID)
 !
-      CLASS (obs_VarCha), intent(inout) :: ad_self ! VarChan object
-      integer,            intent(in   ) :: ng      ! nested grid
-      integer,            intent(in   ) :: tile    ! domain partition
-      integer,            intent(in   ) :: model   ! kernel identifier
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
 !
       integer                           :: LBi, UBi, LBj, UBj
       integer                           :: Istr, Iend, Jstr, Jend
@@ -1117,7 +1284,6 @@
       JendR=BOUNDS(ng)%JendR(tile)
 !
       adfac=0.0_r8
-      ad_UaCosA=0.0_r8
       ad_UaSinA=0.0_r8
       ad_VaCosA=0.0_r8
       ad_VaSinA=0.0_r8
@@ -1144,7 +1310,7 @@
 !
       K_LOOP : DO k=1,N(ng)
 !
-!  Adjoint of rotate from computational to gegraphical Eastward and
+!  Adjoint of rotate from computational to geographical Eastward and
 !  Northward directions.
 !
         DO j=JstrR,JendR
