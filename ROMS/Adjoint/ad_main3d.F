@@ -692,8 +692,9 @@
               DO tile=first_tile(ng),last_tile(ng),+1
                 CALL hofx_run (ng, tile, iADM)
               END DO
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             END DO
-            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  else
 !
 !-----------------------------------------------------------------------

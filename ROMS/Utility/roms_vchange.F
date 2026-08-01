@@ -199,8 +199,10 @@
 !
       integer                           :: is, ie, js, je, ks, ke
       integer                           :: itrc, nz
-!
       real (r8),    target, allocatable :: field(:,:,:)
+!
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_apply2d"
 !
 !  Initialize.
 !
@@ -211,7 +213,7 @@
       ks=1
       ke=N(ng)
 !
-!  Set generic variable change array, VarCha%field2d, for the state
+!  Set generic variable change array, VarCha%field2d, for the 2D state
 !  variable associated with the observations. Then, compute the
 !  appropriate variable change(s), if any. Otherwise, the default is
 !  the identity operator.
@@ -227,7 +229,10 @@
      &                                              KOUT)
 # ifdef ADJOINT
           ELSE IF (hofxID.eq.iADM) THEN
-            self%field2d => OCEAN(ng)%f_zeta
+            IF (.not.associated(self%field2d)) THEN
+              allocate ( self%field2d(is:ie, js:je) )
+              self%field2d=0.0_r8
+            END IF
 # endif
 # ifdef TLM_OBS
           ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
@@ -252,8 +257,10 @@
      &                                           N(ng),NOUT,itrc)
 #  ifdef ADJOINT
           ELSE IF (hofxID.eq.iADM) THEN
-            self%field2d(is:,js:) => OCEAN(ng)%f_t(is:ie,js:je,         &
-     &                                             N(ng),itrc)
+            IF (.not.associated(self%field2d)) THEN
+              allocate ( self%field2d(is:ie, js:je) )
+              self%field2d=0.0_r8
+            END IF
 #  endif
 #  ifdef TLM_OBS
           ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
@@ -271,12 +278,31 @@
 !
           self%field2d => NULL()
 !
-          CALL self%HF_radar (ng, tile, model, hofxID, varname,        &
-     &                        field)
-          self%field2d(is:ie,js:je)=field(is:ie,js:je,1)
-          deallocate (field)
+          IF (hofxID.ne.iADM) THEN
+            CALL self%HF_radar (ng, tile, model, hofxID, varname,       &
+     &                          field)
+            self%field2d(is:ie,js:je) => field(is:ie,js:je,1)
+            deallocate (field)
+
+#  ifdef ADJOINT
+          ELSE IF (hofxID.eq.iADM) THEN
+            IF (.not.associated(self%field2d)) THEN
+              allocate ( self%field2d(is:ie, js:je) )
+              self%field2d=0.0_r8
+            END IF
+#  endif
+          END IF
 # endif
+!
+        CASE DEFAULT
+!
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' VAR_CHANGE::APPLY2D - Cannot process varname = ',a)
 !
       RETURN
       END SUBROUTINE var_change_apply2d
@@ -302,6 +328,9 @@
 !
       integer                           :: is, ie, js, je, ks, ke
       integer                           :: itrc
+!
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_apply3d"
 !
 !  Initialize.
 !
@@ -329,8 +358,10 @@
      &                                               itrc)
 #  ifdef ADJOINT
           ELSE IF (hofxID.eq.iADM) THEN
-            self%field3d(is:,js:,ks:) => OCEAN(ng)%f_t(is:ie,js:je,     &
-     &                                                 ks:ke,itrc)
+            IF (.not.associated(self%field3d)) THEN
+              allocate ( self%field3d(is:ie, js:je, ks:ke) )
+              self%field3d=0.0_r8
+            END IF
 #  endif
 #  ifdef TLM_OBS
           ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
@@ -344,7 +375,16 @@
      &                                                 ks:ke,1,itrc)
 #  endif
           END IF
+!
+        CASE DEFAULT
+!
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' VAR_CHANGE::APPLY3D - Cannot process varname = ',a)
 !
       RETURN
       END SUBROUTINE var_change_apply3d
@@ -367,9 +407,135 @@
 !
       integer                           :: is, ie, js, je, ks, ke
       integer                           :: Istr, Iend, Jstr, Jend
-      integer                           :: i, j
+      integer                           :: i, itrc, j
       integer,                parameter :: nz = 1
       real (r8),    target, allocatable :: ad_field(:,:,:)
+!
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_apply2d_ad"
+!
+!  Initialize.
+!
+      is=BOUNDS(ng)%LBi(tile)
+      ie=BOUNDS(ng)%UBi(tile)
+      js=BOUNDS(ng)%LBj(tile)
+      je=BOUNDS(ng)%UBj(tile)
+      ks=1
+      ke=N(ng)
+!
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+!  Adjoint of set generic variable change array, VarCha%field2d, for
+!  the 2D state variable associated with the observations. Then, compute
+!  the appropriate variable change(s), if any. Otherwise, the default is
+!  the identity operator.
+!
+!  The values are loaded to adjoint forcing state arrays "f_*".
+!
+      SELECT CASE (TRIM(varname))
+!
+        CASE ('adt', 'ssh', 'ADT', 'SSH')
+!
+!^        self%field2d(is:,js:) => OCEAN(ng)%tl_zeta(is:ie,js:je,       &
+!^   &                                               KOUT)
+!^        DO j=js,je
+!^          DO i=is,ie
+!^
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              OCEAN(ng)%f_zeta(i,j)=OCEAN(ng)%f_zeta(i,j)+              &
+     &                              ad_self%field2d(i,j)
+              ad_self%field2d(i,j)=0.0_r8
+            END DO
+          END DO
+
+#  ifdef SOLVE3D
+!
+        CASE ('sss', 'sst', 'SSS', 'SST')
+!
+!^        self%field2d(is:,js:) => OCEAN(ng)%tl_t(is:ie,js:je,          &
+!^   &                                            N(ng),NOUT,itrc)
+!^        DO j=js,je
+!^          DO i=is,ie
+!^
+          itrc=tracer_index(varname)
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              OCEAN(ng)%f_t(i,j,N(ng),itrc)=OCEAN(ng)%f_t(i,j,          &
+     &                                                    N(ng),itrc)+  &
+     &                                     ad_self%field2d(i,j)
+              ad_self%field2d(i,j)=0.0_r8
+            END DO
+          END DO
+!
+        CASE ('Ucodar', 'Vcodar')
+!
+!  Adjoint of pointer association.
+!
+          IF (.not.allocated(ad_field)) THEN
+            allocate ( ad_field(is:ie, js:je, nz) )
+            ad_field=0.0_r8
+          END IF
+!
+!^        self%field2d(is:ie,js:je)=field(is:ie,js:je,1)
+!^
+!^        DO j=js,je
+!^          DO i=is,ie
+!^
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              ad_field(i,j,1)=ad_field(i,j,1)+                          &
+     &                        ad_self%field2d(i,j)
+            END DO
+          END DO
+!
+!  Adjoint of transforming u- and v-momentum component from C-grid to
+!  A-grid.
+!
+!^        CALL self%HF_radar (ng, tile, model, hofxID, varname,         &
+!^   &                        field)
+!^
+          CALL ad_self%HF_radar_ad (ng, tile, model, hofxID, varname,   &
+     &                              ad_field)
+#  endif
+!
+        CASE DEFAULT
+!
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
+      END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+  10  FORMAT (' VAR_CHANGE::APPLY2D_AD - Cannot process varname = ',a)
+!
+      RETURN
+      END SUBROUTINE var_change_apply2d_ad
+
+#  ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Adjoint of applying the necessary linear 3D variable changes.
+!
+      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,       &
+     &                                  hofxID, varname)
+!
+      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
+      integer,            intent(in   ) :: ng       ! nested grid
+      integer,            intent(in   ) :: tile     ! domain partition
+      integer,            intent(in   ) :: model    ! kernel identifier
+      integer,            intent(in   ) :: hofxID   ! H(x) identifier
+      character (len=*),  intent(in   ) :: varname
+!
+      integer                           :: is, ie, js, je, ks, ke
+      integer                           :: Istr, Iend, Jstr, Jend
+      integer                           :: i, itrc, j, k
+!
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_apply3d_ad"
 !
 !  Initialize.
 !
@@ -390,71 +556,35 @@
 !  Otherwise, the default is the identity operator.
 !
       SELECT CASE (TRIM(varname))
-
-#  ifdef SOLVE3D
-        CASE ('Ucodar', 'Vcodar')
 !
-!  Adjoint of pointer association.
-!
-          IF (.not.allocated(ad_field)) THEN
-            allocate ( ad_field(is:ie, js:je, nz) )
-            ad_field=0.0_r8
-          END IF
-!
-!^        DO j=js,je
-!^          DO i=is,ie
+        CASE ('salt', 'temp', 'tracer')
+!^        self%field3d(is:,js:,ks:) => OCEAN(ng)%tl_t(is:ie,js:je,      &
+!^   &                                                ks:ke,NOUT,       &
+!^   &                                                itrc)
 !^
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
-!^            self%field2d(i,j)=field(i,j,1)
+          itrc=tracer_index(varname)
+          DO k=ks,ke
+!^          DO j=js,je
+!^            DO i=is,ie
 !^
-              ad_field(i,j,1)=ad_field(i,j,1)+                          &
-     &                        ad_self%field2d(i,j)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                OCEAN(ng)%f_t(i,j,k,itrc)=OCEAN(ng)%f_t(i,j,k,itrc)+    &
+     &                                    ad_self%field3d(i,j,k)
+                ad_self%field3d(i,j,k)=0.0_r8
+              END DO
             END DO
-          END DO
-!
-!  Adjoint of transforming u- and v-momentum component from C-grid to
-!  A-grid.
-!
-          CALL ad_self%HF_radar_ad (ng, tile, model, hofxID, varname,   &
-     &                              ad_field)
-#  endif
+          END DO                                
 !
         CASE DEFAULT
 !
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-      RETURN
-      END SUBROUTINE var_change_apply2d_ad
-
-#  ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Adjoint of applying the necessary linear 3D variable changes.
-!
-      SUBROUTINE var_change_apply3d_ad (ad_self, ng, tile, model,       &
-     &                                  hofxID, varname)
-!
-      CLASS (obs_VarCha), intent(inout) :: ad_self  ! VarChan object
-      integer,            intent(in   ) :: ng       ! nested grid
-      integer,            intent(in   ) :: tile     ! domain partition
-      integer,            intent(in   ) :: model    ! kernel identifier
-      integer,            intent(in   ) :: hofxID   ! H(x) identifier
-      character (len=*),  intent(in   ) :: varname
-!
-      integer                           :: itrc
-!
-!  Set pointer (ad_self%field2d) to state variable associated with the
-!  observations. Compute the appropriate variable  change(s), if any.
-!  Otherwise, the default is the identity operator.
-!
-      SELECT CASE (TRIM(varname))
-        CASE ('salt', 'temp', 'tracer')
-          itrc=tracer_index(varname)
-!>
-!> Currently, no variable changes are needed for 3D variables.
-!>
-      END SELECT
+  10  FORMAT (' VAR_CHANGE::APPLY3D_AD - Cannot process varname = ',a)
 !
       RETURN
       END SUBROUTINE var_change_apply3d_ad
@@ -488,6 +618,9 @@
       integer,                parameter :: nz = 1
       real (r8),            allocatable :: Zeven(:)
 !
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_HF_radar"
+!
 !  Initialize.
 !
       is=BOUNDS(ng)%LBi(tile)
@@ -514,10 +647,14 @@
 !  Transform u- and v-momentum components from C-grid to A-grid.
 !
       IF (LcomputeC2A) THEN
-        self%Ua => NULL()
-        self%Va => NULL()
-        allocate ( self%Ua(is:ie, js:je, ks:ke) )
-        allocate ( self%Va(is:ie, js:je, ks:ke) )
+        IF (.not.associated(self%Ua)) THEN
+          allocate ( self%Ua(is:ie, js:je, ks:ke) )
+          self%Ua=0.0_r8
+        END IF
+        IF (.not.associated(self%Va)) THEN
+          allocate ( self%Va(is:ie, js:je, ks:ke) )
+          self%Va=0.0_r8
+        END IF
 !
 !  Assign kernel state (u, v) variables to temporary pointers.
 !
@@ -548,6 +685,9 @@
 !  Compute (self%Ua, self%Va) from (self%Uc, self%Vc).
 !
         CALL self%uv_c2a (ng, tile, model, hofxID)
+!
+        IF (associated(self%Uc)) nullify (self%Uc)
+        IF (associated(self%Vc)) nullify (self%Vc)
       END IF
 !
 !  Interpolate (self%Ua, self%Va) to depth Zeven = -2 m.
@@ -559,20 +699,30 @@
      &                          is, ie, js, je,                         &
      &                          varname, Zeven, self%Ua, field)
 !
+          IF (associated(self%Ua)) nullify (self%Ua)
+!
         CASE ('Vcodar')
 !                                            
           CALL self%interp_k2z (ng, tile, model,                        &
      &                          is, ie, js, je,                         &
      &                          varname, Zeven, self%Va, field)
 !
+          IF (associated(self%Va)) nullify (self%Va)
+!
         CASE DEFAULT
 !
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Nullify pointers.
 !
       IF (associated(self%depth)) nullify (self%depth)
       IF (associated(self%mask))  nullify (self%mask)
+!
+  10  FORMAT (' VAR_CHANGE::HF_RADAR - Cannot process varname = ',a)
 !
       RETURN
       END SUBROUTINE var_change_HF_radar 
@@ -605,6 +755,9 @@
       integer,                parameter :: nz = 1
       real (r8),            allocatable :: Zeven(:)
 !
+      character (len=*),      parameter :: MyFile =                     &
+     &  __FILE__//", var_change_HF_radar_ad"
+!
 !  Initialize.
 !
       is=BOUNDS(ng)%LBi(tile)
@@ -624,6 +777,9 @@
         Zeven=-2.0_r8
       END IF
 !
+      ad_self%mask  => GRID(ng)%rmask
+      ad_self%depth => GRID(ng)%z_r
+!
       LcomputeC2A=varname.eq.'Ucodar'
 !
 !  Adjoint of interpolate (self%Ua, self%Va) to depth Zeven = -2 m.
@@ -631,6 +787,11 @@
       SELECT CASE (TRIM(varname))   
 !
         CASE ('Ucodar')
+!
+          IF (.not.associated(ad_self%Ua)) THEN
+            allocate ( ad_self%Ua(is:ie, js:je, ks:ke) )
+            ad_self%Ua=0.0
+          END IF
 !
 !>        CALL self%interp_k2z (ng, tile, model,                        &
 !>   &                          is, ie, js, je,                         &
@@ -643,6 +804,11 @@
 !
         CASE ('Vcodar')
 !
+          IF (.not.associated(ad_self%Va)) THEN
+            allocate ( ad_self%Va(is:ie, js:je, ks:ke) )
+            ad_self%Va=0.0
+          END IF
+!
 !>        CALL self%interp_k2z (ng, tile, model,                        &
 !>   &                          is, ie, js, je,                         &
 !>   &                          varname, Zeven, self%Va, field)
@@ -654,7 +820,11 @@
 !
         CASE DEFAULT
 !
+          IF (Master) WRITE(stdout,10) TRIM(varname)
+          exit_flag=5
+!
       END SELECT
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Adjoint of transform u- and v-momentum components from C-grid to
 !  A-grid. In the tangent linear kernel forward solution, the routine
@@ -668,11 +838,23 @@
 !^
       IF (.not.LcomputeC2A) THEN
 !
+        IF (.not.associated(ad_self%Uc)) THEN
+          allocate ( ad_self%Uc(is:ie, js:je, ks:ke) )
+          ad_self%Uc=0.0_r8
+        END IF
+        IF (.not.associated(ad_self%Vc)) THEN
+          allocate ( ad_self%Vc(is:ie, js:je, ks:ke) )
+          ad_self%Vc=0.0_r8
+        END IF
+!
 !  Adjoint of compute (self%Ua, self%Va) from (self%Uc, self%Vc).
 !
 !>      CALL self%uv_c2a (ng, tile, model, hofxID)
 !>
         CALL ad_self%uv_c2a_ad (ng, tile, model, hofxID)
+!
+        IF (associated(ad_self%Ua)) nullify (ad_self%Ua)
+        IF (associated(ad_self%Va)) nullify (ad_self%Va)
 !
 !  Adjoint of assign kernel state variables to temporary pointers.
 !  Note that the values are assigned to the adjoint forcing arrays
@@ -702,11 +884,13 @@
 !
 !  Nullify pointers.
 !
-        IF (associated(ad_self%Ua)) nullify (ad_self%Ua)
-        IF (associated(ad_self%Va)) nullify (ad_self%Va)
-        IF (associated(ad_self%Uc)) nullify (ad_self%Uc)
-        IF (associated(ad_self%Vc)) nullify (ad_self%Vc)
+        IF (associated(ad_self%Uc))    nullify (ad_self%Uc)
+        IF (associated(ad_self%Vc))    nullify (ad_self%Vc)
+        IF (associated(ad_self%depth)) nullify (ad_self%depth)
+        IF (associated(ad_self%mask))  nullify (ad_self%mask)
       END IF
+!
+  10  FORMAT (' VAR_CHANGE::HF_RADAR_AD - Cannot process varname = ',a)
 !
       RETURN
       END SUBROUTINE var_change_HF_radar_ad
@@ -974,6 +1158,10 @@
           END DO
         END DO
 !
+!  Cycle k-loop if velocity standard deviation error.
+!
+        IF (HofxID.eq.iSTD) CYCLE K_LOOP
+!
 !  Rotate from computational to geographical Eastward and Northward
 !  directions.
 !
@@ -1030,7 +1218,7 @@
 !
       integer                           :: Istr, Iend, Jstr, Jend
       integer                           :: IstrR, IendR, JstrR, JendR
-      integer                           :: i, iz, i1, j, j1, k, k1, k2
+      integer                           :: i, iz, j, k, k1, k2
       real (r8)                         :: Zbot, Ztop, dz, r1, r2
 !
 !  Initialize.
@@ -1072,16 +1260,16 @@
               ad_Fz(i,j,iz)=0.0_r8
             ELSE
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
-                Ztop=ad_self%depth(i,j,k    )  ! to requested depth
-                Zbot=ad_self%depth(i1,j1,k-1)
+                Ztop=ad_self%depth(i,j,k  )    ! to requested depth
+                Zbot=ad_self%depth(i,j,k-1)
                 IF ((Ztop.gt.Zeven(iz)).and.                            &
-     &              (Zeven(i).ge.Zbot)) THEN
+     &              (Zeven(iz).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
                 END IF
               END DO
               dz=ad_self%depth(i,j,k2)-ad_self%depth(i,j,k1)
-              r2=(Zeven(iz)-ad_self%depth(i1,j1,k1))/dz
+              r2=(Zeven(iz)-ad_self%depth(i,j,k1))/dz
               r1=1.0_r8-r2
               IF ((r1+r2).gt.0.0_r8) THEN
 !>              Fz(i,j,iz)=r1*Fk(i,j,k1)+r2*Fk(i,j,k2)

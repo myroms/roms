@@ -1840,7 +1840,6 @@
       RETURN
       END SUBROUTINE obs_hofx_cost_function
 # endif
-
 !
 ! <><><><><><><><><><><><><><><><><><><><><><><><> HOFX OPERATORS <><><>
 !
@@ -1922,6 +1921,7 @@
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
             END SELECT
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Store processing: tally(1,nvars)=Count and tally(2,nvars)=Reject.
 !  To facilitate procesing the tally is a remapped vector.
@@ -2052,6 +2052,7 @@
 !
         CALL vchange%apply2d (ng, tile, model, self%ID,                 &
      &                        obs%vname(ivar))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set switch for filters.
 !
@@ -2115,6 +2116,7 @@
 !
           CALL vchange%apply2d_ad (ng, tile, model, self%ID,            &
      &                             obs%vname(ivar))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
         END IF
       END DO VAR_LOOP
@@ -2167,6 +2169,7 @@
 !
         CALL vchange%apply3d (ng, tile, model, self%ID,                 &
      &                        obs%vname(ivar))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Set switch for filters.
 !
@@ -2183,7 +2186,7 @@
      &                            vchange%field3d)
           ELSE
             CALL self%interp3d (obs, ng, model,                         &
-     &                          ivar, tally,                             &
+     &                          ivar, tally,                            &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          vchange%field3d)
 
@@ -2208,6 +2211,7 @@
 !
           CALL vchange%apply3d_ad (ng, tile, model, self%ID,            &
      &                             obs%vname(ivar))
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
         END IF
       END DO VAR_LOOP
@@ -2249,8 +2253,12 @@
       integer                          :: i1, i2, j1, j2
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8),          dimension(4) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 2D model state variable at the observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2358,8 +2366,12 @@
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8),          dimension(8) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 3D model state variable at the observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2527,8 +2539,12 @@
       integer                          :: i1, i2, j1, j2
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8),          dimension(4) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 2D model state variable at the observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2661,8 +2677,12 @@
       real (r8)                        :: w11, w12, w21, w22, wsum
       real (r8)                        :: Zbot, Ztop, dz
       real (r8),          dimension(8) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 2D model state variable at the observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -2853,6 +2873,7 @@
       real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: area_sum, resol
       real (r8)                         :: my_field
+      character (len=50)                :: obs_ncname, obs_vname
 !
       character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_area_avg2d"
@@ -2873,6 +2894,9 @@
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       MASTER_THREAD : IF (Master) THEN
         DO m=obs%NstrObs,obs%NendObs
@@ -2998,6 +3022,7 @@
       real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: Tsteps, area_sum, resol
       real (r8)                         :: Fvalue
+      character (len=50)                :: obs_ncname, obs_vname
 !
       character (len=*),      parameter :: MyFile =                     &
      &    __FILE__//", roms_hofx_area_time_avg2d"
@@ -3018,6 +3043,9 @@
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       MASTER_THREAD : IF (Master) THEN
         DO m=obs%NstrObs,obs%NendObs
@@ -3148,11 +3176,12 @@
       integer,            intent(in   ) :: LBj, UBj  ! field J-bounds
       real (r8),          intent(inout) :: ad_field(LBi:,LBj:)
 !
-      integer                         :: iobs, i1, j1, m, mc, nscope
-      integer                         :: i, is, ie, j, js, je
-      integer                         :: mvalues, nvalues
-      real (r8)                       :: dfr, dfx, dfy, dlen
-      real (r8)                       :: area_sum, resol
+      integer                           :: iobs, i1, j1, m, mc, nscope
+      integer                           :: i, is, ie, j, js, je
+      integer                           :: mvalues, nvalues
+      real (r8)                         :: dfr, dfx, dfy, dlen
+      real (r8)                         :: area_sum, resol
+      character (len=50)                :: obs_ncname, obs_vname
 !
 !  Clear work global 2D array to hold the adjoint of the area of
 !  influence data.
@@ -3161,6 +3190,9 @@
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO m=obs%NstrObs,obs%NendObs
 !
@@ -3291,6 +3323,7 @@
       integer                           :: iTstr, iTend
       real (r8)                         :: dfr, dfx, dfy, dlen
       real (r8)                         :: Tsteps, area_sum, resol
+      character (len=50)                :: obs_ncname, obs_vname
 !
 !  Clear work global 2D array to hold the adjoint of the area of
 !  influence data.
@@ -3299,6 +3332,9 @@
 !
 !  Compute area-averaged 2D model state variable at the area_averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO m=obs%NstrObs,obs%NendObs
         IF ((obs%TimeStr(m).le.time(ng)).and.                           &
@@ -3439,9 +3475,13 @@
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8)                        :: Fvalue, Tsteps
       real (r8),          dimension(4) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 2D model state variable at the time-averaged observation
 !  locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -3588,9 +3628,13 @@
       real (r8)                        :: Zbot, Ztop, dz
       real (r8)                        :: Fvalue, Tsteps
       real (r8),          dimension(8) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Interpolate 3D model state variable at the time-averaged observation
 !  locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -3801,9 +3845,13 @@
       real (r8)                        :: p1, p2, q1, q2, wsum
       real (r8)                        :: Tsteps
       real (r8),          dimension(4) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Adjoint of interpolate 2D model state variable at the time-averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -3945,9 +3993,13 @@
       real (r8)                        :: Zbot, Ztop, dz
       real (r8)                        :: Tsteps
       real (r8),          dimension(8) :: Hmat
+      character (len=50)               :: obs_ncname, obs_vname
 !
 !  Adjoint of interpolate 3D model state variable at the time-averaged
 !  observation locations.
+!
+      obs_ncname=obs%vars(ivar)
+      obs_vname=obs%vname(ivar)
 !
       DO i=obs%NstrObs,obs%NendObs
         IF ((rXmin(ng).le.obs%Xgrid(i)).and.                            &
@@ -4265,7 +4317,7 @@
      &                         TRIM(obs%pool(i)%vars(ivar)),            &
      &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
           END IF
-          deallocate (work)
+          IF (ivar.eq.mvars) deallocate (work)
         END DO
       END DO
 !
@@ -4333,7 +4385,7 @@
      &                         TRIM(obs%pool(i)%vars(ivar)),            &
      &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
           END IF
-          deallocate (work)
+          IF (ivar.eq.mvars) deallocate (work)
         END DO
       END DO
 !
@@ -4504,7 +4556,7 @@
      &                         TRIM(obs%pool(i)%vars(ivar)),            &
      &                         Wmin, Wmax, TRIM(obs%pool(i)%ncname_out)
           END IF
-          deallocate (work)
+          IF (ivar.eq.mvars) deallocate (work)
         END DO
       END DO
 !

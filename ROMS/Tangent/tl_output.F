@@ -320,6 +320,7 @@
 !
       IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
         CALL hofx_finalize (ng, iTLM)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
 #  else
 !
