@@ -111,8 +111,8 @@
         PROCEDURE :: uv_a2c         => var_change_uv_a2c
         PROCEDURE :: uv_c2a         => var_change_uv_c2a
 #  ifdef ADJOINT
-        PROCEDURE :: uv_a2c_ad      => var_change_uv_a2c
-        PROCEDURE :: uv_c2a_ad      => var_change_uv_c2a
+        PROCEDURE :: uv_a2c_ad      => var_change_uv_a2c_ad
+        PROCEDURE :: uv_c2a_ad      => var_change_uv_c2a_ad
 #  endif
 # endif
 
@@ -793,10 +793,10 @@
             ad_self%Ua=0.0
           END IF
 !
-!>        CALL self%interp_k2z (ng, tile, model,                        &
-!>   &                          is, ie, js, je,                         &
-!>   &                          varname, Zeven, self%Ua, field)
-!>
+!^        CALL self%interp_k2z (ng, tile, model,                        &
+!^   &                          is, ie, js, je,                         &
+!^   &                          varname, Zeven, self%Ua, field)
+!^
           CALL ad_self%interp_k2z_ad (ng, tile, model,                  &
      &                                is, ie, js, je,                   &
      &                                varname, Zeven,                   &
@@ -809,10 +809,10 @@
             ad_self%Va=0.0
           END IF
 !
-!>        CALL self%interp_k2z (ng, tile, model,                        &
-!>   &                          is, ie, js, je,                         &
-!>   &                          varname, Zeven, self%Va, field)
-!>
+!^        CALL self%interp_k2z (ng, tile, model,                        &
+!^   &                          is, ie, js, je,                         &
+!^   &                          varname, Zeven, self%Va, field)
+!^
           CALL ad_self%interp_k2z_ad (ng, tile, model,                  &
      &                                is, ie, js, je,                   &
      &                                varname, Zeven,                   &
@@ -849,8 +849,8 @@
 !
 !  Adjoint of compute (self%Ua, self%Va) from (self%Uc, self%Vc).
 !
-!>      CALL self%uv_c2a (ng, tile, model, hofxID)
-!>
+!^      CALL self%uv_c2a (ng, tile, model, hofxID)
+!^
         CALL ad_self%uv_c2a_ad (ng, tile, model, hofxID)
 !
         IF (associated(ad_self%Ua)) nullify (ad_self%Ua)
@@ -866,11 +866,11 @@
 !^
           DO j=Jstr,Jend
             DO i=Istr,Iend
-!>            self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je, &
-!>   &                                                     ks:ke,NOUT)
-!>            self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je, &
-!>   &                                                     ks:ke,NOUT)
-!>
+!^            self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je, &
+!^   &                                                     ks:ke,NOUT)
+!^            self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je, &
+!^   &                                                     ks:ke,NOUT)
+!^
               OCEAN(ng)%f_v(i,j,k)=OCEAN(ng)%f_v(i,j,k)+                &
      &                             ad_self%Vc(i,j,k)
               ad_self%Vc(i,j,k)=0.0_r8
@@ -937,10 +937,13 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
+          IZ_LOOP : DO iz=1,SIZE(Zeven)
 #  ifdef MASKING
-          IF (self%mask(i,j).lt.0.5_r8) CYCLE
+            IF (self%mask(i,j).lt.0.5_r8)  THEN
+              Fz(i,j,iz)=0.0_r8
+              CYCLE IZ_LOOP
+            END IF
 #  endif
-          DO iz=1,SIZE(Zeven)
             Ztop=self%depth(i,j,N(ng))
             Zbot=self%depth(i,j,1    )
             IF (Zeven(iz).ge.Ztop) THEN        ! If shallower, assign
@@ -954,15 +957,16 @@
               r2=0.0_r8                        ! return zero value.
               Fz(i,j,iz)=0.0_r8
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=self%depth(i,j,k  )       ! to requested depth
                 Zbot=self%depth(i,j,k-1)
                 IF ((Ztop.gt.Zeven(iz)).and.                            &
      &              (Zeven(iz).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=self%depth(i,j,k2)-self%depth(i,j,k1)
               r2=(Zeven(iz)-self%depth(i,j,k1))/dz
               r1=1.0_r8-r2
@@ -970,7 +974,7 @@
                 Fz(i,j,iz)=r1*Fk(i,j,k1)+r2*Fk(i,j,k2)
               END IF
             END IF
-          END DO
+          END DO IZ_LOOP
         END DO
       END DO
 !
@@ -1237,10 +1241,15 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
+          IZ_LOOP : DO iz=1,SIZE(Zeven)
 #  ifdef MASKING
-          IF (ad_self%mask(i,j).lt.0.5_r8) CYCLE
+            IF (ad_self%mask(i,j).lt.0.5_r8) THEN
+!^            Fz(i,j,iz)=0.0_r8
+!^
+              ad_Fz(i,j,iz)=0.0_r8
+              CYCLE IZ_LOOP
+            END IF
 #  endif
-          DO iz=1,SIZE(Zeven)
             Ztop=ad_self%depth(i,j,N(ng))
             Zbot=ad_self%depth(i,j,1    )
             IF (Zeven(iz).ge.Ztop) THEN        ! If shallower, assign
@@ -1248,38 +1257,39 @@
               k2=N(ng)                         ! field is located on the
               r1=1.0_r8                        ! upper cell half above
               r2=0.0_r8                        ! its middle depth.
-!>            Fz(i,j,iz)=Fk(i,j,k1)
-!>
+!^            Fz(i,j,iz)=Fk(i,j,k1)
+!^
               ad_Fk(i,j,k1)=ad_Fk(i,j,k1)+ad_Fz(i,j,iz)
               ad_Fz(i,j,iz)=0.0_r8
             ELSE IF (Zbot.ge.Zeven(iz)) THEN
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8                        ! return zero value.
-!>            Fz(i,j,iz)=0.0_r8
-!>
+!^            Fz(i,j,iz)=0.0_r8
+!^
               ad_Fz(i,j,iz)=0.0_r8
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=ad_self%depth(i,j,k  )    ! to requested depth
                 Zbot=ad_self%depth(i,j,k-1)
                 IF ((Ztop.gt.Zeven(iz)).and.                            &
      &              (Zeven(iz).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=ad_self%depth(i,j,k2)-ad_self%depth(i,j,k1)
               r2=(Zeven(iz)-ad_self%depth(i,j,k1))/dz
               r1=1.0_r8-r2
               IF ((r1+r2).gt.0.0_r8) THEN
-!>              Fz(i,j,iz)=r1*Fk(i,j,k1)+r2*Fk(i,j,k2)
-!>
+!^              Fz(i,j,iz)=r1*Fk(i,j,k1)+r2*Fk(i,j,k2)
+!^
                 ad_Fk(i,j,k1)=ad_Fk(i,j,k1)+r1*ad_Fz(i,j,iz)
                 ad_Fk(i,j,k2)=ad_Fk(i,j,k2)+r2*ad_Fz(i,j,iz)
                 ad_Fz(i,j,iz)=0.0_r8
               END IF
             END IF
-          END DO
+          END DO IZ_LOOP
         END DO
       END DO
 !
@@ -1349,12 +1359,12 @@
 !
 !  Adjoint of exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    self%Uc, self%Vc)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    self%Uc, self%Vc)
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
@@ -1371,12 +1381,12 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
 #   ifdef MASKING
-!>          self%Vc(i,j,k)=self%Vc(i,j,k)*GRID(ng)%vmask(i,j)
-!>
+!^          self%Vc(i,j,k)=self%Vc(i,j,k)*GRID(ng)%vmask(i,j)
+!^
             ad_self%Vc(i,j,k)=ad_self%Vc(i,j,k)*GRID(ng)%vmask(i,j)
 #   endif
-!>          self%Vc(i,j,k)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
-!>
+!^          self%Vc(i,j,k)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
+!^
             adfac=0.5_r8*ad_self%Vc(i,j,k)
             ad_Vrho(i,j-1)=ad_Vrho(i,j-1)+adfac
             ad_Vrho(i,j  )=ad_Vrho(i,j  )+adfac
@@ -1387,12 +1397,12 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
 #   ifdef MASKING
-!>          self%Uc(i,j,k)=self%Uc(i,j,k)*GRID(ng)%umask(i,j)
-!>
+!^          self%Uc(i,j,k)=self%Uc(i,j,k)*GRID(ng)%umask(i,j)
+!^
             ad_self%Uc(i,j,k)=ad_self%Uc(i,j,k)*GRID(ng)%umask(i,j)
 #   endif
-!>          self%Uc(i,j,k)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
-!>
+!^          self%Uc(i,j,k)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
+!^
             adfac=0.5_r8*ad_self%Uc(i,j,k)
             ad_Urho(i-1,j)=ad_Urho(i-1,j)+adfac
             ad_Urho(i  ,j)=ad_Urho(i  ,j)+adfac
@@ -1405,17 +1415,17 @@
 !
         DO j=Jstr-1,JendR
           DO i=Istr-1,IendR
-!>          Vrho(i,j)=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)-           &
-!>   &                self%Ua(i,j,k)*GRID(ng)%SinAngler(i,j)
-!>
+!^          Vrho(i,j)=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)-           &
+!^   &                self%Ua(i,j,k)*GRID(ng)%SinAngler(i,j)
+!^
             adfac1=GRID(ng)%CosAngler(i,j)*ad_Vrho(i,j)
             adfac2=GRID(ng)%SinAngler(i,j)*ad_Vrho(i,j)
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+adfac1
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)-adfac2
             ad_Vrho(i,j)=0.0_r8
-!>          Urho(i,j)=self%Ua(i,j,k)*GRID(ng)%CosAngler(i,j)+           &
-!>   &                self%Va(i,j,k)*GRID(ng)%SinAngler(i,j)
-!>
+!^          Urho(i,j)=self%Ua(i,j,k)*GRID(ng)%CosAngler(i,j)+           &
+!^   &                self%Va(i,j,k)*GRID(ng)%SinAngler(i,j)
+!^
             adfac1=GRID(ng)%CosAngler(i,j)*ad_Urho(i,j)
             adfac2=GRID(ng)%SinAngler(i,j)*ad_Urho(i,j)
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+adfac1
@@ -1472,6 +1482,7 @@
       JendR=BOUNDS(ng)%JendR(tile)
 !
       adfac=0.0_r8
+      ad_UaCosA=0.0_r8
       ad_UaSinA=0.0_r8
       ad_VaCosA=0.0_r8
       ad_VaSinA=0.0_r8
@@ -1480,12 +1491,12 @@
 !
 !  Exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    self%Ua, self%Va)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    self%Ua, self%Va)
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
@@ -1504,41 +1515,41 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
 #   ifdef MASKING
-!>          self%Va(i,j,k)=self%Va(i,j,k)*GRID(ng)%rmask(i,j)
-!>
+!^          self%Va(i,j,k)=self%Va(i,j,k)*GRID(ng)%rmask(i,j)
+!^
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)*GRID(ng)%rmask(i,j)
-!>          self%Ua(i,j,k)=self%Ua(i,j,k)*GRID(ng)%rmask(i,j)
-!>
+!^          self%Ua(i,j,k)=self%Ua(i,j,k)*GRID(ng)%rmask(i,j)
+!^
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)*GRID(ng)%rmask(i,j)
 #   endif
-!>          seld%Va(i,j,k)=VaCosA+UaSinA
-!>
+!^          self%Va(i,j,k)=VaCosA+UaSinA
+!^
             ad_UaSinA=ad_UaSinA+ad_self%Va(i,j,k)
             ad_VaCosA=ad_VaCosA+ad_self%Va(i,j,k)
             ad_self%Va(i,j,k)=0.0_r8
-!>          self%Ua(i,j,k)=UaCosA-VaSinA
-!>
+!^          self%Ua(i,j,k)=UaCosA-VaSinA
+!^
             ad_VaSinA=ad_VaSinA-ad_self%Ua(i,j,k)
             ad_UaCosA=ad_UaCosA+ad_self%Ua(i,j,k)
             ad_self%Ua(i,j,k)=0.0_r8
-!>          VaSinA=self%Va(i,j,k)*GRID(ng)%SinAngler(i,j)
-!>
+!^          VaSinA=self%Va(i,j,k)*GRID(ng)%SinAngler(i,j)
+!^
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+                        &
      &                        GRID(ng)%SinAngler(i,j)*ad_VaSinA
             ad_VaSinA=0.0_r8
 
-!>          VaCosA=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)
-!>
+!^          VaCosA=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)
+!^
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+                        &
      &                        GRID(ng)%CosAngler(i,j)*ad_VaCosA
             ad_VaCosA=0.0_r8
-!>          UaSinA=self%Ua(i,j,k)*GRID(ng)%SinAngler(i,j)
-!>
+!^          UaSinA=self%Ua(i,j,k)*GRID(ng)%SinAngler(i,j)
+!^
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+                        &
      &                        GRID(ng)%SinAngler(i,j)*ad_UaSinA
             ad_UaSinA=0.0_r8
-!>          UaCosA=self%Ua(i,j,k)*GRID(ng)%CosAngler(i,j)
-!>
+!^          UaCosA=self%Ua(i,j,k)*GRID(ng)%CosAngler(i,j)
+!^
             ad_self%Ua(i,j,k)=ad_self%Ua(i,j,k)+                        &
      &                        GRID(ng)%CosAngler(i,j)*ad_UaCosA
             ad_UaCosA=0.0_r8
@@ -1551,22 +1562,22 @@
           DO i=IstrR,IendR
             IF (.not.NSperiodic(ng)) THEN
               IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-!>              self%Va(i,Jend+1,k)=self%Va(i,Jend,k)
-!>
+!^              self%Va(i,Jend+1,k)=self%Va(i,Jend,k)
+!^
                 ad_self%Va(i,Jend,k)=ad_self%Va(i,Jend  ,k)+            &
      &                               ad_self%Va(i,Jend+1,k)
                 ad_self%Va(i,Jend+1,k)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-!>              self%Va(i,Jstr-1,k)=self%Va(i,Jstr,k)
-!>
+!^              self%Va(i,Jstr-1,k)=self%Va(i,Jstr,k)
+!^
                 ad_self%Va(i,Jstr,k)=ad_self%Va(i,Jstr  ,k)+            &
      &                               ad_self%Va(i,Jstr-1,k)
                 ad_self%Va(i,Jstr-1,k)=0.0_r8
               END IF
             END IF
-!>          self%Va(i,j,k)=0.5_r8*(self%Vc(i,j,k)+self%Vc(i,j+1,k))
-!>
+!^          self%Va(i,j,k)=0.5_r8*(self%Vc(i,j,k)+self%Vc(i,j+1,k))
+!^
             adfac=0.5_r8*ad_self%Va(i,j,k)
             ad_self%Vc(i,j  ,k)=ad_self%Vc(i,j  ,k)+adfac
             ad_self%Vc(i,j+1,k)=ad_self%Vc(i,j+1,k)+adfac
@@ -1578,22 +1589,22 @@
           DO i=Istr,Iend
             IF (.not.EWperiodic(ng)) THEN
               IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-!>              self%Ua(Iend+1,j,k)=self%Ua(Iend,j,k)
-!>
+!^              self%Ua(Iend+1,j,k)=self%Ua(Iend,j,k)
+!^
                 ad_self%Ua(Iend,j,k)=ad_self%Ua(Iend  ,j,k)+            &
      &                               ad_self%Ua(Iend+1,j,k)
                 ad_self%Ua(Iend+1,j,k)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-!>              self%Ua(Istr-1,j,k)=self%Ua(Istr,j,k)
-!>
+!^              self%Ua(Istr-1,j,k)=self%Ua(Istr,j,k)
+!^
                 ad_self%Ua(Istr,j,k)=ad_self%Ua(Istr  ,j,k)+            &
      &                               ad_self%Ua(Istr-1,j,k)
                 ad_self%Ua(Istr-1,j,k)=0.0_r8
               END IF
             END IF
-!>          self%Ua(i,j,k)=0.5_r8*(self%Uc(i,j,k)+self%Uc(i+1,j,k))
-!>
+!^          self%Ua(i,j,k)=0.5_r8*(self%Uc(i,j,k)+self%Uc(i+1,j,k))
+!^
             adfac=0.5_r8*ad_self%Ua(i,j,k)
             ad_self%Uc(i  ,j,k)=ad_self%Uc(i  ,j,k)+adfac
             ad_self%Uc(i+1,j,k)=ad_self%Uc(i+1,j,k)+adfac

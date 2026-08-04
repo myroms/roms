@@ -3237,14 +3237,14 @@
         END DO
 !
         IF (area_sum.gt.0.0_r8) THEN
-!>        self%state(iobs)=ad_self%state(iobs)/area_sum
-!>        self%ObsVetting(iobs)=1
-!>
+!^        self%state(iobs)=ad_self%state(iobs)/area_sum
+!^        self%ObsVetting(iobs)=1
+!^
           ad_self%state(iobs)=ad_self%state(iobs)/area_sum
           ad_self%ObsVetting(iobs)=1
         ELSE
-!>        ad_self%ObsVetting(iobs)=0
-!>
+!^        ad_self%ObsVetting(iobs)=0
+!^
           ad_self%ObsVetting(iobs)=0
           tally(mc+1)=tally(mc+1)+1                ! obs rejected
         END IF
@@ -3260,9 +3260,9 @@
             dlen=SQRT(dfx*dfx+dfy*dfy)
             IF (dlen.le.dfr) THEN
               nvalues=nvalues+1
-!>            self%state(iobs)=self%state(iobs)+                        &
-!>   &                         geom%area(i,j)*geom%global2d(i,j)
-!>
+!^            self%state(iobs)=self%state(iobs)+                        &
+!^   &                         geom%area(i,j)*geom%global2d(i,j)
+!^
               geom%global2d(i,j)=geom%global2d(i,j)+                    &
      &                           geom%area(i,j)*ad_self%state(iobs)
             END IF
@@ -3391,8 +3391,8 @@
           END DO
 !
           IF ((area_sum.gt.0.0_r8).and.(iic(ng).eq.iTend)) THEN
-!>          self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
-!>
+!^          self%state(iobs)=self%state(iobs)/(area_sum*Tsteps)
+!^
             ad_self%state(iobs)=ad_self%state(iobs)/(area_sum*Tsteps)
           END IF
           ad_self%ObsVetting(iobs)=1
@@ -3408,9 +3408,9 @@
               dlen=SQRT(dfx*dfx+dfy*dfy)
               IF (dlen.le.dfr) THEN
                 nvalues=nvalues+1
-!>              self%state(iobs)=self%state(iobs)+                      &
-!>   &                           geom%area(i,j)*geom%global2d(i,j)
-!>
+!^              self%state(iobs)=self%state(iobs)+                      &
+!^   &                           geom%area(i,j)*geom%global2d(i,j)
+!^
                 geom%global2d(i,j)=geom%global2d(i,j)+                  &
      &                             geom%area(i,j)*ad_self%state(iobs)
               END IF
@@ -3910,17 +3910,17 @@
           Tsteps=REAL(iTend-iTstr, r8)
 !
           IF (iic(ng).eq.iTend) THEN
-!>          self%state(iobs)=self%state(iobs)/Tsteps
-!>
+!^          self%state(iobs)=self%state(iobs)/Tsteps
+!^
             ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
           END IF
 !
-!>        self%state(iobs)=self%state(iobs)+                            &
-!>   &                     Hmat(1)*field(i1,j1)+                        &
-!>   &                     Hmat(2)*field(i2,j1)+                        &
-!>   &                     Hmat(3)*field(i2,j2)+                        &
-!>   &                     Hmat(4)*field(i1,j2)
-!>
+!^        self%state(iobs)=self%state(iobs)+                            &
+!^   &                     Hmat(1)*field(i1,j1)+                        &
+!^   &                     Hmat(2)*field(i2,j1)+                        &
+!^   &                     Hmat(3)*field(i2,j2)+                        &
+!^   &                     Hmat(4)*field(i1,j2)
+!^
           ad_field(i1,j1)=ad_field(i1,j1)+                              &
      &                    Hmat(1)*ad_self%state(iobs)
           ad_field(i2,j1)=ad_field(i2,j1)+                              &
@@ -4105,21 +4105,21 @@
             Tsteps=REAL(iTend-iTstr, r8)
 !
             IF (iic(ng).eq.iTend) THEN
-!>            self%state(iobs)=self%state(iobs)/Tsteps
-!>
+!^            self%state(iobs)=self%state(iobs)/Tsteps
+!^
               ad_self%state(iobs)=ad_self%state(iobs)/Tsteps
             END IF
 !
-!>          self%state(iobs)=self%state(iobs)+                          &
-!>   &                       Hmat(1)*field(i1,j1,k1)+                   &
-!>   &                       Hmat(2)*field(i2,j1,k1)+                   &
-!>   &                       Hmat(3)*field(i2,j2,k1)+                   &
-!>   &                       Hmat(4)*field(i1,j2,k1)+                   &
-!>   &                       Hmat(5)*field(i1,j1,k2)+                   &
-!>   &                       Hmat(6)*field(i2,j1,k2)+                   &
-!>   &                       Hmat(7)*field(i2,j2,k2)+                   &
-!>   &                       Hmat(8)*field(i1,j2,k2)
-!>
+!^          self%state(iobs)=self%state(iobs)+                          &
+!^   &                       Hmat(1)*field(i1,j1,k1)+                   &
+!^   &                       Hmat(2)*field(i2,j1,k1)+                   &
+!^   &                       Hmat(3)*field(i2,j2,k1)+                   &
+!^   &                       Hmat(4)*field(i1,j2,k1)+                   &
+!^   &                       Hmat(5)*field(i1,j1,k2)+                   &
+!^   &                       Hmat(6)*field(i2,j1,k2)+                   &
+!^   &                       Hmat(7)*field(i2,j2,k2)+                   &
+!^   &                       Hmat(8)*field(i1,j2,k2)
+!^
             ad_field(i1,j1,k1)=ad_field(i1,j1,k1)+                      &
      &                         Hmat(1)*ad_self%state(iobs)
             ad_field(i2,j1,k1)=ad_field(i2,j1,k1)+                      &
