@@ -614,6 +614,8 @@
       real (r8), target, allocatable, intent(inout) :: field(:,:,:)
 !
       logical                           :: LcomputeC2A
+      integer                           :: IstrR, IendR, JstrR, JendR
+      integer                           :: i, j, k
       integer                           :: is, ie, js, je, ks, ke
       integer,                parameter :: nz = 1
       real (r8),            allocatable :: Zeven(:)
@@ -629,6 +631,11 @@
       je=BOUNDS(ng)%UBj(tile)
       ks=1
       ke=N(ng)
+!
+      IstrR=BOUNDS(ng)%Istr(tile)
+      IendR=BOUNDS(ng)%Iend(tile)
+      JstrR=BOUNDS(ng)%Jstr(tile)
+      JendR=BOUNDS(ng)%Jend(tile)
 !
       IF (.not.allocated(field)) THEN
         allocate ( field(is:ie, js:je, nz) )
@@ -655,30 +662,50 @@
           allocate ( self%Va(is:ie, js:je, ks:ke) )
           self%Va=0.0_r8
         END IF
+        IF (.not.associated(self%Uc)) THEN
+          allocate ( self%Uc(is:ie, js:je, ks:ke) )
+          self%Uc=0.0_r8
+        END IF
+        IF (.not.associated(self%Vc)) THEN
+          allocate ( self%Vc(is:ie, js:je, ks:ke) )
+          self%Vc=0.0_r8
+        END IF
 !
-!  Assign kernel state (u, v) variables to temporary pointers.
-!
-        self%Uc => NULL()
-        self%Vc => NULL()
+!  Copy the kernel state variables (u, v) to temporary arrays (Uc, Vc).
+!  Note that pointer association cannot be used here, as the
+!  transformation cannot change the native state values.
 !
         IF (hofxID.eq.iNLM) THEN
-          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%u(is:ie,js:je,        &
-     &                                              ks:ke,NOUT)
-          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%v(is:ie,js:je,        &
-     &                                              ks:ke,NOUT)
+          DO k=ks,ke
+            DO j=js,je
+              DO i=is,ie
+                self%Uc(i,j,k)=OCEAN(ng)%u(i,j,k,NOUT)
+                self%Vc(i,j,k)=OCEAN(ng)%v(i,j,k,NOUT)
+              END DO
+            END DO
+          END DO
+
 #  ifdef TLM_OBS
         ELSE IF ((hofxID.eq.iTLM).or.(hofxID.eq.iRPM)) THEN
-          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je,     &
-     &                                                 ks:ke,NOUT)
-          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je,     &
-     &                                                 ks:ke,NOUT)
+          DO k=ks,ke
+            DO j=js,je
+              DO i=is,ie
+                self%Uc(i,j,k)=OCEAN(ng)%tl_u(i,j,k,NOUT)
+                self%Vc(i,j,k)=OCEAN(ng)%tl_v(i,j,k,NOUT)
+              END DO
+            END DO
+          END DO
 #  endif
 #  ifndef VERIFICATION
         ELSE IF (hofxID.eq.iSTD) THEN
-          self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%e_u(is:ie,js:je,      &
-     &                                                ks:ke,1)
-          self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%e_v(is:ie,js:je,      &
-     &                                                ks:ke,1)
+          DO k=ks,ke
+            DO j=js,je
+              DO i=is,ie
+                self%Uc(i,j,k)=OCEAN(ng)%e_u(i,j,k,NOUT)
+                self%Vc(i,j,k)=OCEAN(ng)%e_v(i,j,k,NOUT)
+              END DO
+            END DO
+          END DO
 #  endif
         END IF
 !
@@ -861,11 +888,8 @@
 !  (f_u, f_v) instead of (ad_u, ad_v).
 !
         DO k=ks,ke
-!^        DO j=js,je
-!^          DO i=is,ie
-!^
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=js,je
+            DO i=is,ie
 !^            self%Uc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_u(is:ie,js:je, &
 !^   &                                                     ks:ke,NOUT)
 !^            self%Vc(is:ie,js:je,ks:ke) => OCEAN(ng)%tl_v(is:ie,js:je, &
@@ -1537,7 +1561,6 @@
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+                        &
      &                        GRID(ng)%SinAngler(i,j)*ad_VaSinA
             ad_VaSinA=0.0_r8
-
 !^          VaCosA=self%Va(i,j,k)*GRID(ng)%CosAngler(i,j)
 !^
             ad_self%Va(i,j,k)=ad_self%Va(i,j,k)+                        &

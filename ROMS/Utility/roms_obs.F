@@ -1398,6 +1398,7 @@
           poolname='uv_codar'
           varname(1)='Ucodar'
           Varname(2)='Vcodar'
+          HaveUVobs(ng)=.TRUE.
         CASE (60)
           poolname='SST'
           varname(1)='SST'
