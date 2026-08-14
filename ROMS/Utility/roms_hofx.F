@@ -2421,15 +2421,16 @@
               self%ObsVetting(iobs)=0
               tally(mc+1)=tally(mc+1)+1        ! obs rejected
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=self%depth(i1,j1,k  )     ! to fractional level
                 Zbot=self%depth(i1,j1,k-1)
                 IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
      &              (obs%Zgrid(i).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=self%depth(i1,j1,k2)-self%depth(i1,j1,k1)
               r2=(obs%Zgrid(i)-self%depth(i1,j1,k1))/dz
               r1=1.0_r8-r2
@@ -2732,15 +2733,16 @@
               ad_self%ObsVetting(iobs)=0
               tally(mc+1)=tally(mc+1)+1        ! obs rejected
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
                 Zbot=ad_self%depth(i1,j1,k-1)
                 IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
      &              (obs%Zgrid(i).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=ad_self%depth(i1,j1,k2)-ad_self%depth(i1,j1,k1)
               r2=(obs%Zgrid(i)-ad_self%depth(i1,j1,k1))/dz
               r1=1.0_r8-r2
@@ -3688,15 +3690,16 @@
               self%ObsVetting(iobs)=0
               tally(mc+1)=tally(mc+1)+1        ! obs rejected
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=self%depth(i1,j1,k  )     ! to fractional level
                 Zbot=self%depth(i1,j1,k-1)
                 IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
      &              (obs%Zgrid(i).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=self%depth(i1,j1,k2)-self%depth(i1,j1,k1)
               r2=(obs%Zgrid(i)-self%depth(i1,j1,k1))/dz
               r1=1.0_r8-r2
@@ -4051,15 +4054,16 @@
               ad_self%ObsVetting(iobs)=0
               tally(mc+1)=tally(mc+1)+1        ! obs reject
             ELSE
-              DO k=N(ng),2,-1                  ! Otherwise, interpolate
+              K_LOOP : DO k=N(ng),2,-1         ! Otherwise, interpolate
                 Ztop=ad_self%depth(i1,j1,k  )  ! to fractional level
                 Zbot=ad_self%depth(i1,j1,k-1)
                 IF ((Ztop.gt.obs%Zgrid(i)).and.                         &
      &              (obs%Zgrid(i).ge.Zbot)) THEN
                   k1=k-1
                   k2=k
+                  EXIT K_LOOP
                 END IF
-              END DO
+              END DO K_LOOP
               dz=ad_self%depth(i1,j1,k2)-ad_self%depth(i1,j1,k1)
               r2=(obs%Zgrid(i)-ad_self%depth(i1,j1,k1))/dz
               r1=1.0_r8-r2
