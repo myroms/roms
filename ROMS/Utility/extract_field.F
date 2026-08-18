@@ -67,7 +67,7 @@
 # ifdef ADJUST_BOUNDARY
       PUBLIC  :: extract_boundary
 # endif
-      PUBLIC  ;; extract_field
+      PUBLIC  :: extract_field
       PUBLIC  :: interp_coords
 !
 # ifdef ADJUST_BOUNDARY
