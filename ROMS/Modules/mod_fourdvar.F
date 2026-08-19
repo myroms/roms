@@ -1306,7 +1306,7 @@
 #  endif
 
 #  ifdef BGQC
-      IF (associated(BgThresh)) THEN
+      IF (allocated(BgThresh)) THEN
         deallocate (BgThresh)
       END IF
 #  endif
@@ -2293,13 +2293,13 @@
 #  endif
 
 #  ifdef BGQC
-      IF (.not.associated(BgThresh)) THEN
+      IF (.not.allocated(BgThresh)) THEN
         allocate ( BgThresh(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       BgThresh = IniVal
 
-      IF (.not.associated(Jact_S)) THEN
+      IF (.not.allocated(Jact_S)) THEN
         allocate ( Jact_S(0:Ninner) )
         Dmem(1)=Dmem(1)+REAL(Ninner+1,r8)
       END IF

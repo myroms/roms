@@ -43,7 +43,7 @@
 # endif
 #endif
 #ifdef VERIFICATION
-# ifndef IODA_OBS
+# ifdef IODA_OBS
       USE roms_hofx_mod,     ONLY : hofx_finalize
 # else
       USE stats_modobs_mod,  ONLY : stats_modobs
