@@ -12,8 +12,12 @@
 ###########################################################################
 
 if( MPI )
-  if( ${COMM} MATCHES "intel")
+  if( ${COMM} MATCHES "intel" )
     execute_process( COMMAND which mpiifort
+                     OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
+                     OUTPUT_STRIP_TRAILING_WHITESPACE )
+  elseif( ${COMM} MATCHES "oneapi" )
+    execute_process( COMMAND which mpiifx
                      OUTPUT_VARIABLE CMAKE_Fortran_COMPILER
                      OUTPUT_STRIP_TRAILING_WHITESPACE )
   else()
