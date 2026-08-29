@@ -669,6 +669,9 @@
 !
       status=PIO_noerr
 !
+      Awrk4 => NULL()
+      Awrk8 => NULL()
+!
 !  Set first and last tile computational grid point according to the
 !  staggered C-grid location. Ghost points are not included.
 !

@@ -1575,11 +1575,11 @@
       integer :: cLB(2), cUB(2), eLB(2), eUB(2), tLB(2), tUB(2)
 !
       integer, allocatable :: deBlockList(:,:,:)
-      integer (i4b), pointer :: ptrM(:,:) => NULL()
+      integer (i4b), pointer :: ptrM(:,:)
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()
-      real (dp), pointer :: ptrX(:,:) => NULL()
-      real (dp), pointer :: ptrY(:,:) => NULL()
+      real (dp), pointer :: ptrA(:,:)
+      real (dp), pointer :: ptrX(:,:)
+      real (dp), pointer :: ptrY(:,:)
 !
       character (len=40) :: name
 
@@ -1593,6 +1593,11 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrA => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetGridArrays',    &
@@ -1954,7 +1959,7 @@
       integer :: IminP, ImaxP, JminP, JmaxP
       integer :: haloLW(2), haloUW(2)
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", COAMPS_SetStates"
@@ -1970,6 +1975,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_SetStates',        &
@@ -3216,9 +3223,9 @@
 
       real (dp) :: Fval, MyFmax(3), MyFmin(3), Fmin(3), Fmax(3)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
-      real (KIND(adom(1)%tsea)), pointer :: Fout(:,:) => NULL()
+      real (KIND(adom(1)%tsea)), pointer :: Fout(:,:)
 !
       character (len=22 )     :: Time_CurrentString
 
@@ -3237,6 +3244,9 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
+      Fout  => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_ProcessImport',    &
@@ -3663,7 +3673,7 @@
 
       real (dp) :: MyFmax(1), MyFmin(1), Fmin(1), Fmax(1), Fval
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=22)      :: Time_CurrentString
 
@@ -3682,6 +3692,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering COAMPS_Export',           &

@@ -1364,11 +1364,11 @@
       integer, allocatable :: IpatchEnds(:),   JpatchEnds(:)
       integer, allocatable :: deBlockList(:,:,:)
 !
-      integer (i4b), pointer :: ptrM(:,:) => NULL()
+      integer (i4b), pointer :: ptrM(:,:)
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()
-      real (dp), pointer :: ptrX(:,:) => NULL()
-      real (dp), pointer :: ptrY(:,:) => NULL()
+      real (dp), pointer :: ptrA(:,:)
+      real (dp), pointer :: ptrX(:,:)
+      real (dp), pointer :: ptrY(:,:)
 !
       character (len=40) :: name
 
@@ -1382,6 +1382,11 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrA => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetGridArrays',       &
@@ -1851,7 +1856,7 @@
       integer :: localPET, PETcount
       integer :: ExportCount, ImportCount
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", WRF_SetStates"
@@ -1866,6 +1871,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_SetStates',           &
@@ -3224,9 +3231,9 @@
 
       real (dp) :: Fval, MyFmax(3), MyFmin(3), Fmin(3), Fmax(3)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
-      real (KIND(grid%sst)), pointer :: Fout(:,:) => NULL()
+      real (KIND(grid%sst)), pointer :: Fout(:,:)
 !
       character (len=22 )     :: Time_CurrentString
 
@@ -3245,6 +3252,9 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
+      Fout  => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_ProcessImport_scalar',&
@@ -3707,11 +3717,11 @@
 !
       real (dp), parameter :: MaxOcnVelocity = 10.0_dp   ! m/s
 !
-      real (dp), pointer :: ptrU2d(:,:) => NULL()
-      real (dp), pointer :: ptrV2d(:,:) => NULL()
+      real (dp), pointer :: ptrU2d(:,:)
+      real (dp), pointer :: ptrV2d(:,:)
 !
-      real (KIND(grid%uoce)), pointer :: Uout(:,:) => NULL()
-      real (KIND(grid%voce)), pointer :: Vout(:,:) => NULL()
+      real (KIND(grid%uoce)), pointer :: Uout(:,:)
+      real (KIND(grid%voce)), pointer :: Vout(:,:)
 !
       character (len=22 ) :: Time_CurrentString
 
@@ -3730,6 +3740,11 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrU2d => NULL()
+      ptrV2d => NULL()
+      Uout   => NULL()
+      Vout   => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_ProcessImport_vector',&
@@ -4280,7 +4295,7 @@
       real (dp) :: cff1, cff2, cff3, f1, scale
       real (dp) :: MyFmax(1), MyFmin(1), Fmin(1), Fmax(1), Fval
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=22)      :: Time_CurrentString
 # ifdef WRF_TIMEAVG
@@ -4301,6 +4316,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WRF_Export',              &

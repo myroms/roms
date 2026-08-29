@@ -1366,11 +1366,11 @@
       integer :: localDE, localDEcount, localPET, PETcount
       integer :: cpus_per_dim(2)
 !
-      integer (i4b), pointer :: ptrM(:,:) => NULL()
+      integer (i4b), pointer :: ptrM(:,:)
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()
-      real (dp), pointer :: ptrX(:,:) => NULL()
-      real (dp), pointer :: ptrY(:,:) => NULL()
+      real (dp), pointer :: ptrA(:,:)
+      real (dp), pointer :: ptrX(:,:)
+      real (dp), pointer :: ptrY(:,:)
 !
       character (len=40) :: name
 
@@ -1384,6 +1384,11 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrA => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetGridArrays',     &
@@ -1730,7 +1735,7 @@
       integer :: localPET, PETcount
       integer :: ExportCount, ImportCount
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", RegCM_SetStates"
@@ -1746,6 +1751,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_SetStates',         &
@@ -2379,7 +2386,7 @@
       real (dp) :: MyFmax(2), MyFmin(2), Fmin(2), Fmax(2), Fval
       real (dp) :: scale, add_offset
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=22 )     :: Time_CurrentString
       character (len=100)     :: FieldName
@@ -2399,6 +2406,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_Import',            &
@@ -2797,7 +2806,7 @@
 
       real (dp) :: MyFmax(1), MyFmin(1), Fmin(1), Fmax(1), Fval
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=22)      :: Time_CurrentString
 
@@ -2815,6 +2824,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering RegCM_Export',            &
