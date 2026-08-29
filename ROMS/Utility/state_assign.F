@@ -53,13 +53,13 @@
 !
 !  Declare pointers for temporary work state variables.
 !
-      real (r8), pointer :: my_zeta(:,:)  => NULL()
-      real (r8), pointer :: my_ubar(:,:)  => NULL()
-      real (r8), pointer :: my_vbar(:,:)  => NULL()
+      real (r8), pointer :: my_zeta(:,:)       ! free surface
+      real (r8), pointer :: my_ubar(:,:)       ! 2D U-momentum
+      real (r8), pointer :: my_vbar(:,:)       ! 2D V-momentum
 #ifdef SOLVE3D
-      real (r8), pointer :: my_t(:,:,:,:) => NULL()
-      real (r8), pointer :: my_u(:,:,:)   => NULL()
-      real (r8), pointer :: my_v(:,:,:)   => NULL()
+      real (r8), pointer :: my_t(:,:,:,:)      ! tracers
+      real (r8), pointer :: my_u(:,:,:)        ! 3D U-momentum
+      real (r8), pointer :: my_v(:,:,:)        ! 3D V-momentum
 #endif 
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -93,6 +93,15 @@
       ke=N(ng)
       ls=1
       le=NT(ng)
+!
+      my_zeta => NULL()
+      my_ubar => NULL()
+      my_vbar => NULL()
+#ifdef SOLVE3D
+      my_t    => NULL()
+      my_u    => NULL()
+      my_v    => NULL()
+#endif 
 !
 !  Associate to required state vector variables.
 !

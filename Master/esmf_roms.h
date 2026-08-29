@@ -1560,11 +1560,11 @@
       integer :: staggerEdgeUWidth(2)
 !
       integer, allocatable :: deBlockList(:,:,:)
-      integer (i4b), pointer :: ptrM(:,:) => NULL()     ! land/sea mask
+      integer (i4b), pointer :: ptrM(:,:)               ! land/sea mask
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()         ! area
-      real (dp), pointer :: ptrX(:,:) => NULL()         ! longitude
-      real (dp), pointer :: ptrY(:,:) => NULL()         ! latitude
+      real (dp), pointer :: ptrA(:,:)                   ! area
+      real (dp), pointer :: ptrX(:,:)                   ! longitude
+      real (dp), pointer :: ptrY(:,:)                   ! latitude
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_SetGridArrays"
@@ -1587,6 +1587,11 @@
 !  Set limits of the grid arrays based on tile decomposition (MPI rank)
 !  and nested grid number.
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrA => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IstrR=BOUNDS(ng)%IstrR(tile)   ! Full range I-starting (RHO)
       IendR=BOUNDS(ng)%IendR(tile)   ! Full range I-ending   (RHO)
@@ -2045,7 +2050,7 @@
       integer :: staggerEdgeLWidth(2)
       integer :: staggerEdgeUWidth(2)
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=10) :: AttList(1)
 
@@ -2064,6 +2069,8 @@
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
 !
+      ptr2d => NULL()
+!   
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ROMS_SetStates',          &
      &                          ', PET', PETrank
@@ -2794,7 +2801,7 @@
 # endif
       real (dp) :: AttValues(14)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
 # if defined WIND_MINUS_CURRENT && !defined BULK_FLUXES
       real (dp), allocatable  :: RhoAir(:,:),  Wstar(:,:)
@@ -2831,6 +2838,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Import',             &
@@ -4460,7 +4469,7 @@
 !
       real (dp) :: Fmin(1), Fmax(1), Fval, MyFmin(1), MyFmax(1)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       real (dp), allocatable  :: Ubar(:,:), Vbar(:,:)
       real (dp), allocatable  :: Usur(:,:), Vsur(:,:)
@@ -4482,6 +4491,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering ROMS_Export',             &

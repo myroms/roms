@@ -233,9 +233,9 @@
       character (ESMF_MAXSTR) :: msgString
       character (ESMF_MAXSTR) :: Cname, Dname, Fname, Rname, Sname
 !
-      character (ESMF_MAXSTR), pointer :: CplSetList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: dstList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: srcList(:) => NULL()
+      character (ESMF_MAXSTR), pointer :: CplSetList(:)
+      character (ESMF_MAXSTR), pointer :: dstList(:)
+      character (ESMF_MAXSTR), pointer :: srcList(:)
 !
       TYPE (ESMF_ExtrapMethod_Flag)   :: extrapMethod
       TYPE (ESMF_Field)               :: dstField, srcField, tmpField
@@ -250,6 +250,10 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      CplSetList => NULL()
+      dstList    => NULL()
+      srcList    => NULL()
 !
       rc=ESMF_SUCCESS
 !
@@ -1105,7 +1109,7 @@
 !
       real (dp) :: src_total, dst_total, rel_error
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", Coupler_ExecuteRH"
@@ -1115,9 +1119,9 @@
       character (ESMF_MAXSTR) :: dstTimeString, srcTimeString
       character (ESMF_MAXSTR) :: dstFile, srcFile
 !
-      character (ESMF_MAXSTR), pointer :: CplSetList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: dstList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: srcList(:) => NULL()
+      character (ESMF_MAXSTR), pointer :: CplSetList(:)
+      character (ESMF_MAXSTR), pointer :: dstList(:)
+      character (ESMF_MAXSTR), pointer :: srcList(:)
 !
       TYPE (ESMF_Field)       :: srcField, dstField, tmpField
       TYPE (ESMF_FieldBundle) :: dstFields, srcFields
@@ -1129,6 +1133,11 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d      => NULL()
+      CplSetList => NULL()
+      dstList    => NULL()
+      srcList    => NULL()
 !
       rc=ESMF_SUCCESS
 !
@@ -1807,9 +1816,9 @@
 
       character(ESMF_MAXSTR) :: Cname, Rname
 
-      character (ESMF_MAXSTR), pointer :: CplSetList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: dstList(:) => NULL()
-      character (ESMF_MAXSTR), pointer :: srcList(:) => NULL()
+      character (ESMF_MAXSTR), pointer :: CplSetList(:)
+      character (ESMF_MAXSTR), pointer :: dstList(:)
+      character (ESMF_MAXSTR), pointer :: srcList(:)
 !
       TYPE (ESMF_VM)          :: vm
       TYPE (ESMF_State)       :: state
@@ -1819,6 +1828,10 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      CplSetList => NULL()
+      dstList    => NULL()
+      srcList    => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_ReleaseRH',       &
@@ -2227,13 +2240,13 @@
       integer :: localDE, localDEcount, localPET, PETcount, MyComm
       integer :: cLbnd(2), cUbnd(2)
 !
-      integer (i4b), pointer :: ptrMask(:,:) => NULL()
+      integer (i4b), pointer :: ptrMask(:,:)
 !
       real (dp) :: MyAreaSum(1), AreaSum(1)
       real (dp) :: error_unit
 !
-      real (dp), pointer :: ptrField(:,:) => NULL()
-      real (dp), pointer :: ptrArea(:,:) => NULL()
+      real (dp), pointer :: ptrField(:,:)
+      real (dp), pointer :: ptrArea(:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", Coupler_AdjustedField"
@@ -2246,6 +2259,10 @@
 !-----------------------------------------------------------------------
 !  Initialize.
 !-----------------------------------------------------------------------
+!
+      ptrMask  => NULL()
+      ptrField => NULL()
+      ptrArea  => NULL()
 !
 !  Set return code flag to success state (no error).
 !
@@ -2502,12 +2519,12 @@
       integer :: localDE, localDEcount, localPET, PETcount, MyComm
       integer :: cLbnd(2), cUbnd(2)
 !
-      integer (i4b), pointer :: ptrMask(:,:) => NULL()
+      integer (i4b), pointer :: ptrMask(:,:)
 !
       real (dp) :: MyAreaSum(1), AreaSum(1)
 !
-      real (dp), pointer :: ptrField(:,:) => NULL()
-      real (dp), pointer :: ptrArea(:,:) => NULL()
+      real (dp), pointer :: ptrField(:,:)
+      real (dp), pointer :: ptrArea(:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", Coupler_AreaIntegral"
@@ -2520,6 +2537,10 @@
 !-----------------------------------------------------------------------
 !  Initialize.
 !-----------------------------------------------------------------------
+!
+      ptrMask  => NULL()
+      ptrField => NULL()
+      ptrArea  => NULL()
 !
 !  Set return code flag to success state (no error).
 !
@@ -2744,10 +2765,10 @@
       integer :: i, j, localDE, localDEcount
       integer :: cLbnd(2), cUbnd(2)
 !
-      integer (i4b), pointer :: msk2d(:,:) => NULL()
+      integer (i4b), pointer :: msk2d(:,:)
       integer (i4b), allocatable :: tlw(:,:), tuw(:,:)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", Coupler_FieldCreate"
@@ -2760,6 +2781,9 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      msk2d => NULL()
+      ptr2d => NULL()
 !
       rc=ESMF_SUCCESS
       IF (ESM_track) THEN
@@ -2963,12 +2987,12 @@
       integer :: localDE, localDEcount
       integer :: cLbnd(2), cUbnd(2)
 !
-      integer (i4b), pointer :: msk2d(:,:) => NULL()
+      integer (i4b), pointer :: msk2d(:,:)
 !
       real (dp) :: IniVal
 !
-      real (dp), pointer :: bdy2d(:,:) => NULL()
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: bdy2d(:,:)
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", Coupler_FindUnmapped"
@@ -2985,6 +3009,10 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      msk2d => NULL()
+      bdy2d => NULL()
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering Coupler_FindUnmapped',    &
