@@ -802,8 +802,10 @@
     defined ECB         || \
     defined ECOSIM      || \
     defined HYPOXIA_SRM || \
+    defined IOP_CDOM    || \
     defined NEMURO      || \
     defined NPZD_FRANKS || \
+    defined NPZD_IOP    || \
     defined NPZD_IRON   || \
     defined NPZD_POWELL || \
     defined RED_TIDE
