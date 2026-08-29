@@ -740,6 +740,9 @@
 !
       status=PIO_noerr
 !
+      Awrk4 => NULL()
+      Awrk8 => NULL()
+!
 !  Set first and last grid point according to staggered C-grid
 !  classification. Set loops offsets.
 !

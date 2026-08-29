@@ -1359,6 +1359,9 @@
       my_Amin=spval
       my_Amax=-spval
 !
+      Awrk4 => NULL()
+      Awrk8 => NULL()
+!
 !  Set global (interior plus boundary) starting and ending grid cell
 !  indices in the I- and J-directions according to staggered C-grid
 !  classification.

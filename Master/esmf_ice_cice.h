@@ -945,17 +945,17 @@
       integer :: locID, peID
       integer :: lbnd(2),ubnd(2)
 !
-      integer, pointer :: deLabelList(:) => NULL()
-      integer, pointer :: deBlockList(:,:,:) => NULL()
-      integer, pointer :: i_glob(:) => NULL()
-      integer, pointer :: j_glob(:) => NULL()
-      integer, pointer :: PETmap(:) => NULL()
+      integer, pointer :: deLabelList(:)
+      integer, pointer :: deBlockList(:,:,:)
+      integer, pointer :: i_glob(:)
+      integer, pointer :: j_glob(:)
+      integer, pointer :: PETmap(:)
 !
-      integer (i4b), pointer :: ptrM(:,:) => NULL()
+      integer (i4b), pointer :: ptrM(:,:)
 !
-      real (dp), pointer :: ptrA(:,:) => NULL()
-      real (dp), pointer :: ptrX(:,:) => NULL()
-      real (dp), pointer :: ptrY(:,:) => NULL()
+      real (dp), pointer :: ptrA(:,:)
+      real (dp), pointer :: ptrX(:,:)
+      real (dp), pointer :: ptrY(:,:)
 !
       character (len=40) :: name
 
@@ -972,6 +972,16 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      deLabelList => NULL()
+      deBlockList => NULL()
+      i_glob      => NULL()
+      j_glob      => NULL()
+      PETmap      => NULL()
+      ptrM        => NULL()
+      ptrA        => NULL()
+      ptrX        => NULL()
+      ptrY        => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetGridArrays',      &
@@ -1330,7 +1340,7 @@
       integer :: localPET
       integer :: ExportCount, ImportCount
 !
-      real (dp), pointer :: ptr3d(:,:,:) => NULL()
+      real (dp), pointer :: ptr3d(:,:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", CICE_SetStates"
@@ -1346,6 +1356,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr3d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_SetStates',          &
@@ -1961,7 +1973,7 @@
 !
       real (dp), dimension(nx_global,ny_global,max_blocks) :: Pair
 !
-      real (dp), pointer :: ptr3d(:,:,:) => NULL()
+      real (dp), pointer :: ptr3d(:,:,:)
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", CICE_Import"
@@ -1978,6 +1990,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr3d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_Import',             &
@@ -2883,7 +2897,7 @@
       real (dp) :: Fmin(1), Fmax(1), Fval, MyFmin(1), MyFmax(1)
       real (dp) :: wdir
 !
-      real (dp), pointer :: ptr3d(:,:,:) => NULL()
+      real (dp), pointer :: ptr3d(:,:,:)
 !
       character (len=22)      :: Time_CurrentString
 
@@ -2901,6 +2915,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr3d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering CICE_Export',             &

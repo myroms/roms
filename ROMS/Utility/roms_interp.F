@@ -81,9 +81,9 @@
         integer :: Imin_d, Imax_d, Jmin_d, Jmax_d  ! data bounds
 !
         real(r8), allocatable :: Adst(:,:)         ! rotation angle
-        real(r8), pointer :: Mdst(:,:) => NULL()   ! land/sea mask
-        real(r8), pointer :: Xdst(:,:) => NULL()   ! X-locations
-        real(r8), pointer :: Ydst(:,:) => NULL()   ! Y-locations
+        real(r8), pointer :: Mdst(:,:)             ! land/sea mask
+        real(r8), pointer :: Xdst(:,:)             ! X-locations
+        real(r8), pointer :: Ydst(:,:)             ! Y-locations
         real(r8), allocatable :: Idst(:,:)         ! X-fractional coords
         real(r8), allocatable :: Jdst(:,:)         ! Y-fractional coords
 !
@@ -157,6 +157,10 @@
 !-----------------------------------------------------------------------
 !  Create intepolation object for the requested C-type variable.
 !-----------------------------------------------------------------------
+!
+      self%Mdst => NULL()
+      self%Xdst => NULL()
+      self%Ydst => NULL()
 !
 !  Allocate and initialize destination interpolation parameters and
 !  arrays. This arrays are available from the calling ROMS kernel.

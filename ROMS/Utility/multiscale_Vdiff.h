@@ -2050,7 +2050,7 @@
 !
       real (r8)                         :: cff, cff1
 !
-      real (r8), pointer                :: mask(:,:) => NULL()
+      real (r8), pointer                :: mask(:,:)
 !
       real(r8), dimension(LBij:UBij,N(ng),2) :: tl_Awrk
 # if defined SPLINES_VCONV
@@ -2077,6 +2077,9 @@
       Imax=Iend
       Jmin=Jstr
       Jmax=Jend
+!
+      mask => NULL()
+!
       SELECT CASE (ctype)
         CASE (r3dvar)
           bindex=r2dvar
@@ -2569,7 +2572,7 @@
 !
       real (r8)                         :: adfac, cff, cff1
 !
-      real (r8), pointer                :: mask(:,:) => NULL()
+      real (r8), pointer                :: mask(:,:)
 !
       real(r8), dimension(LBij:UBij,N(ng),2) :: ad_Awrk
 # if defined SPLINES_VCONV
@@ -2596,6 +2599,9 @@
       Imax=Iend
       Jmin=Jstr
       Jmax=Jend
+!
+      mask => NULL()
+!
       SELECT CASE (ctype)
         CASE (r3dvar)
           bindex=r2dvar

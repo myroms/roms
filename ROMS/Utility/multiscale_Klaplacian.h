@@ -70,8 +70,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -99,6 +99,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -304,8 +310,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -333,6 +339,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8
@@ -545,8 +557,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -574,6 +586,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -773,8 +791,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -802,6 +820,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8
@@ -1008,8 +1032,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: tl_Awrk
@@ -1037,6 +1061,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -1237,8 +1267,8 @@
 
 #ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 #endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj)         :: ad_Awrk
@@ -1266,6 +1296,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8
@@ -1476,8 +1512,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -1513,6 +1549,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -1947,8 +1989,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -1984,6 +2026,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8
@@ -2524,8 +2572,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -2563,6 +2611,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -3022,8 +3076,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -3059,6 +3113,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8
@@ -3617,8 +3677,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: tl_Awrk
@@ -3656,6 +3716,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       Hfac=0.0_r8
       Khx=0.0_r8
@@ -4107,8 +4173,8 @@
 
 # ifdef NONUNIFORM_SCALES
 !
-      real (r8), pointer                :: BscaleX(:,:) => NULL()
-      real (r8), pointer                :: BscaleY(:,:) => NULL()
+      real (r8), pointer                :: BscaleX(:,:)
+      real (r8), pointer                :: BscaleY(:,:)
 # endif
 !
       real(r8), dimension(LBi:UBi,LBj:UBj,1:N(ng)) :: ad_Awrk
@@ -4146,6 +4212,12 @@
       ELSE
         rec=1                        ! strong constraint correlations
       END IF
+
+#ifdef NONUNIFORM_SCALES
+!
+      BscaleX => NULL()
+      BscaleY => NULL()
+#endif
 !
       ad_Awrk=0.0_r8
       ad_FE=0.0_r8

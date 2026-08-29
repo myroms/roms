@@ -74,8 +74,8 @@
       real (r8)                         :: deps
 #endif
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
       real (r8), dimension(0:NiterCG)               :: cg_a
@@ -107,6 +107,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       self%cg2d_r=0.0_r8
       self%cg2d_p=0.0_r8
@@ -409,8 +412,8 @@
       real (r8)                         :: dotpq, dotr, dotrd, deps
       real (r8), dimension(N(ng))       :: dotn
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
       real (r8), dimension(0:NiterCG,N(ng))         :: cg_a
@@ -442,6 +445,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       self%cg3d_r=0.0_r8
       self%cg3d_p=0.0_r8
@@ -753,8 +759,8 @@
       real (r8)                         :: deps
 # endif
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(LBij:UBij)           :: tl_scale
       real (r8), dimension(0:NiterCG)           :: cg_a
@@ -786,6 +792,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
@@ -1156,8 +1165,8 @@
       real (r8)                         :: dotpq, dotr, dotrd, deps
       real (r8), dimension(N(ng))       :: dotn
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(LBij:UBij)           :: tl_scale
       real (r8), dimension(0:NiterCG,N(ng))     :: cg_a
@@ -1189,6 +1198,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
