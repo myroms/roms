@@ -194,6 +194,8 @@
             END IF
           END IF
         END IF
+
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Read in nonlinear RHS of free-surface.
 !
@@ -207,15 +209,15 @@
      &                        InpRec, gtype, Vsize,                     &
      &                        LBi, UBi, LBj, UBj, 1, 2,                 &
      &                        Fscl, Fmin, Fmax,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                        GRID(ng) % rmask,                         &
-#endif
-#ifdef CHECKSUM
+# endif
+# ifdef CHECKSUM
      &                        OCEAN(ng) % rzeta,                        &
      &                        checksum = Fhash)
-#else
+# else
      &                        OCEAN(ng) % rzeta)
-#endif
+# endif
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,60) string, TRIM(Vname(1,idRzet)),        &
@@ -226,12 +228,12 @@
               RETURN
             ELSE
               IF (Master) THEN
-#ifdef CHECKSUM
+# ifdef CHECKSUM
                 WRITE (stdout,70) TRIM(Vname(2,idRzet)), Fmin, Fmax,    &
      &                            Fhash
-#else
+# else
                 WRITE (stdout,70) TRIM(Vname(2,idRzet)), Fmin, Fmax
-#endif
+# endif
 
               END IF
             END IF
@@ -247,6 +249,7 @@
             END IF
           END IF
         END IF
+#endif
 !
 !  Read in nonlinear 2D U-momentum component (m/s).
 !
@@ -321,6 +324,8 @@
             END IF
           END IF
         END IF
+
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Read in nonlinear RHS of 2D U-momentum component.
 !
@@ -334,15 +339,15 @@
      &                        InpRec, gtype, Vsize,                     &
      &                        LBi, UBi, LBj, UBj, 1, 2,                 &
      &                        Fscl, Fmin, Fmax,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                        GRID(ng) % umask,                         &
-#endif
-#ifdef CHECKSUM
+# endif
+# ifdef CHECKSUM
      &                        OCEAN(ng) % rubar,                        &
      &                        checksum = Fhash)
-#else
+# else
      &                        OCEAN(ng) % rubar)
-#endif
+# endif
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,60) string, TRIM(Vname(1,idRu2d)),        &
@@ -353,12 +358,12 @@
               RETURN
             ELSE
               IF (Master) THEN
-#ifdef CHECKSUM
+# ifdef CHECKSUM
                 WRITE (stdout,70) TRIM(Vname(2,idRu2d)), Fmin, Fmax,    &
      &                            Fhash
-#else
+# else
                 WRITE (stdout,70) TRIM(Vname(2,idRu2d)), Fmin, Fmax
-#endif
+# endif
 
               END IF
             END IF
@@ -374,6 +379,7 @@
             END IF
           END IF
         END IF
+#endif
 !
 !  Read in nonlinear 2D V-momentum component (m/s).
 !
@@ -448,6 +454,8 @@
             END IF
           END IF
         END IF
+
+#if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Read in nonlinear RHS 2D V-momentum component.
 !
@@ -461,15 +469,15 @@
      &                        InpRec, gtype, Vsize,                     &
      &                        LBi, UBi, LBj, UBj, 1, 2,                 &
      &                        Fscl, Fmin, Fmax,                         &
-#ifdef MASKING
+# ifdef MASKING
      &                        GRID(ng) % vmask,                         &
-#endif
-#ifdef CHECKSUM
+# endif
+# ifdef CHECKSUM
      &                        OCEAN(ng) % rvbar,                        &
      &                        checksum = Fhash)
-#else
+# else
      &                        OCEAN(ng) % rvbar)
-#endif
+# endif
             IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
               IF (Master) THEN
                 WRITE (stdout,60) string, TRIM(Vname(1,idRv2d)),        &
@@ -480,12 +488,12 @@
               RETURN
             ELSE
               IF (Master) THEN
-#ifdef CHECKSUM
+# ifdef CHECKSUM
                 WRITE (stdout,70) TRIM(Vname(2,idRv2d)), Fmin, Fmax,    &
      &                            Fhash
-#else
+# else
                 WRITE (stdout,70) TRIM(Vname(2,idRv2d)), Fmin, Fmax
-#endif
+# endif
 
               END IF
             END IF
@@ -501,6 +509,7 @@
             END IF
           END IF
         END IF
+#endif
 
 #ifdef SOLVE3D
 !

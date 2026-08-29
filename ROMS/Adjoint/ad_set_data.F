@@ -1182,7 +1182,11 @@
 !
 !  Set forward free-surface.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfldr_tile (ng, tile, iADM, idFsur,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%zetaG,                          &
@@ -1201,7 +1205,11 @@
 !
 !  Set forward 2D momentum.
 !
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+      DO k=1,4
+#  else
       DO k=1,3
+#  endif
         CALL set_2dfldr_tile (ng, tile, iADM, idUbar,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%ubarG,                          &
