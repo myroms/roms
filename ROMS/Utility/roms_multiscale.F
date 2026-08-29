@@ -1024,9 +1024,9 @@
       integer                           :: gtype, i, itrc, ns
       integer                           :: ncid, status, varid
 !
-      real (r8), pointer                :: Bscale(:,:,:) => NULL()
+      real (r8), pointer                :: Bscale(:,:,:)
 #  ifdef MASKING
-      real (r8), pointer                :: mask(:,:) => NULL()
+      real (r8), pointer                :: mask(:,:)
 #  endif
       real (r8)                         :: Fmin, Fmax, Fscl
       real (r8), dimension(4)           :: Fvalue
@@ -1063,6 +1063,11 @@
       op_handle(2)='MAX'
       op_handle(3)='MIN'
       op_handle(4)='MAX'
+#  endif
+!
+      Bscale => NULL()
+#  ifdef MASKING
+      mask   => NULL()
 #  endif
 !
 !  Open input NetCDF file.

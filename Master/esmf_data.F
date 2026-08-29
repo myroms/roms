@@ -1259,10 +1259,10 @@
       integer :: Im, Istr, Iend, Jm, Jstr, Jend, i, j
       integer :: localDE, localDEcount
 !
-      integer (i4b), pointer :: ptrM(:,:) => NULL()     ! land/sea mask
+      integer (i4b), pointer :: ptrM(:,:)               ! land/sea mask
 !
-      real (dp), pointer :: ptrX(:,:) => NULL()         ! longitude
-      real (dp), pointer :: ptrY(:,:) => NULL()         ! latitude
+      real (dp), pointer :: ptrX(:,:)                   ! longitude
+      real (dp), pointer :: ptrY(:,:)                   ! latitude
 !
       character (len=40) :: GridName
 
@@ -1276,6 +1276,10 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetGridArrays',      &
@@ -1494,7 +1498,7 @@
       integer :: localDE, localDEcount, localPET
       integer :: ExportCount
 !
-      real (dp), dimension(:,:), pointer :: ptr2d => NULL()
+      real (dp), dimension(:,:), pointer :: ptr2d
 !
       character (len=10) :: AttList(1)
       character (len=20) :: FieldName
@@ -1512,6 +1516,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_SetStates',          &
@@ -2121,8 +2127,8 @@
       real (dp) :: Fmin(1), Fmax(1), MyFmin(1), MyFmax(1), Fval
       real (dp) :: MyAttValues(14)
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
-      real (dp), pointer :: ptr3d(:,:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
+      real (dp), pointer :: ptr3d(:,:,:)
 !
       character (len=20)      :: ShortName
 # ifdef TIME_INTERP
@@ -2147,6 +2153,9 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
+      ptr3d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering DATA_Export',             &

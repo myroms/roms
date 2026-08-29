@@ -215,6 +215,8 @@ ifdef USE_MPI
  ifdef USE_MPIF90
   ifeq ($(which_MPI), intel)
                FC := mpiifort
+  else ifeq ($(which_MPI), oneapi)
+               FC := mpiifx
   else
                FC := mpif90
   endif

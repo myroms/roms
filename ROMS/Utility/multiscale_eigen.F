@@ -1428,7 +1428,7 @@
             IF (ANY(Lobc(:,isUvel,ng))) THEN
               CALL pio_netcdf_get_fvar (ng, model, ncname,              &
      &                                  Vname(1,ieU3bc),                &
-     &                                  self%ubar_obc_eigen,            &
+     &                                  self%u_obc_eigen,               &
      &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                                  start = (/1,1,1,1,1/),          &
      &                                  total = (/nl,N(ng),4,ns,2/))
@@ -1445,7 +1445,7 @@
             IF (ANY(Lobc(:,isVvel,ng))) THEN
               CALL pio_netcdf_get_fvar (ng, model, ncname,              &
      &                                  Vname(1,ieV3bc),                &
-     &                                  self%ubar_obc_eigen,            &
+     &                                  self%v_obc_eigen,               &
      &                                  pioFile = NRM(3,ng)%pioFile,    &
      &                                  start = (/1,1,1,1,1/),          &
      &                                  total = (/nl,N(ng),4,ns,2/))
