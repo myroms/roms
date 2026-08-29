@@ -59,8 +59,18 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_scalars
+!
       implicit none
-
+!
+      PUBLIC  :: exchange_p3d_tile
+      PUBLIC  :: exchange_r3d_tile
+      PUBLIC  :: exchange_u3d_tile
+      PUBLIC  :: exchange_v3d_tile
+      PUBLIC  :: exchange_w3d_tile
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -68,9 +78,6 @@
      &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -271,7 +278,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_p3d_tile
 
@@ -282,9 +289,6 @@
      &                              A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -484,18 +488,16 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_r3d_tile
+
 !
 !***********************************************************************
       SUBROUTINE exchange_u3d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -695,7 +697,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_u3d_tile
 
@@ -706,9 +708,6 @@
      &                              A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -908,7 +907,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_v3d_tile
 
@@ -918,9 +917,6 @@
      &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1121,9 +1117,8 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_w3d_tile
 #endif
-
       END MODULE exchange_3d_mod

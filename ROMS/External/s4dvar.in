@@ -593,8 +593,9 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
        NRMnameB == roms_nrm_b.nc
        NRMnameF == roms_nrm_f.nc
 
-! Input/output observation filename, [1:Ngrids].
+! Input observation filename(s), [1:Ngrids].
 
+      NOBSFILES =  1
         OBSname == roms_obs.nc
 
 ! Input/output Hessian eigenvectors filename, [1:Ngrids].
@@ -1277,6 +1278,14 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !  SVCname        Input background-error covariance horizontal
 !                   spatially-varying correlation length scales filename.
 !
+!                 Users can utilize the original native 4D-Var NetCDF file,
+!                 which consolidates all observations into a single vector
+!                 sorted in ascending order of time. As the observation
+!                 operators and filters become increasingly complex,
+!                 separating the observations into multiple files can be
+!                 beneficial. Alternatively, IODA enhanced-NetCDF4 files
+!                 with "Groups" are also acceptable.
+!
 !  STDnameM       Input model error covariance
 !                   standard deviation filename.
 !
@@ -1304,7 +1313,9 @@ Sigma_max(isTvar) == 0.33d0   0.056d0  ! 1:NT tracers maximum STD
 !  NRMnameF       Input/output surface forcing error covariance
 !                   normalization factors filename.
 !
-!  OBSname        Input/Output observations data filename.
+!  NOBSFILES      Number of observation files, usually NOBSFILES=1.
+!
+!  OBSname        Input/Output observations data filename(s).
 !
 !  HSSname        Input/Output Hessian eigenvectors filename.
 !

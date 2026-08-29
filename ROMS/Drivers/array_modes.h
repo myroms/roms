@@ -472,7 +472,7 @@
 !
       logical :: Lcgini, Linner, Lposterior
 !
-      integer :: my_inner, my_outer
+      integer :: my_inner, my_outer, my_tile
       integer :: Lbck, Lini, Rec1, Rec2
       integer :: i, lstr, ng, status, tile
       integer :: Fcount, NRMrec
@@ -512,6 +512,11 @@
       inner=0
       ERstr=1
       ERend=Nouter
+#ifdef DISTRIBUTE
+      my_tile=MyRank
+#else
+      my_tile=-1
+#endif
       driver='array_modes_w4dvar'
 !
 !-----------------------------------------------------------------------
@@ -545,11 +550,7 @@
         INI(ng)%Rindex=1
         Fcount=INI(ng)%load
         INI(ng)%Nrec(Fcount)=1
-#ifdef DISTRIBUTE
-        CALL wrt_ini (ng, MyRank, 1)
-#else
-        CALL wrt_ini (ng, -1, 1)
-#endif
+        CALL wrt_ini (ng, my_tile, 1)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
@@ -1032,11 +1033,7 @@
 !  forcing is delayed by nADJ time-steps.
 !
             DO ng=1,Ngrids
-# ifdef DISTRIBUTE
-              CALL ad_wrt_his (ng, MyRank)
-# else
-              CALL ad_wrt_his (ng, -1)
-# endif
+              CALL ad_wrt_his (ng, my_tile)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
             END DO
@@ -1046,11 +1043,7 @@
 !
             DO ng=1,Ngrids
               WRTforce(ng)=.FALSE.
-# ifdef DISTRIBUTE
-              CALL ad_wrt_his (ng, MyRank)
-# else
-              CALL ad_wrt_his (ng, -1)
-# endif
+              CALL ad_wrt_his (ng, my_tile)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
             END DO
@@ -1074,11 +1067,7 @@
             END IF
             DO ng=1,Ngrids
               TLF(ng)%Rindex=0
-# ifdef DISTRIBUTE
-              CALL wrt_impulse (ng, MyRank, iADM, ADM(ng)%name)
-# else
-              CALL wrt_impulse (ng, -1, iADM, ADM(ng)%name)
-# endif
+              CALL wrt_impulse (ng, my_tile, iADM, ADM(ng)%name)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
             END DO
@@ -1239,11 +1228,7 @@
 !  forcing is delayed by nADJ time-steps.
 !
         DO ng=1,Ngrids
-#  ifdef DISTRIBUTE
-          CALL ad_wrt_his (ng, MyRank)
-#  else
-          CALL ad_wrt_his (ng, -1)
-#  endif
+          CALL ad_wrt_his (ng, my_tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
@@ -1252,11 +1237,7 @@
 !
         DO ng=1,Ngrids
           WRTforce(ng)=.FALSE.
-#  ifdef DISTRIBUTE
-          CALL ad_wrt_his (ng, MyRank)
-#  else
-          CALL ad_wrt_his (ng, -1)
-#  endif
+          CALL ad_wrt_his (ng, my_tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 !
@@ -1279,11 +1260,7 @@
         END IF
         DO ng=1,Ngrids
           TLF(ng)%Rindex=0
-#  ifdef DISTRIBUTE
-          CALL wrt_impulse (ng, MyRank, iADM, ADM(ng)%name)
-#  else
-          CALL wrt_impulse (ng, -1, iADM, ADM(ng)%name)
-#  endif
+          CALL wrt_impulse (ng, my_tile, iADM, ADM(ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
 
@@ -1431,13 +1408,6 @@
       DO ng=1,Ngrids
 !       HIS(ng)%ncid=-1
       END DO
-!!
-!! Compute and report model-observation comparison statistics.
-!!
-!!    DO ng=1,Ngrids
-!!      CALL stats_modobs (ng)
-!!    END DO
-!!
 !
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1524,11 +1494,7 @@
 !  forcing is delayed by nADJ time-steps.
 !
       DO ng=1,Ngrids
-#ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
-#else
-        CALL ad_wrt_his (ng, -1)
-#endif
+        CALL ad_wrt_his (ng, my_tile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
@@ -1537,11 +1503,7 @@
 !
       WRTforce=.FALSE.
       DO ng=1,Ngrids
-#ifdef DISTRIBUTE
-        CALL ad_wrt_his (ng, MyRank)
-#else
-        CALL ad_wrt_his (ng, -1)
-#endif
+        CALL ad_wrt_his (ng, my_tile)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
@@ -1564,11 +1526,7 @@
       END IF
       DO ng=1,Ngrids
         TLF(ng)%Rindex=0
-#ifdef DISTRIBUTE
-        CALL wrt_impulse (ng, MyRank, iADM, ADM(ng)%name)
-#else
-        CALL wrt_impulse (ng, -1, iADM, ADM(ng)%name)
-#endif
+        CALL wrt_impulse (ng, my_tile, iADM, ADM(ng)%name)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !
@@ -2042,11 +2000,7 @@
           END IF
           blowup=exit_flag
           exit_flag=NoError
-#ifdef DISTRIBUTE
-          CALL wrt_rst (ng, MyRank)
-#else
-          CALL wrt_rst (ng, -1)
-#endif
+          CALL wrt_rst (ng, my_tile)
         END IF
       END DO
 !

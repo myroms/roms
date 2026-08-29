@@ -17,6 +17,7 @@
 !    assign_string    allocates and assign string                      !
 !    find_string      scans a character array for a specified string   !
 !    join_string      concatenate character array into a single string !
+!    nc_error         checks return flag from NetCDF libray calls      !
 !    lowercase        converts input string characters to lowercase    !
 !    uppercase        converts input string characters to uppercase    !
 !                                                                      !
@@ -32,6 +33,15 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_parallel
+!
+#if defined DISTRIBUTE && defined DISJOINTED
+      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
+#endif
+      USE mod_iounits,    ONLY : ioerror, stdout
+      USE mod_scalars,    ONLY : exit_flag
+      USE netcdf,         ONLY : nf90_strerror
+!
       implicit none
 !
       PRIVATE
@@ -44,6 +54,7 @@
       PUBLIC :: find_string
       PUBLIC :: join_string
       PUBLIC :: lowercase
+      PUBLIC :: nc_error
       PUBLIC :: uppercase
 !
       CONTAINS
@@ -69,13 +80,10 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_iounits,  ONLY : stdout
-      USE mod_parallel, ONLY : Master
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: flag, NoErr, line
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -96,7 +104,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION FoundError
 !
@@ -131,18 +139,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_parallel
-      USE mod_iounits,    ONLY : stdout
-
-#if defined DISTRIBUTE && defined DISJOINTED
-      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
-#endif
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, NoErr, line
       integer, intent(inout) :: flag
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -191,7 +192,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION GlobalError
 !
@@ -226,18 +227,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_parallel
-      USE mod_iounits,    ONLY : stdout
-
-#if defined DISTRIBUTE && defined DISJOINTED
-      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
-#endif
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, NoErr, line
       integer, intent(inout) :: flag
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -291,7 +285,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION TaskError
 !
@@ -439,7 +433,7 @@
       integer, intent(in) :: Asize
 
       integer, intent(out) :: Aindex
-
+!
       character (len=*), intent(in) :: A(Asize)
       character (len=*), intent(in) :: string
 !
@@ -462,7 +456,7 @@
           EXIT
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION find_string
 !
@@ -490,7 +484,7 @@
       integer, intent(in) :: Asize
 
       integer, intent(out) :: Lstring
-
+!
       character (len=*), intent(in) :: A(Asize)
       character (len=*), intent(out) :: string
 !
@@ -523,9 +517,61 @@
         END IF
       END DO
       Lstring=LEN_TRIM(string)-1
-
+!
       RETURN
       END SUBROUTINE join_string
+!
+      FUNCTION nc_error (flag, NoErr, line, routine) RESULT (foundit)
+!
+!=======================================================================
+!                                                                      !
+!  This logical function issues a NetCDF error when the return flag    !
+!  from library functions is different than NoErr value.               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     flag         ROMS execution flag (integer)                       !
+!     NoErr        No Error code (integer)                             !
+!     line         Calling model routine line (integer)                !
+!     routine      Calling model routine (string)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     foundit      The value of the result is TRUE/FALSE if the        !
+!                    execution flag is in error.                       !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: flag, NoErr, line
+!
+      character (len=*), intent(in) :: routine
+!
+!  Local variable declarations.
+!
+      logical :: foundit
+!
+!-----------------------------------------------------------------------
+!  Scan array for requested string.
+!-----------------------------------------------------------------------
+!
+      foundit=.FALSE.
+      IF (flag.ne.NoErr) THEN
+        foundit=.TRUE.
+        IF (Master) THEN
+          WRITE (stdout,10) flag, line, TRIM(routine),                  &
+     &                      TRIM(nf90_strerror(flag))
+  10      FORMAT (' Found Error: ', i0, t20, 'Line: ', i0,              &
+     &            t35, 'Source: ', a,/,t20,'Reason:',a)
+          exit_flag=3
+          ioerror=flag
+        END IF
+        FLUSH (stdout)
+      END IF
+!
+      RETURN
+      END FUNCTION nc_error
 !
       FUNCTION lowercase (Sinp) RESULT (Sout)
 !
@@ -556,9 +602,9 @@
 !  Local variable definitions.
 !
       integer :: i, j, lstr
-
+!
       character (LEN(Sinp)) :: Sout
-
+!
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 !
@@ -574,7 +620,7 @@
           Sout(i:i)=Lcase(j:j)
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION lowercase
 !
@@ -607,9 +653,9 @@
 !  Local variable definitions.
 !
       integer :: i, j, lstr
-
+!
       character (LEN(Sinp)) :: Sout
-
+!
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 !
@@ -625,8 +671,8 @@
           Sout(i:i)=Ucase(j:j)
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION uppercase
-
+!
       END MODULE strings_mod

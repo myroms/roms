@@ -418,6 +418,7 @@
 ** IMPACT_INNER            to write observations impacts for each inner loop **
 ** IMPLICIT_VCONV          if implicit vertical convolution algorithm        **
 ** IMPULSE                 if processing adjoint impulse forcing             **
+** IODA_OBS                if multiple IODA-type NetCDF4 observation files   **
 ** MINRES                  if Minimal Residual Method for 4DVar minimization **
 ** MULTIPLE_TLM            if multiple TLM history files in 4DVAR            **
 ** MULTI_SCALE_B           if multiscale background-error covariance modeling**

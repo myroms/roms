@@ -216,6 +216,8 @@
       USE dateclock_mod, ONLY : time_string
       USE strings_mod,   ONLY : FoundError, lowercase
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model
@@ -382,6 +384,8 @@
 !
       USE dateclock_mod, ONLY : time_string
       USE strings_mod,   ONLY : FoundError, lowercase
+!
+      implicit none
 !
 !  Imported variable declarations.
 !

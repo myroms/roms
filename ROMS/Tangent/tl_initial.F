@@ -64,7 +64,7 @@
 # if defined WAV_COUPLING_NOT_YET && defined MCT_LIB
       USE mct_coupler_mod,     ONLY : ocn2wav_coupling
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_initial_mod,     ONLY : obs_initial
 # endif
 # ifdef SOLVE3D
@@ -513,7 +513,7 @@
       END IF
 # endif
 
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && !defined IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables

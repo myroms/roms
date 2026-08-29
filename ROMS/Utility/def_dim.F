@@ -28,6 +28,13 @@
 #endif
       END INTERFACE def_dim
 !
+      PUBLIC  :: def_dim
+      PRIVATE :: def_dim_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: def_dim_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

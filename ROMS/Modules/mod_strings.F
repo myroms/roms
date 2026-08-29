@@ -132,6 +132,8 @@
 !
         implicit none
 !
+        PUBLIC
+!
         character (len=80)   :: title
         character (len=2048) :: Coptions
 !

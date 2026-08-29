@@ -142,15 +142,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_mixing
-        PUBLIC :: deallocate_mixing
-        PUBLIC :: initialize_mixing
+        PUBLIC  :: allocate_mixing
+        PUBLIC  :: deallocate_mixing
+        PUBLIC  :: initialize_mixing
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_MIXING structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_MIXING
+        TYPE, PUBLIC :: T_MIXING
 !
 !  Nonlinear model state.
 !
@@ -396,7 +397,7 @@
 
         END TYPE T_MIXING
 !
-        TYPE (T_MIXING), allocatable :: MIXING(:)
+        TYPE (T_MIXING), public, allocatable :: MIXING(:)
 !
       CONTAINS
 !

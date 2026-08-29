@@ -53,6 +53,9 @@
       integer, parameter :: Avar = 1
       integer, parameter :: Pvar = 2
 !
+      PUBLIC  :: destroy
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -66,7 +69,7 @@
 
       integer, pointer, intent(inout) :: Varray(:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -84,12 +87,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -120,7 +125,7 @@
 !
       integer, intent(in) :: ng, line
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -138,12 +143,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -174,7 +181,7 @@
 !
       real(r8), pointer, intent(inout) :: Varray(:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -192,12 +199,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -228,7 +237,7 @@
 !
       real(r8), pointer, intent(inout) :: Varray(:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -246,12 +255,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -282,7 +293,7 @@
 !
       real(r8), pointer, intent(inout) :: Varray(:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -300,12 +311,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -336,7 +349,7 @@
 !
       real(r8), pointer, intent(inout) :: Varray(:,:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -354,12 +367,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -390,7 +405,7 @@
 !
       real(r8), pointer, intent(inout) :: Varray(:,:,:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -408,12 +423,14 @@
       Derror=0
 !
 #ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 #else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 #endif
 !
@@ -446,7 +463,7 @@
 !
       real(dp), pointer, intent(inout) :: Varray(:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -464,12 +481,14 @@
       Derror=0
 !
 # ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 # else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 # endif
 !
@@ -500,7 +519,7 @@
 !
       real(dp), pointer, intent(inout) :: Varray(:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -518,12 +537,14 @@
       Derror=0
 !
 # ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 # else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 # endif
 !
@@ -554,7 +575,7 @@
 !
       real(dp), pointer, intent(inout) :: Varray(:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -572,12 +593,14 @@
       Derror=0
 !
 # ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 # else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 # endif
 !
@@ -608,7 +631,7 @@
 !
       real(dp), pointer, intent(inout) :: Varray(:,:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -626,12 +649,14 @@
       Derror=0
 !
 # ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 # else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 # endif
 !
@@ -662,7 +687,7 @@
 !
       real(dp), pointer, intent(inout) :: Varray(:,:,:,:,:)
 !
-      character (len=*) :: Vstring, routine
+      character (len=*), intent(in) :: Vstring, routine
 !
 !  Local variable declarations.
 !
@@ -680,12 +705,14 @@
       Derror=0
 !
 # ifdef DISTRIBUTE
-      IF (associated(Varray))                                           &
-     &  deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      IF (associated(Varray)) THEN
+        deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+      END IF
 # else
       IF (Master) THEN
-        IF (associated(Varray))                                         &
-     &    deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        IF (associated(Varray)) THEN
+          deallocate ( Varray, ERRMSG = Dmsg, STAT = Derror )
+        END IF
       END IF
 # endif
 !

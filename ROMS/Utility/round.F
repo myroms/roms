@@ -57,6 +57,7 @@
       PUBLIC  :: TCEIL           ! Tolerant ceiling function
       PUBLIC  :: TFLOOR          ! Tolerant floor function
       PRIVATE :: UFLOOR          ! Unfuzzy floor function
+      PRIVATE
 !
       CONTAINS
 !

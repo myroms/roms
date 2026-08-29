@@ -33,6 +33,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_ini_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -93,7 +94,7 @@
       logical :: got_frc_adjust
 # endif
       logical :: got_var(NV)
-      logical :: Ldefine = .FALSE.
+      logical :: Ldefine
 !
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
@@ -123,6 +124,7 @@
      &  __FILE__//", def_ini_nf90"
 !
       SourceFile=MyFile
+      Ldefine=.FALSE.
 
 # if !defined CORRELATION     && \
      (defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
@@ -934,7 +936,7 @@
       logical :: got_frc_adjust
 #  endif
       logical :: got_var(NV)
-      logical :: Ldefine = .FALSE.
+      logical :: Ldefine
 !
       integer :: i, j, ifield, itrc, status
       integer :: Fcount
@@ -964,6 +966,7 @@
      &  __FILE__//", def_ini_pio"
 !
       SourceFile=MyFile
+      Ldefine=.TRUE.
 
 #  if !defined CORRELATION     && \
      (defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
@@ -1105,7 +1108,7 @@
       END DO
 
 #   ifdef ADJUST_BOUNDARY
-      IF (.not.got_var(idSbry(isFsur))) Ldefine=.TRUE.
+      IF (.not.got_var(idSbry(isFsur))) Ldefin=.TRUE.
       IF (.not.got_var(idSbry(isUbar))) Ldefine=.TRUE.
       IF (.not.got_var(idSbry(isVbar))) Ldefine=.TRUE.
 #    ifdef SOLVE3D

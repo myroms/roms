@@ -117,7 +117,7 @@
 !
 !  Determine number of slice depths (negative, m) to extract.
 !
-      mslice = SIZE(z_slice)      
+      mslice = SIZE(z_slice)
 !
 !  Extract horizontal slices via linear interpolation.
 !
@@ -133,7 +133,7 @@
               Ztop=Adepth(i,j,UBK)
               Zbot=Adepth(i,j,LBK)
               IF (z_slice(iz).ge.Ztop) THEN    ! shallower than top grid
-                k1=UBk                         ! cell. The slice is in 
+                k1=UBk                         ! cell. The slice is in
                 k2=UBK                         ! the upper cell half
                 r1=1.0_r8                      ! shallower than top grid
                 r2=0.0_r8                      ! above its middle depth
@@ -144,7 +144,8 @@
                 DO k=UBk,LBk+1,-1              ! Otherwise, interpolate
                   Ztop=Adepth(i,j,k  )         ! field at slice depth
                   Zbot=Adepth(i,j,k-1)
-                  IF ((Ztop.gt.z_slice(iz)).and.(z_slice(iz).ge.Zbot)) THEN
+                  IF ((Ztop.gt.z_slice(iz)).and.                        &
+     &                (z_slice(iz).ge.Zbot)) THEN
                     k1=k-1
                     k2=k
                   END IF
@@ -160,7 +161,7 @@
               END IF
             ELSE
               Aslice(i,j,iz)=0.0_r8            ! land masked value
-            END IF 
+            END IF
           END DO
         END DO
       END DO

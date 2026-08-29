@@ -13,9 +13,12 @@
         USE netcdf
 #endif
 !
+        implicit none
+!
         PUBLIC :: allocate_scalars
         PUBLIC :: deallocate_scalars
         PUBLIC :: initialize_scalars
+        PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Multiple grid structure.
@@ -774,7 +777,7 @@
 !  fraction is absorbed by the bed (effectively modifying bottom
 !  tracer flux).
 !
-        real(dp), allocatable :: bot_albedo(:) 
+        real(dp), allocatable :: bot_albedo(:)
 !
 !  Grid r-factor (non-dimensional).
 !
@@ -1295,6 +1298,10 @@
 !  Background/model error covariance parameters.
 !------------------------------------------------------------------------
 !
+!  Background error (standard deviation) H(x) identifier.
+!
+        integer, parameter :: iSTD = 10
+!
 !  Logical switch to compute initial conditions, model and surface
 !  forcing error covariance normalization factors.
 !
@@ -1304,6 +1311,12 @@
 !  normalization factors.
 !
         logical,  allocatable :: CnormB(:,:)
+!
+!  Logical switch indicating processing of velocity observations like
+!  HF radar data, which require special variable changes and H(x)
+!  operators.
+!
+        logical, allocatable :: HaveUVobs(:)
 !
 !  Logical switches to process weak constraint forcing as intermittent
 !  or continuous impulses.
@@ -1344,13 +1357,13 @@
 ! free-surface contribution:
 !
 !      [0] Integrate from local bottom to the surface
-!      [1] Integrate from LNM_depth to surface or integrate from local bottom
-!          if shallower than LNM_depth
+!      [1] Integrate from LNM_depth to surface or integrate from local
+!          bottom if shallower than LNM_depth
 !
         integer :: LNM_flag
 !
-! Balance operator logical switches for state variables to consider in the
-! error covariance multivariate constraints.
+! Balance operator logical switches for state variables to consider in
+! the error covariance multivariate constraints.
 !
         logical, allocatable :: balance(:)
 !
@@ -3277,6 +3290,11 @@
         Dmem(1)=Dmem(1)+4.0_r8*REAL(MstateVar,r8)
       END IF
 
+      IF (.not.allocated(HaveUVobs)) THEN
+        allocate ( HaveUVobs(Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
+      END IF
+
       IF (.not.allocated(SporadicImpulse)) THEN
         allocate ( SporadicImpulse(Ngrids) )
         Dmem(1)=Dmem(1)+REAL(Ngrids,r8)
@@ -3554,9 +3572,11 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param, ONLY : Ngrids
+!
 !  Imported variable declarations.
 !
-      integer :: ng
+      integer, intent(in) :: ng
 
 #ifdef SUBOBJECT_DEALLOCATION
 !
@@ -4187,6 +4207,8 @@
 
       IF (allocated(CnormB))            deallocate ( CnormB )
 
+      IF (allocated(HaveUVobs))         deallocate ( HaveUVobs )
+
       IF (allocated(SporadicImpulse))   deallocate ( SporadicImpulse )
 
       IF (allocated(FrequentImpulse))   deallocate ( FrequentImpulse )
@@ -4516,6 +4538,7 @@
         Lsediment(ng)=.TRUE.
         Lstations(ng)=.TRUE.
 #if defined FOUR_DVAR || defined VERIFICATION
+        HaveUVobs(ng)=.FALSE.
         FrequentImpulse(ng)=.FALSE.
         SporadicImpulse(ng)=.FALSE.
 #endif

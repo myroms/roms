@@ -25,12 +25,10 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_kinds
-
+      USE mod_kinds, ONLY : i8b, r8
+!
       implicit none
-
-      PUBLIC
-
+!
       integer(i8b), parameter :: hg = HUGE(1_i8b)
       integer(i8b), parameter :: hgm = -hg
       integer(i8b), parameter :: hgng = hgm - 1
@@ -52,15 +50,20 @@
       integer(i8b), pointer, save :: ranv(:)
 
       integer(i8b), pointer, save :: ranseeds(:,:)
-
+!
       real(r8), save :: amm
 !
       INTERFACE ran_hash
         MODULE PROCEDURE ran_hash_s, ran_hash_v
       END INTERFACE
 !
+      PUBLIC  :: ran_hash
+      PRIVATE :: ran_hash_s
+      PRIVATE :: ran_hash_v
+      PUBLIC
+!
       CONTAINS
-
+!
       SUBROUTINE ran_init (length)
 !
 !=======================================================================
@@ -95,24 +98,41 @@
 !  use this module are portable, even though they go beyond F90 integer
 !  model.
 !
-      IF (hg.ne.2147483647)                                             &
-     &  CALL nrerror ('RAN_INIT: arith assump 1 fails')
-      IF (hgng.ge.0)                                                    &
-     &  CALL nrerror ('RAN_INIT: arith assump 2 fails')
-      IF ((hgt+1).ne.hgng)                                              &
-     &  CALL nrerror ('RAN_INIT: arith assump 3 fails')
-      IF (NOT(hg).ge.0)                                                 &
-     &  CALL nrerror ('RAN_INIT: arith assump 4 fails')
-      IF (NOT(hgng).lt.0)                                               &
-     &  CALL nrerror ('RAN_INIT: arith assump 5 fails')
-      IF ((hg+hgng).ge.0)                                               &
-     &  CALL nrerror ('RAN_INIT: arith assump 6 fails')
-      IF (NOT(-1_i8b).lt.0)                                             &
-     &  CALL nrerror ('RAN_INIT: arith assump 7 fails')
-      IF (NOT(0_i8b).ge.0)                                              &
-     &  CALL nrerror ('RAN_INIT: arith assump 8 fails')
-      IF (NOT(1_i8b).ge.0)                                              &
-     &  CALL nrerror ('RAN_INIT: arith assump 9 fails')
+      IF (hg.ne.2147483647) THEN
+        CALL nrerror ('RAN_INIT: arith assump 1 fails')
+      END IF
+
+      IF (hgng.ge.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 2 fails')
+      END IF
+
+      IF ((hgt+1).ne.hgng) THEN
+        CALL nrerror ('RAN_INIT: arith assump 3 fails')
+      END IF
+
+      IF (NOT(hg).ge.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 4 fails')
+      END IF
+
+      IF (NOT(hgng).lt.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 5 fails')
+      END IF
+
+      IF ((hg+hgng).ge.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 6 fails')
+      END IF
+
+      IF (NOT(-1_i8b).lt.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 7 fails')
+      END IF
+
+      IF (NOT(0_i8b).ge.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 8 fails')
+      END IF
+
+      IF (NOT(1_i8b).ge.0) THEN
+        CALL nrerror ('RAN_INIT: arith assump 9 fails')
+      END IF
 !
 !  Reallocate or allocate state space.
 !
@@ -125,8 +145,9 @@
         ALLOCATE (ranv(length-1))
         new=1
         amm=NEAREST(1.0_r8,-1.0_r8)/hgng
-        IF ((amm*hgng.ge.1.0_r8).or.(amm*hgng.le.0.0_r8))               &
-     &    CALL nrerror ('RAN_INIT: arth assump 10 fails')
+        IF ((amm*hgng.ge.1.0_r8).or.(amm*hgng.le.0.0_r8)) THEN
+          CALL nrerror ('RAN_INIT: arth assump 10 fails')
+        END IF
       END IF
 !
 !  Set starting values, unique by SEQ and vector component.
@@ -173,9 +194,10 @@
         ranv = nran
       END IF
       lenran=length
-
+!
+      RETURN
       END SUBROUTINE ran_init
-
+!
       SUBROUTINE ran_deallocate
 !
 !=======================================================================
@@ -190,8 +212,10 @@
         NULLIFY (ranseeds, ranv, iran, jran, kran, mran, nran)
         lenran=0
       END IF
+!
+      RETURN
       END SUBROUTINE ran_deallocate
-
+!
       SUBROUTINE ran_seed (sequence, size, put, get)
 !
 !=======================================================================
@@ -237,10 +261,10 @@
         CALL ran_deallocate
         seq=sequence
       END IF
-
+!
       RETURN
       END SUBROUTINE ran_seed
-
+!
       SUBROUTINE ran_hash_s (il, ir)
 !
 !=======================================================================
@@ -270,10 +294,10 @@
         ir=IEOR(il,ir)
         il=is
       END DO
-
+!
       RETURN
       END SUBROUTINE ran_hash_s
-
+!
       SUBROUTINE ran_hash_v (il, ir)
 !
 !=======================================================================
@@ -305,9 +329,9 @@
         ir=IEOR(il,ir)
         il=is
       END DO
-
+!
       RETURN
       END SUBROUTINE ran_hash_v
-
+!
       END MODULE ran_state
 

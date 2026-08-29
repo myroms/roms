@@ -50,7 +50,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCG   ! CG iterations
@@ -117,7 +117,7 @@
       self%cg2d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -191,7 +191,7 @@
           END DO
       END SELECT
 !
-!  Advance in K-space implicit pseudo-diffusion 2D equation using 
+!  Advance in K-space implicit pseudo-diffusion 2D equation using
 !  Weaver et al. (2016) algorithm 1.
 !
       KDIFF_ITER : DO iterDiff=1,Mlap
@@ -313,7 +313,7 @@
           END DO
         END DO
 !
-!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and 
+!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and
 !  Ritz values of the tridiagonal matrix.
 !
         DO i=1,NiterCG+1                                  ! step 14
@@ -390,7 +390,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCG   ! CG iterations
@@ -522,7 +522,7 @@
           END DO
       END SELECT
 !
-!  Advance in K-space implicit pseudo-diffusion 3D equation using 
+!  Advance in K-space implicit pseudo-diffusion 3D equation using
 !  Weaver et al. (2016) algorithm 1.
 !
       KDIFF_ITER : DO iterDiff=1,Mlap
@@ -734,7 +734,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -807,7 +807,7 @@
       self%cgB1d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -902,7 +902,7 @@
      &                        tl_A)
 #  endif
 !
-!  Advance in K-space implicit pseudo-diffusion 2D equation using 
+!  Advance in K-space implicit pseudo-diffusion 2D equation using
 !  Weaver et al. (2016) algorithm 1.
 !
       KDIFF_ITER : DO iterDiff=1,Mlap
@@ -1051,7 +1051,7 @@
             END DO
         END SELECT
 !
-!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and 
+!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and
 !  Ritz values of the tridiagonal matrix.
 !
         DO i=1,NiterCG+1                                  ! step 14
@@ -1141,7 +1141,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -1213,7 +1213,7 @@
       self%cgB2d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -1312,7 +1312,7 @@
         END SELECT
       END IF
 !
-!  Advance in K-space implicit pseudo-diffusion 2D equation using 
+!  Advance in K-space implicit pseudo-diffusion 2D equation using
 !  Weaver et al. (2016) algorithm 1.
 !
       KDIFF_ITER : DO iterDiff=1,Mlap
@@ -1468,7 +1468,7 @@
               END DO
           END SELECT
 !
-!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and 
+!  Use the LAPACK routine DSTEQR to compute the Ritz vectors and
 !  Ritz values of the tridiagonal matrix.
 !
           DO i=1,NiterCG+1                                ! step 14

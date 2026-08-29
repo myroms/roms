@@ -26,9 +26,11 @@
 !
       USE close_io_mod, ONLY : close_file
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
-      character (len=*) :: task
+      character (len=*), intent(in) :: task
 !
 !  Local variable declarations.
 !
@@ -367,6 +369,8 @@
       USE mod_iounits
       USE mod_ncparam, ONLY : NV
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Nfiles
@@ -376,7 +380,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, lstr
-
+!
       character (len=  1), parameter :: blank = ' '
 !
 !-----------------------------------------------------------------------

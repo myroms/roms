@@ -49,5 +49,6 @@
 #else
         integer, parameter :: r16 = SELECTED_REAL_KIND(15,300) !128-bit
 #endif
-
+!
+        PUBLIC
       END MODULE mod_kinds

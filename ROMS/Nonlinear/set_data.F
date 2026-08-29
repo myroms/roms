@@ -94,7 +94,7 @@
 !  Local variable declarations.
 !
       logical :: Lprocess, SetBC
-      logical :: update = .FALSE.
+      logical :: update
 # ifdef WET_DRY
       logical :: bry_update
 # endif
@@ -119,6 +119,7 @@
       IUB=BOUNDS(ng)%UBi(my_tile)
       JLB=BOUNDS(ng)%LBj(my_tile)
       JUB=BOUNDS(ng)%UBj(my_tile)
+      update=.FALSE.
 !
 !=======================================================================
 !  Set point Sources/Sinks (river runoff).
