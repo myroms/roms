@@ -69,8 +69,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
       real (r8), dimension(0:NiterCI)               :: ci_alpha
@@ -98,6 +98,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       ci_alpha=0.0_r8
       ci_beta=0.0_r8
@@ -357,8 +360,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_scale
       real (r8), dimension(0:NiterCI)               :: ci_alpha
@@ -386,6 +389,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       ad_scale=0.0_r8
       ci_alpha=0.0_r8
@@ -682,8 +688,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
       real (r8), dimension(0:NiterCI,N(ng))         :: ci_alpha
@@ -711,6 +717,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       ci_alpha=0.0_r8
       ci_beta=0.0_r8
@@ -969,8 +978,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_scale
       real (r8), dimension(0:NiterCI,N(ng))         :: ci_alpha
@@ -998,6 +1007,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       ad_scale=0.0_r8
       ci_alpha=0.0_r8
@@ -1295,8 +1307,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(LBij:UBij)   :: tl_scale
       real (r8), dimension(0:NiterCI)   :: ci_alpha
@@ -1324,6 +1336,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
@@ -1622,8 +1637,8 @@
       real (r8)                         :: adfac, cff
       real (r8)                         :: ci_alpham1, ci_delta, ci_sigma
 !
-      real (r8), pointer                :: eigMin(:) => NULL()
-      real (r8), pointer                :: eigMax(:) => NULL()
+      real (r8), pointer                :: eigMin(:)
+      real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(LBij:UBij)   :: ad_scale
       real (r8), dimension(0:NiterCI)   :: ci_alpha
@@ -1651,6 +1666,9 @@
         CASE (v2dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
@@ -2032,8 +2050,8 @@
       real (r8)                         :: cff, ci_alpham1, ci_delta
       real (r8)                         :: ci_sigma
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(LBij:UBij)         :: tl_scale
       real (r8), dimension(0:NiterCI,N(ng))   :: ci_alpha
@@ -2061,6 +2079,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)
@@ -2379,8 +2400,8 @@
       real (r8)                         :: adfac, cff
       real (r8)                         :: ci_alpham1, ci_delta, ci_sigma
 !
-      real (r8), pointer                :: eigMin(:,:) => NULL()
-      real (r8), pointer                :: eigMax(:,:) => NULL()
+      real (r8), pointer                :: eigMin(:,:)
+      real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(LBij:UBij)         :: ad_scale
       real (r8), dimension(0:NiterCI,N(ng))   :: ci_alpha
@@ -2408,6 +2429,9 @@
         CASE (v3dvar)
           Jmin=JstrV
       END SELECT
+!
+      eigMin => NULL()
+      eigMax => NULL()
 !
       Lboundary(iwest )=DOMAIN(ng)%Western_Edge (tile)
       Lboundary(ieast )=DOMAIN(ng)%Eastern_Edge (tile)

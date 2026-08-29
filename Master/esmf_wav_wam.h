@@ -1144,10 +1144,10 @@
 !
       integer, allocatable :: deBlockList(:,:,:)
 !
-      integer (i4b), pointer :: ptrM(:,:) => NULL()
+      integer (i4b), pointer :: ptrM(:,:)
 !
-      real (r8), pointer :: ptrX(:,:) => NULL()
-      real (r8), pointer :: ptrY(:,:) => NULL()
+      real (r8), pointer :: ptrX(:,:)
+      real (r8), pointer :: ptrY(:,:)
 !
       character (ESMF_MAXSTR) :: name
 
@@ -1161,6 +1161,10 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptrM => NULL()
+      ptrX => NULL()
+      ptrY => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WAM_SetGridArrays',       &
@@ -1420,7 +1424,7 @@
       integer :: localDE, localDEcount
       integer :: ExportCount, ImportCount
 !
-      real (dp), pointer :: ptr2d(:,:) => NULL()
+      real (dp), pointer :: ptr2d(:,:)
 !
       character (ESMF_MAXSTR), allocatable :: ExportNameList(:)
       character (ESMF_MAXSTR), allocatable :: ImportNameList(:)
@@ -1436,6 +1440,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr2d => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WAM_SetStates',           &
@@ -2279,7 +2285,7 @@
       integer :: ExportCount
       integer :: localDE, localDEcount, localPET, PETcount
 !
-      real (r8), pointer :: ptr(:,:) => NULL()
+      real (r8), pointer :: ptr(:,:)
 !
       character (ESMF_MAXSTR) :: ofile
       character (ESMF_MAXSTR), allocatable :: ImportNameList(:)
@@ -2296,6 +2302,8 @@
 !-----------------------------------------------------------------------
 !  Initialize return code flag to success state (no error).
 !-----------------------------------------------------------------------
+!
+      ptr => NULL()
 !
       IF (ESM_track) THEN
         WRITE (trac,'(a,a,i0)') '==> Entering WAM_Export',              &
