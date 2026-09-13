@@ -79,10 +79,10 @@
       SUBROUTINE unique_1dr8 (Ninp, Ainp, Nout, Aout, Iout)
 !
       integer,                   intent(in ) :: Ninp
-      real (r8),                 intent(in ) :: Ainp(Ninp)
+      real (dp),                 intent(in ) :: Ainp(Ninp)
       integer,                   intent(out) :: Nout
       integer,      allocatable, intent(out) :: Iout(:)
-      real (r8),    allocatable, intent(out) :: Aout(:)
+      real (dp),    allocatable, intent(out) :: Aout(:)
 !
       logical                                :: mask(Ninp)
       integer                                :: i

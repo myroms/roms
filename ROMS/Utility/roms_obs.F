@@ -106,8 +106,8 @@
 !
 !  Starting and ending times for time-averaged operator.
 !
-        real (r8), allocatable :: TimeStr(:)     ! starting time
-        real (r8), allocatable :: TimeEnd(:)     ! ending time
+        real (dp), allocatable :: TimeStr(:)     ! starting time
+        real (dp), allocatable :: TimeEnd(:)     ! ending time
 !
 !  Starting and ending observation vector indices available for
 !  requested model time interval, time-0.5*dt to time+0.5*dt. They
@@ -135,8 +135,8 @@
         real (r8), allocatable :: lon(:)        ! observation longitude
         real (r8), allocatable :: lat(:)        ! observation latitude
         real (r8), allocatable :: depth(:)      ! depth of observation
-        real (r8), allocatable :: time(:)       ! time  of observation
-        real (r8), allocatable :: surveyTime(:) ! survey time
+        real (dp), allocatable :: time(:)       ! time  of observation
+        real (dp), allocatable :: surveyTime(:) ! survey time
 !
         real (r8), allocatable :: Xgrid(:)      ! fractional X-grid
         real (r8), allocatable :: Ygrid(:)      ! fractional Y-grid
@@ -353,6 +353,8 @@
       integer                         :: LBi, UBi, LBj, UBj
       integer                         :: IstrR, IendR, JstrR, JendR
 !
+      real(r8),             parameter :: IJspv = 0.0_r8
+!
 !  Compute observation fractional coordinates.
 !
       LBi=BOUNDS(ng)%LBi(tile)
@@ -377,14 +379,14 @@
      &               1, self%nlocs, 1, 1,                               &
      &               self%lon, self%lat,                                &
      &               self%Xgrid, self%Ygrid,                            &
-     &               spval, rectangular)
+     &               IJspv, rectangular)
 
 #ifdef DISTRIBUTE
 !
 !  Collect fractional coordinates.
 !
-      CALL mp_assemble (ng, model, self%nlocs, spval, self%Xgrid)
-      CALL mp_assemble (ng, model, self%nlocs, spval, self%Ygrid)
+      CALL mp_assemble (ng, model, self%nlocs, IJspv, self%Xgrid)
+      CALL mp_assemble (ng, model, self%nlocs, IJspv, self%Ygrid)
 #endif
 !
       RETURN
@@ -404,7 +406,7 @@
 !
       logical                          :: Loaded, isDayUnits
       integer                          :: i, lstr, ncount
-      real (r8),          dimension(4) :: Tmin, Tmax
+      real (dp),          dimension(4) :: Tmin, Tmax
       character (len=22), dimension(4) :: Dmin, Dmax
 
       character (len=*),     parameter :: MyFile =                      &
@@ -695,7 +697,7 @@
 !
       integer (i8b)                   :: checksum
       integer                         :: i
-      real (r8)                       :: Tmin, Tmax
+      real (dp)                       :: Tmin, Tmax
 !
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", obs_data_stats"
@@ -2113,7 +2115,7 @@
 !
       CALL caldate (tdays(ng), yy_i=YY, mm_i=MM, dd_i=DD,               &
      &                         h_i=hi, m_i=mi, s_i=si)
-      CALL datenum (self%ref_datetime, YY, MM, DD, 0, 0, 0.0_r8)
+      CALL datenum (self%ref_datetime, YY, MM, DD, 0, 0, 0.0_dp)
       WRITE (YYMMDD, '(i4.4,2(i2.2))') YY, MM, DD
       WRITE (epoch, 10) YY, MM, DD, hi, mi, si
 !
@@ -2865,9 +2867,9 @@
       integer,             allocatable :: surveyIndex(:)
       integer                          :: Ninp, Nout
       integer                          :: i, iobs, j, lstr, mvar, npool
-      real (r8),       dimension(mobs) :: obs_rdata
-      real (r8),           allocatable :: surveyTime(:)
-      real (r8),          dimension(2) :: Tmin, Tmax
+      real (dp),       dimension(mobs) :: obs_rdata
+      real (dp),           allocatable :: surveyTime(:)
+      real (dp),          dimension(2) :: Tmin, Tmax
       character (len=22), dimension(2) :: Dmin, Dmax
       character (len=40)               :: poolname, varname(2), vars(2)
 
@@ -3483,7 +3485,7 @@
       integer,           intent(in   ) :: ND         ! datum dimension
       integer,           intent(in   ) :: typeID(ND) ! observation type
       real (r8),         intent(in   ) :: Zgrid(ND)  ! fractional Zgrid
-      real (r8),         intent(in   ) :: rdata(ND)  ! obsevation data
+      real (dp),         intent(in   ) :: rdata(ND)  ! obsevation data
       character (len=*), intent(in   ) :: VarName    ! variable name
 !
       logical                          :: mask(ND), msk2(ND)

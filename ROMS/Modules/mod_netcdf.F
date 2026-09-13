@@ -3779,6 +3779,9 @@
         CALL netcdf_close (ng, model, my_ncid, ncname, .FALSE.)
       END IF
 !
+  10  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while inquiring Group ',  &
+     &        'ID:',2x,a,', Group:',2x,a,/,22x,'in input file:',2x,a,   &
+     &        /,22x,'call from:',2x,a,/,22x,a)
   20  FORMAT (/,' NETCDF_GET_FVAR_1DP - error while reading variable:', &
      &        2x,a,/,23x,'in input file:',2x,a,/,23x,'call from:',2x,a, &
      &        /,23x,a)

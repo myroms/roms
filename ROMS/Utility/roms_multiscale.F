@@ -1028,7 +1028,8 @@
 #  ifdef MASKING
       real (r8), pointer                :: mask(:,:)
 #  endif
-      real (r8)                         :: Fmin, Fmax, Fscl
+      real (r8)                         :: Fmin, Fmax
+      real (dp)                         :: Fscl
       real (r8), dimension(4)           :: Fvalue
 !
 #  ifdef DISTRIBUTE

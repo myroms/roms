@@ -1108,7 +1108,7 @@
       END DO
 
 #   ifdef ADJUST_BOUNDARY
-      IF (.not.got_var(idSbry(isFsur))) Ldefin=.TRUE.
+      IF (.not.got_var(idSbry(isFsur))) Ldefine=.TRUE.
       IF (.not.got_var(idSbry(isUbar))) Ldefine=.TRUE.
       IF (.not.got_var(idSbry(isVbar))) Ldefine=.TRUE.
 #    ifdef SOLVE3D

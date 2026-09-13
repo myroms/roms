@@ -78,12 +78,12 @@
       real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
-      real (r8), dimension(0:NiterCG)               :: cg_a
-      real (r8), dimension(0:NiterCG+1)             :: cg_b
-      real (r8), dimension(NiterCG+1)               :: cg_Rv
-      real (r8), dimension(2*(NiterCG+1)-2)         :: work
-      real (r8), dimension(NiterCG)                 :: zwork
-      real (r8), dimension(NiterCG+1,NiterCG+1)     :: zgv
+      real (dp), dimension(0:NiterCG)               :: cg_a
+      real (dp), dimension(0:NiterCG+1)             :: cg_b
+      real (dp), dimension(NiterCG+1)               :: cg_Rv
+      real (dp), dimension(2*(NiterCG+1)-2)         :: work
+      real (dp), dimension(NiterCG)                 :: zwork
+      real (dp), dimension(NiterCG+1,NiterCG+1)     :: zgv
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", multiscale_CG_2d_tl"
@@ -416,12 +416,12 @@
       real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_scale
-      real (r8), dimension(0:NiterCG,N(ng))         :: cg_a
-      real (r8), dimension(0:NiterCG+1,N(ng))       :: cg_b
-      real (r8), dimension(NiterCG+1)               :: cg_Rv
-      real (r8), dimension(2*(NiterCG+1)-2)         :: work
-      real (r8), dimension(NiterCG)                 :: zwork
-      real (r8), dimension(NiterCG+1,NiterCG+1)     :: zgv
+      real (dp), dimension(0:NiterCG,N(ng))         :: cg_a
+      real (dp), dimension(0:NiterCG+1,N(ng))       :: cg_b
+      real (dp), dimension(NiterCG+1)               :: cg_Rv
+      real (dp), dimension(2*(NiterCG+1)-2)         :: work
+      real (dp), dimension(NiterCG)                 :: zwork
+      real (dp), dimension(NiterCG+1,NiterCG+1)     :: zgv
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", multiscale_CG_3d_tl"
@@ -763,12 +763,12 @@
       real (r8), pointer                :: eigMax(:)
 !
       real (r8), dimension(LBij:UBij)           :: tl_scale
-      real (r8), dimension(0:NiterCG)           :: cg_a
-      real (r8), dimension(0:NiterCG+1)         :: cg_b
-      real (r8), dimension(NiterCG+1)           :: cg_Rv
-      real (r8), dimension(2*(NiterCG+1)-2)     :: work
-      real (r8), dimension(NiterCG)             :: zwork
-      real (r8), dimension(NiterCG+1,NiterCG+1) :: zgv
+      real (dp), dimension(0:NiterCG)           :: cg_a
+      real (dp), dimension(0:NiterCG+1)         :: cg_b
+      real (dp), dimension(NiterCG+1)           :: cg_Rv
+      real (dp), dimension(2*(NiterCG+1)-2)     :: work
+      real (dp), dimension(NiterCG)             :: zwork
+      real (dp), dimension(NiterCG+1,NiterCG+1) :: zgv
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", multiscale_CG_b1d_tl"
@@ -1169,12 +1169,12 @@
       real (r8), pointer                :: eigMax(:,:)
 !
       real (r8), dimension(LBij:UBij)           :: tl_scale
-      real (r8), dimension(0:NiterCG,N(ng))     :: cg_a
-      real (r8), dimension(0:NiterCG+1,N(ng))   :: cg_b
-      real (r8), dimension(NiterCG+1)           :: cg_Rv
-      real (r8), dimension(2*(NiterCG+1)-2)     :: work
-      real (r8), dimension(NiterCG)             :: zwork
-      real (r8), dimension(NiterCG+1,NiterCG+1) :: zgv
+      real (dp), dimension(0:NiterCG,N(ng))     :: cg_a
+      real (dp), dimension(0:NiterCG+1,N(ng))   :: cg_b
+      real (dp), dimension(NiterCG+1)           :: cg_Rv
+      real (dp), dimension(2*(NiterCG+1)-2)     :: work
+      real (dp), dimension(NiterCG)             :: zwork
+      real (dp), dimension(NiterCG+1,NiterCG+1) :: zgv
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", multiscale_CG_b2d_tl"

@@ -708,12 +708,6 @@
 # if !defined FORWARD_FLUXES
 #  define FORWARD_FLUXES
 # endif
-# if !defined FORWARD_MIXING
-#  define FORWARD_MIXING
-# endif
-# if !defined FORWARD_WRITE
-#  define FORWARD_WRITE
-# endif
 # if !defined GENERIC_DSTART
 #  define GENERIC_DSTART
 # endif
