@@ -172,6 +172,38 @@
         END DO
       END DO
 
+#elif defined IOP_CDOM
+!
+!-----------------------------------------------------------------------
+!  IOP-based, CDOM (Colored Dissolver Organic Matter) ecosystem model.
+!-----------------------------------------------------------------------
+!
+      DO itrc=1,NBT
+        DO k=1,N(ng)
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
+              t(i,j,k,1,idbio(itrc))=BioIni(idbio(itrc),ng)
+            END DO
+          END DO
+        END DO
+      END DO
+
+#elif defined NPZD_IOP
+!
+!-----------------------------------------------------------------------
+!  IOP-based, NPZD ecosystem model.
+!-----------------------------------------------------------------------
+!
+      DO itrc=1,NBT
+        DO k=1,N(ng)
+          DO j=JstrT,JendT
+            DO i=IstrT,IendT
+              t(i,j,k,1,idbio(itrc))=BioIni(idbio(itrc),ng)
+            END DO
+          END DO
+        END DO
+      END DO
+
 #elif defined NPZD_FRANKS || defined NPZD_POWELL
 !
 !-----------------------------------------------------------------------
