@@ -45,6 +45,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_norm_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -153,13 +154,13 @@
           SELECT CASE (ifile)
             CASE (1)
               Text='Creating prior B-normalization file:'
-            CASE (2)              
+            CASE (2)
               Text='Creating model Q-normalization file:'
             CASE (3)
               Text='Creating boundary B-normalization file:'
             CASE (4)
               Text='Creating forcing B-normalization file:'
-          END SELECT          
+          END SELECT
           WRITE (stdout,5) TRIM(Text), TRIM(ncname)
         END IF
 !
@@ -167,7 +168,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,10) TRIM(ncname)
           RETURN
-        END IF         
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Define the dimensions of staggered fields.
@@ -1583,13 +1584,13 @@
           SELECT CASE (ifile)
             CASE (1)
               Text='Creating prior B-normalization file:'
-            CASE (2)              
+            CASE (2)
               Text='Creating model Q-normalization file:'
             CASE (3)
               Text='Creating boundary B-normalization file:'
             CASE (4)
               Text='Creating forcing B-normalization file:'
-          END SELECT          
+          END SELECT
           WRITE (stdout,5) TRIM(Text), TRIM(ncname)
         END IF
 !

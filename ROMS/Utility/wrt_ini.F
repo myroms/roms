@@ -81,6 +81,7 @@
       PRIVATE :: wrt_frc_AD_pio
 #  endif
 # endif
+      PRIVATE
 !
       CONTAINS
 !

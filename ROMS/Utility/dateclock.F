@@ -196,10 +196,10 @@
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 1968-05-23 00:00:00 GMT'. It is a Truncated Julian
 !  day introduced by NASA and primarily used by Astronomers. It has
-!  a year length of 365.25 days. It is less used nowadays since the length
-!  of the year is 648 seconds less (365.2425) resulting in too many leap
-!  years.  So it was corrected after 15 October 1582 and it is now called
-!  the Gregorian Calendar.
+!  a year length of 365.25 days. It is less used nowadays since the
+!  length of the year is 648 seconds less (365.2425) resulting in too
+!  many leap years.  So it was corrected after 15 October 1582 and it
+!  is now called the Gregorian Calendar.
 !
       ELSE IF (INT(time_ref).eq.-2) THEN
         IF (CurrentTime.ge.RefDateNumber) THEN        ! fractional day
@@ -411,7 +411,7 @@
 !     datenum(0000,00,00) = 0
 !
         IF ((year.eq.0).and.(month.eq.0).and.(day.eq.0)) THEN
-          MyDay=0;
+          MyDay=0
         ELSE
           IF (MyDay.lt.0) THEN
             MyDay=MyDay+offset-1
@@ -557,7 +557,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: ProlepticJulian = .FALSE.
+      logical, parameter :: ProlepticJulian = .FALSE.
 
       integer :: MyDay, MyMonth, MyYear, yday
       integer :: ja, jalpha, jb, jc, jd, jday, je
@@ -697,7 +697,7 @@
           MyDateNumber=MyDateNumber-offset+1.0_dp   ! zero origin,
         ELSE                                        ! datenum(0,0,0)=0,
           MyDateNumber=MyDateNumber-offset          ! 61 days offset
-        ENDIF
+        END IF
 !
         MyYear=INT((10000.0_dp*AINT(MyDateNumber)+14780.0_dp)/          &
      &             3652425.0_dp)
@@ -798,7 +798,7 @@
 
       integer :: i, leap, no_day, no_yr, nqy, nyc, nyqc
 
-      integer, dimension(12) :: month_day =                             &
+      integer, parameter, dimension(12) :: month_day =                  &
      &         (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
 !
 !-----------------------------------------------------------------------
@@ -880,10 +880,10 @@
 
       integer, dimension(8) :: values
 
-      integer, dimension(31) :: lday =                                  &
+      integer, parameter, dimension(31) :: lday =                       &
      &          (/ (1,i=1,9), (2,i=1,22) /)
 
-      integer, dimension(12) :: lmonth =                                &
+      integer, parameter, dimension(12) :: lmonth =                     &
      &          (/ 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 /)
 
       character (len= 5) :: czone
@@ -894,15 +894,15 @@
       character (len=20) :: fmt
       character (len=44) :: dstring
 
-      character (len=3), dimension(0:1) :: ampm =                       &
+      character (len=3), parameter, dimension(0:1) :: ampm =            &
      &                   (/' AM',' PM'/)
 
-      character (len=9), dimension(0:6) :: day =                        &
+      character (len=9), parameter, dimension(0:6) :: day =             &
      &                   (/ 'Sunday   ','Monday   ','Tuesday  ',        &
      &                      'Wednesday','Thursday ','Friday   ',        &
      &                      'Saturday ' /)
 
-      character (len=9), dimension(12) :: month =                       &
+      character (len=9), parameter, dimension(12) :: month =            &
      &                   (/ 'January  ','February ','March    ',        &
      &                      'April    ','May      ','June     ',        &
      &                      'July     ','August   ','September',        &

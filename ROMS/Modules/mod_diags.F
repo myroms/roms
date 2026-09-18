@@ -46,15 +46,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_diags
-        PUBLIC :: deallocate_diags
-        PUBLIC :: initialize_diags
+        PUBLIC  :: allocate_diags
+        PUBLIC  :: deallocate_diags
+        PUBLIC  :: initialize_diags
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_DIAGS structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_DIAGS
+        TYPE, PUBLIC :: T_DIAGS
 
           real(r8), pointer :: avgzeta(:,:)
 
@@ -97,7 +98,7 @@
 
         END TYPE T_DIAGS
 !
-        TYPE (T_DIAGS), allocatable :: DIAGS(:)
+        TYPE (T_DIAGS), public, allocatable :: DIAGS(:)
 !
       CONTAINS
 !

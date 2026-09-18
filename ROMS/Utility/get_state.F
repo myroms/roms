@@ -85,6 +85,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: get_state_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !

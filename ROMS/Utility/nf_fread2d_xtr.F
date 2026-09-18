@@ -75,6 +75,14 @@
 # endif
       END INTERFACE nf_fread2d_xtr
 !
+      PUBLIC  :: nf_fread2d_xtr
+      PRIVATE :: nf90_fread2d_xtr
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: pio_fread2d_xtr
+#endif
+      PRIVATE
+
+!
       CONTAINS
 
 # if defined PARALLEL_IO && defined DISTRIBUTE

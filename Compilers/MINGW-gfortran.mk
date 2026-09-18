@@ -104,7 +104,7 @@ ifdef USE_ROMS
 #          FFLAGS += -ffpe-trap=invalid,zero,overflow
  else
            FFLAGS += -O3
-           FFLAGS += -ffast-math
+#          FFLAGS += -ffast-math
  endif
  ifdef SHARED
            FFLAGS += -fPIC

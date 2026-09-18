@@ -73,15 +73,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_ocean
-        PUBLIC :: deallocate_ocean
-        PUBLIC :: initialize_ocean
+        PUBLIC  :: allocate_ocean
+        PUBLIC  :: deallocate_ocean
+        PUBLIC  :: initialize_ocean
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_OCEAN structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_OCEAN
+        TYPE, PUBLIC :: T_OCEAN
 !
 !  Nonlinear model state.
 !
@@ -361,7 +362,7 @@
 
         END TYPE T_OCEAN
 !
-        TYPE (T_OCEAN), allocatable :: OCEAN(:)
+        TYPE (T_OCEAN), public, allocatable :: OCEAN(:)
 !
       CONTAINS
 !

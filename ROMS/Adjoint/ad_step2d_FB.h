@@ -1901,7 +1901,7 @@
 #else
 !^   &                       cff3*tl_rubar(i,j)+cff2*tl_sustr(i,j))
 #endif
-!>
+!^
           adfac=fac1*ad_ubar(i,j,knew)
           adfac1=adfac*(Dstp(i,j)+Dstp(i-1,j))
           adfac2=adfac*cff3

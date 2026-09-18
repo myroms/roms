@@ -5234,7 +5234,7 @@
       ad_FX=0.0_r8
       Hfac=0.0_r8
       Khx=0.0_r8
-      Khy=0.0_r8     
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.
@@ -5796,7 +5796,7 @@
 #  endif
 !
       IF (Lboundary(ibry)) THEN
-        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN 
+        IF ((ibry.eq.iwest).or.(ibry.eq.ieast)) THEN
           DO k=1,N(ng)
            DO j=Jmin-1,Jmax+1
 !^            Awrk(j,k)=A(j,k)
@@ -6125,7 +6125,7 @@
       ad_FX=0.0_r8
       Hfac=0.0_r8
       Khx=0.0_r8
-      Khy=0.0_r8     
+      Khy=0.0_r8
 !
 !  Assign contol variable isotropic or anisotropic correlation length
 !  scales.

@@ -199,15 +199,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_forces
-        PUBLIC :: deallocate_forces
-        PUBLIC :: initialize_forces
+        PUBLIC  :: allocate_forces
+        PUBLIC  :: deallocate_forces
+        PUBLIC  :: initialize_forces
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_FORCES structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_FORCES
+        TYPE, PUBLIC :: T_FORCES
 !
 !  Nonlinear model state.
 !
@@ -560,7 +561,7 @@
 
         END TYPE T_FORCES
 !
-        TYPE (T_FORCES), allocatable :: FORCES(:)
+        TYPE (T_FORCES), public, allocatable :: FORCES(:)
 !
       CONTAINS
 !

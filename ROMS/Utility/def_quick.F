@@ -75,6 +75,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_quick_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !

@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE obs_read_mod
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR   || defined VERIFICATION) && \
+    defined OBSERVATIONS && !defined IODA_OBS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -34,6 +35,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: obs_read_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -56,7 +58,7 @@
 !  Write out time-averaged fields according to IO type.
 !-----------------------------------------------------------------------
 !
-      SELECT CASE (OBS(ng)%IOtype)
+      SELECT CASE (OBS(1,ng)%IOtype)
         CASE (io_nf90)
           CALL obs_read_nf90 (ng, model, backward)
 
@@ -65,7 +67,7 @@
           CALL obs_read_pio (ng, model, backward)
 # endif
         CASE DEFAULT
-          IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+          IF (Master) WRITE (stdout,10) OBS(1,ng)%IOtype
           exit_flag=2
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END SELECT
@@ -161,45 +163,46 @@
 !
 !  Read in observation type identifier.
 !
-        CALL netcdf_get_ivar (ng, model, OBS(ng)%name, Vname(1,idOtyp), &
-     &                        ObsType(Mstr:),                           &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_ivar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idOtyp), ObsType(Mstr:),          &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation provenance identifier.
 !
-        CALL netcdf_get_ivar (ng, model, OBS(ng)%name, Vname(1,idOpro), &
-     &                        ObsProv(Mstr:),                           &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_ivar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idOpro), ObsProv(Mstr:),          &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation time (days).
 !
-        CALL netcdf_get_time (ng, model, OBS(ng)%name, Vname(1,idObsT), &
-     &                        Rclock%DateNumber, Tobs(Mstr:),           &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_time (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idObsT), Rclock%DateNumber,       &
+     &                        Tobs(Mstr:),                              &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation X-location (grid units).
 !
-        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsX), &
-     &                        Xobs(Mstr:),                              &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idObsX), Xobs(Mstr:),             &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation Y-location (grid units).
 !
-        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idObsY), &
-     &                        Yobs(Mstr:),                              &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idObsY), Yobs(Mstr:),             &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -213,18 +216,18 @@
 !  be written into the observation NetCDF file for latter use.
 !
         IF (wrote_Zobs(ng)) THEN
-          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+          CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,              &
      &                          Vname(1,idObsZ),                        &
      &                          Zobs(Mstr:),                            &
-     &                          ncid = OBS(ng)%ncid,                    &
+     &                          ncid = OBS(1,ng)%ncid,                  &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
-          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+          CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,              &
      &                          Vname(1,idObsD),                        &
      &                          Zobs(Mstr:),                            &
-     &                          ncid = OBS(ng)%ncid,                    &
+     &                          ncid = OBS(1,ng)%ncid,                  &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -250,9 +253,9 @@
 !
 !  Read in observation values.
 !
-        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idOval), &
-     &                        ObsVal(Mstr:),                            &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idOval), ObsVal(Mstr:),           &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -260,10 +263,10 @@
 !  If appropriate, read in observation meta values.
 !
         IF (haveObsMeta(ng)) THEN
-          CALL netcdf_get_fvar (ng, model, OBS(ng)%name,                &
+          CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,              &
      &                          Vname(1,idOmet),                        &
      &                          ObsMeta(Mstr:),                         &
-     &                          ncid = OBS(ng)%ncid,                    &
+     &                          ncid = OBS(1,ng)%ncid,                  &
      &                          start = (/NstrObs(ng)/),                &
      &                          total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -276,9 +279,9 @@
 !  convert to inverse observation error covariance.
 # endif
 !
-        CALL netcdf_get_fvar (ng, model, OBS(ng)%name, Vname(1,idOerr), &
-     &                        ObsErr(Mstr:),                            &
-     &                        ncid = OBS(ng)%ncid,                      &
+        CALL netcdf_get_fvar (ng, model, OBS(1,ng)%name,                &
+     &                        Vname(1,idOerr), ObsErr(Mstr:),           &
+     &                        ncid = OBS(1,ng)%ncid,                    &
      &                        start = (/NstrObs(ng)/),                  &
      &                        total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -505,50 +508,50 @@
 !
 !  Read in observation type identifier.
 !
-        CALL pio_netcdf_get_ivar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_ivar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idOtyp),                      &
      &                            ObsType(Mstr:),                       &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation provenance identifier.
 !
-        CALL pio_netcdf_get_ivar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_ivar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idOpro),                      &
      &                            ObsProv(Mstr:),                       &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation time (days).
 !
-        CALL pio_netcdf_get_time (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_time (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idObsT),                      &
      &                            Rclock%DateNumber, Tobs(Mstr:),       &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation X-location (grid units).
 !
-        CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idObsX),                      &
      &                            Xobs(Mstr:),                          &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
 !  Read in observation Y-location (grid units).
 !
-        CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idObsY),                      &
      &                            Yobs(Mstr:),                          &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -562,18 +565,18 @@
 !  be written into the observation NetCDF file for latter use.
 !
         IF (wrote_Zobs(ng)) THEN
-          CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,            &
+          CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,          &
      &                              Vname(1,idObsZ),                    &
      &                              Zobs(Mstr:),                        &
-     &                              pioFile = OBS(ng)%pioFile,          &
+     &                              pioFile = OBS(1,ng)%pioFile,        &
      &                              start = (/NstrObs(ng)/),            &
      &                              total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
-          CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,            &
+          CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,          &
      &                              Vname(1,idObsD),                    &
      &                              Zobs(Mstr:),                        &
-     &                              pioFile = OBS(ng)%pioFile,          &
+     &                              pioFile = OBS(1,ng)%pioFile,        &
      &                              start = (/NstrObs(ng)/),            &
      &                              total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -596,10 +599,10 @@
 !
 !  Read in observation values.
 !
-        CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idOval),                      &
      &                            ObsVal(Mstr:),                        &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -607,10 +610,10 @@
 !  If appropriate, read in observation meta values.
 !
         IF (haveObsMeta(ng)) THEN
-          CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,            &
+          CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,          &
      &                              Vname(1,idOmet),                    &
      &                              ObsMeta(Mstr:),                     &
-     &                              pioFile = OBS(ng)%pioFile,          &
+     &                              pioFile = OBS(1,ng)%pioFile,        &
      &                              start = (/NstrObs(ng)/),            &
      &                              total = (/Nobs(ng)/))
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -623,10 +626,10 @@
 !  convert to inverse observation error covariance.
 #  endif
 !
-        CALL pio_netcdf_get_fvar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_get_fvar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idOerr),                      &
      &                            ObsErr(Mstr:),                        &
-     &                            pioFile = OBS(ng)%pioFile,            &
+     &                            pioFile = OBS(1,ng)%pioFile,          &
      &                            start = (/NstrObs(ng)/),              &
      &                            total = (/Nobs(ng)/))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN

@@ -7817,8 +7817,8 @@
           DO ifile=1,FRC(i,ng)%Nfiles
             fname=FRC(i,ng)%files(ifile)
             IF (.not.find_file(ng, out, fname, 'FRCNAME')) THEN
-              IF (FoundError(exit_flag, NoError, __LINE__, MyFile))     &
-     &          RETURN
+              IF (FoundError(exit_flag, NoError,                        &
+     &                       __LINE__, MyFile)) RETURN
             ELSE
               IF (ifile.eq.1) THEN
                 IF (Master.and.Lwrite) WRITE (out,310)                  &
@@ -7835,8 +7835,8 @@
             DO ifile=1,CLM(i,ng)%Nfiles
               fname=CLM(i,ng)%files(ifile)
               IF (.not.find_file(ng, out, fname, 'CLMNAME')) THEN
-                IF (FoundError(exit_flag, NoError, __LINE__, MyFile))   &
-     &            RETURN
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
               ELSE
                 IF (ifile.eq.1) THEN
                   IF (Master.and.Lwrite) WRITE (out,310)                &
@@ -7896,8 +7896,8 @@
             DO ifile=1,BRY(i,ng)%Nfiles
               fname=BRY(i,ng)%files(ifile)
               IF (.not.find_file(ng, out, fname, 'BRYNAME')) THEN
-                IF (FoundError(exit_flag, NoError, __LINE__, MyFile))   &
-     &            RETURN
+                IF (FoundError(exit_flag, NoError,                      &
+     &                         __LINE__, MyFile)) RETURN
               ELSE
                 IF (ifile.eq.1) THEN
                   IF (Master.and.Lwrite) WRITE (out,310)                &
@@ -7977,7 +7977,7 @@
         END IF
       END DO
       IF (Nuser.gt.0) THEN
-        IF (Master.and.Lwrite) WRITE (out,230)                        &
+        IF (Master.and.Lwrite) WRITE (out,230)                          &
      &    '          Input/Output USER File:  ',  TRIM(USRname)
       END IF
 !

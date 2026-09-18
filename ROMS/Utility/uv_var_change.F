@@ -461,18 +461,18 @@
 !
         DO j=JstrR,JendR
           DO i=Istr,Iend
-!>          Urho(i,j)=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
-!>
+!^          Urho(i,j)=0.5_r8*(u(i,j,k,ninp)+u(i+1,j,k,ninp))
+!^
             tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
             IF (.not.EWperiodic(ng)) THEN
               IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-!>              Urho(Istr-1,j)=Urho(Istr,j)
-!>
+!^              Urho(Istr-1,j)=Urho(Istr,j)
+!^
                 tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
               END IF
               IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-!>              Urho(Iend+1,j)=Urho(Iend,j)
-!>
+!^              Urho(Iend+1,j)=Urho(Iend,j)
+!^
                 tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
               END IF
             END IF
@@ -481,18 +481,18 @@
 !
         DO j=Jstr,Jend
           DO i=IstrR,IendR
-!>          Vrho(i,j)=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
-!>
+!^          Vrho(i,j)=0.5_r8*(v(i,j,k,ninp)+v(i,j+1,k,ninp))
+!^
             tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
             IF (.not.NSperiodic(ng)) THEN
               IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-!>              Vrho(i,Jstr-1) = Vrho(i,Jstr)
-!>
+!^              Vrho(i,Jstr-1) = Vrho(i,Jstr)
+!^
                 tl_Vrho(i,Jstr-1) = tl_Vrho(i,Jstr)
               END IF
               IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-!>              Vrho(i,Jend+1) = Vrho(i,Jend)
-!>
+!^              Vrho(i,Jend+1) = Vrho(i,Jend)
+!^
                 tl_Vrho(i,Jend+1) = tl_Vrho(i,Jend)
               END IF
             END IF
@@ -504,22 +504,22 @@
 !
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-!>          ua(i,j,k)=Urho(i,j)*CosAngler(i,j)-                         &
-!>   &                Vrho(i,j)*SinAngler(i,j)
-!>
+!^          ua(i,j,k)=Urho(i,j)*CosAngler(i,j)-                         &
+!^   &                Vrho(i,j)*SinAngler(i,j)
+!^
             tl_ua(i,j,k)=tl_Urho(i,j)*CosAngler(i,j)-                   &
      &                   tl_Vrho(i,j)*SinAngler(i,j)
-!>          va(i,j,k)=Vrho(i,j)*CosAngler(i,j)+                         &
-!>   &                Urho(i,j)*SinAngler(i,j)
-!>
+!^          va(i,j,k)=Vrho(i,j)*CosAngler(i,j)+                         &
+!^   &                Urho(i,j)*SinAngler(i,j)
+!^
             tl_va(i,j,k)=tl_Vrho(i,j)*CosAngler(i,j)+                   &
      &                   tl_Urho(i,j)*SinAngler(i,j)
 # ifdef MASKING
-!>          ua(i,j,k)=ua(i,j,k)*rmask(i,j)
-!>
+!^          ua(i,j,k)=ua(i,j,k)*rmask(i,j)
+!^
             tl_ua(i,j,k)=tl_ua(i,j,k)*rmask(i,j)
-!>          va(i,j,k)=va(i,j,k)*rmask(i,j)
-!>
+!^          va(i,j,k)=va(i,j,k)*rmask(i,j)
+!^
             tl_va(i,j,k)=tl_va(i,j,k)*rmask(i,j)
 # endif
           END DO
@@ -530,12 +530,12 @@
 !
 !  Exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    ua, va)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    ua, va)
+!^
       CALL mp_exchange3d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
@@ -645,14 +645,14 @@
 !
         DO j=Jstr-1,JendR
           DO i=Istr-1,IendR
-!>          Urho(i,j)=ua(i,j,k)*CosAngler(i,j)+                         &
-!>   &                va(i,j,k)*SinAngler(i,j)
-!>
+!^          Urho(i,j)=ua(i,j,k)*CosAngler(i,j)+                         &
+!^   &                va(i,j,k)*SinAngler(i,j)
+!^
             tl_Urho(i,j)=tl_ua(i,j,k)*CosAngler(i,j)+                   &
      &                   tl_va(i,j,k)*SinAngler(i,j)
-!>          Vrho(i,j)=va(i,j,k)*CosAngler(i,j)-                         &
-!>   &                ua(i,j,k)*SinAngler(i,j)
-!>
+!^          Vrho(i,j)=va(i,j,k)*CosAngler(i,j)-                         &
+!^   &                ua(i,j,k)*SinAngler(i,j)
+!^
             tl_Vrho(i,j)=tl_va(i,j,k)*CosAngler(i,j)-                   &
      &                   tl_ua(i,j,k)*SinAngler(i,j)
           END DO
@@ -662,12 +662,12 @@
 !
         DO j=JstrR,JendR
           DO i=Istr,IendR
-!>          u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
-!>
+!^          u(i,j,k,nout)=0.5_r8*(Urho(i-1,j)+Urho(i,j))
+!^
             tl_u(i,j,k,nout)=0.5_r8*(tl_Urho(i-1,j)+tl_Urho(i,j))
 #  ifdef MASKING
-!>          u(i,j,k,nout)=u(i,j,k,nout)*umask(i,j)
-!>
+!^          u(i,j,k,nout)=u(i,j,k,nout)*umask(i,j)
+!^
             tl_u(i,j,k,nout)=tl_u(i,j,k,nout)*umask(i,j)
 #  endif
           END DO
@@ -675,12 +675,12 @@
 !
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-!>          v(i,j,k,nout)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
-!>
+!^          v(i,j,k,nout)=0.5_r8*(Vrho(i,j-1)+Vrho(i,j))
+!^
             tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1)+tl_Vrho(i,j))
 #  ifdef MASKING
-!>          v(i,j,k,nout)=v(i,j,k,nout)*vmask(i,j)
-!>
+!^          v(i,j,k,nout)=v(i,j,k,nout)*vmask(i,j)
+!^
             tl_v(i,j,k,nout)=tl_v(i,j,k,nout)*vmask(i,j)
 #  endif
           END DO
@@ -691,12 +691,12 @@
 !
 !  Exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    u(:,:,:,nout), v(:,:,:,nout))
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    u(:,:,:,nout), v(:,:,:,nout))
+!^
       CALL mp_exchange3d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints,                                 &
@@ -813,12 +813,12 @@
 !
 !  Adjoint of exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    tl_ua, tl_va)
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_ua, tl_va)
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
@@ -836,24 +836,24 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
 # ifdef MASKING
-!>          tl_va(i,j,k)=tl_va(i,j,k)*rmask(i,j)
-!>
+!^          tl_va(i,j,k)=tl_va(i,j,k)*rmask(i,j)
+!^
             ad_va(i,j,k)=ad_va(i,j,k)*rmask(i,j)
-!>          tl_ua(i,j,k)=tl_ua(i,j,k)*rmask(i,j)
-!>
+!^          tl_ua(i,j,k)=tl_ua(i,j,k)*rmask(i,j)
+!^
             ad_ua(i,j,k)=ad_ua(i,j,k)*rmask(i,j)
 # endif
-!>          tl_va(i,j,k)=tl_Vrho(i,j)*CosAngler(i,j)+                   &
-!>   &                   tl_Urho(i,j)*SinAngler(i,j)
-!>
+!^          tl_va(i,j,k)=tl_Vrho(i,j)*CosAngler(i,j)+                   &
+!^   &                   tl_Urho(i,j)*SinAngler(i,j)
+!^
             adfac1=CosAngler(i,j)*ad_va(i,j,k)
             adfac2=SinAngler(i,j)*ad_va(i,j,k)
             ad_Vrho(i,j)=ad_Vrho(i,j)+adfac1
             ad_Urho(i,j)=ad_Urho(i,j)+adfac2
             ad_va(i,j,k)=0.0_r8
-!>          tl_ua(i,j,k)=tl_Urho(i,j)*CosAngler(i,j)                    &
-!>   &                   tl_Vrho(i,j)*SinAngler(i,j)
-!>
+!^          tl_ua(i,j,k)=tl_Urho(i,j)*CosAngler(i,j)                    &
+!^   &                   tl_Vrho(i,j)*SinAngler(i,j)
+!^
             adfac1=CosAngler(i,j)*ad_ua(i,j,k)
             adfac2=SinAngler(i,j)*ad_ua(i,j,k)
             ad_Urho=ad_Urho+adfac1
@@ -868,20 +868,20 @@
           DO i=IstrR,IendR
             IF (.not.NSperiodic(ng)) THEN
               IF (DOMAIN(ng)%Northern_Edge(tile)) THEN
-!>              tl_Vrho(i,Jend+1)=tl_Vrho(i,Jend)
-!>
+!^              tl_Vrho(i,Jend+1)=tl_Vrho(i,Jend)
+!^
                 ad_Vrho(i,Jend  )=ad_Vrho(i,Jend)+ad_Vrho(i,Jend+1)
                 ad_Vrho(i,Jend+1)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Southern_Edge(tile)) THEN
-!>              tl_Vrho(i,Jstr-1)=tl_Vrho(i,Jstr)
-!>
+!^              tl_Vrho(i,Jstr-1)=tl_Vrho(i,Jstr)
+!^
                 ad_Vrho(i,Jstr  )=ad_Vrho(i,Jstr)+ad_Vrho(i,Jstr-1)
                 ad_Vrho(i,Jstr-1)=0.0_r8
               END IF
             END IF
-!>          tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
-!>
+!^          tl_Vrho(i,j)=0.5_r8*(tl_v(i,j,k,ninp)+tl_v(i,j+1,k,ninp))
+!^
             adfac=0.5_r8*ad_Vrho(i,j)
             ad_v(i,j  ,k,ninp)=ad_v(i,j  ,k,ninp)+adfac
             ad_v(i,j+1,k,ninp)=ad_v(i,j+1,k,ninp)+adfac
@@ -893,20 +893,20 @@
           DO i=Istr,Iend
             IF (.not.EWperiodic(ng)) THEN
               IF (DOMAIN(ng)%Eastern_Edge(tile)) THEN
-!>              tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
-!>
+!^              tl_Urho(Iend+1,j)=tl_Urho(Iend,j)
+!^
                 ad_Urho(Iend  ,j)=ad_Urho(Iend,j)+ad_Urho(Iend+1,j)
                 ad_Urho(Iend+1,j)=0.0_r8
               END IF
               IF (DOMAIN(ng)%Western_Edge(tile)) THEN
-!>              tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
-!>
+!^              tl_Urho(Istr-1,j)=tl_Urho(Istr,j)
+!^
                 ad_Urho(Istr  ,j)=ad_Urho(Istr,j)+ad_Urho(Istr-1,j)
                 ad_Urho(Istr-1,j)=0.0_r8
               END IF
             END IF
-!>          tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
-!>
+!^          tl_Urho(i,j)=0.5_r8*(tl_u(i,j,k,ninp)+tl_u(i+1,j,k,ninp))
+!^
             adfac=0.5_r8*ad_Urho(i,j)
             ad_u(i  ,j,k,ninp)=ad_u(i  ,j,k,ninp)+adfac
             ad_u(i+1,j,k,ninp)=ad_u(i+1,j,k,ninp)+adfac
@@ -1025,12 +1025,12 @@
 !
 !  Adjoint of exchange boundary data.
 !
-!>    CALL mp_exchange3d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-!>   &                    NghostPoints,                                 &
-!>   &                    EWperiodic(ng), NSperiodic(ng),               &
-!>   &                    tl_u(:,:,:,nout), tl_v(:,:,:,nout))
-!>
+!^    CALL mp_exchange3d (ng, tile, model, 2,                           &
+!^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_u(:,:,:,nout), tl_v(:,:,:,nout))
+!^
       CALL ad_mp_exchange3d (ng, tile, model, 2,                        &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
@@ -1047,12 +1047,12 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
 #  ifdef MASKING
-!>          tl_v(i,j,k,nout)=tl_v(i,j,k,nout)*vmask(i,j)
-!>
+!^          tl_v(i,j,k,nout)=tl_v(i,j,k,nout)*vmask(i,j)
+!^
             ad_v(i,j,k,nout)=ad_v(i,j,k,nout)*vmask(i,j)
 #  endif
-!>          tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1)+tl_Vrho(i,j))
-!>
+!^          tl_v(i,j,k,nout)=0.5_r8*(tl_Vrho(i,j-1)+tl_Vrho(i,j))
+!^
             adfac=0.5_r8*ad_v(i,j,k,nout)
             ad_Vrho(i,j-1)=ad_Vrho(i,j-1)+adfac
             ad_Vrho(i,j  )=ad_Vrho(i,j  )+adfac
@@ -1063,12 +1063,12 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
 #  ifdef MASKING
-!>          tl_u(i,j,k,nout)=tl_u(i,j,k,nout)*umask(i,j)
-!>
+!^          tl_u(i,j,k,nout)=tl_u(i,j,k,nout)*umask(i,j)
+!^
             ad_u(i,j,k,nout)=ad_u(i,j,k,nout)*umask(i,j)
 #  endif
-!>          tl_u(i,j,k,nout)=0.5_r8*(tl_Urho(i-1,j)+tl_Urho(i,j))
-!>
+!^          tl_u(i,j,k,nout)=0.5_r8*(tl_Urho(i-1,j)+tl_Urho(i,j))
+!^
             adfac=0.5_r8*ad_u(i,j,k,nout)
             ad_Urho(i-1,j)=ad_Urho(i-1,j)+adfac
             ad_Urho(i  ,j)=ad_Urho(i  ,j)+adfac
@@ -1081,17 +1081,17 @@
 !
         DO j=Jstr-1,JendR
           DO i=Istr-1,IendR
-!>          tl_Vrho(i,j)=tl_va(i,j,k)*CosAngler(i,j)-                   &
-!>   &                   tl_ua(i,j,k)*SinAngler(i,j)
-!>
+!^          tl_Vrho(i,j)=tl_va(i,j,k)*CosAngler(i,j)-                   &
+!^   &                   tl_ua(i,j,k)*SinAngler(i,j)
+!^
             adfac1=CosAngler(i,j)*ad_Vrho(i,j)
             adfac2=SinAngler(i,j)*ad_Vrho(i,j)
             ad_va(i,j,k)=ad_va(i,j,k)+adfac1
             ad_ua(i,j,k)=ad_ua(i,j,k)-adfac2
             ad_Vrho(i,j)=0.0_r8
-!>          tl_Urho(i,j)=tl_ua(i,j,k)*CosAngler(i,j)+                   &
-!>   &                   tl_va(i,j,k)*SinAngler(i,j)
-!>
+!^          tl_Urho(i,j)=tl_ua(i,j,k)*CosAngler(i,j)+                   &
+!^   &                   tl_va(i,j,k)*SinAngler(i,j)
+!^
             adfac1=CosAngler(i,j)*ad_Urho(i,j)
             adfac2=SinAngler(i,j)*ad_Urho(i,j)
             ad_ua(i,j,k)=ad_ua(i,j,k)+adfac1

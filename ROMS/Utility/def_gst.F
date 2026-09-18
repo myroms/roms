@@ -37,6 +37,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_gst_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

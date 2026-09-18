@@ -61,8 +61,18 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_scalars
+!
       implicit none
-
+!
+      PUBLIC  :: exchange_p4d_tile
+      PUBLIC  :: exchange_r4d_tile
+      PUBLIC  :: exchange_u4d_tile
+      PUBLIC  :: exchange_v4d_tile
+      PUBLIC  :: exchange_w4d_tile
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -71,9 +81,6 @@
      &                              LBl, UBl,                           &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -300,7 +307,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_p4d_tile
 
@@ -312,9 +319,6 @@
      &                              A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -540,7 +544,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_r4d_tile
 !
@@ -550,9 +554,6 @@
      &                              LBl, UBl,                           &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -778,7 +779,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_u4d_tile
 
@@ -790,9 +791,6 @@
      &                              A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_scalars
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -1018,7 +1016,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_v4d_tile
 
@@ -1029,9 +1027,6 @@
      &                              LBl, UBl,                           &
      &                              A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1258,7 +1253,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE exchange_w4d_tile
 #endif

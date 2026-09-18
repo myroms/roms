@@ -44,7 +44,7 @@
       logical :: Lvalue(4)
 
       integer :: Mval, Npts, Nval
-      integer :: i, ib, igrid, itrc, k, ng, ns, status
+      integer :: i, ib, igrid, iobsfile, itrc, k, ng, ns, status
       integer :: Cdim, Clen, Mscale, Rdim
       integer :: obs_lib
       integer :: Ivalue(1)
@@ -60,6 +60,8 @@
       integer, allocatable :: MiterT(:,:,:)
 #  endif
 # endif
+      integer, allocatable :: NOBScount(:,:)
+
 # if defined FOUR_DVAR  || defined VERIFICATION || \
     (defined HESSIAN_SV && defined BNORM)
       logical, dimension(MT) :: Ltracer
@@ -103,7 +105,8 @@
 !  Initialize.
 !-----------------------------------------------------------------------
 !
-      igrid=1
+      igrid=1                            ! nested grid counter
+      iobsfile=1                         ! multiple OBS file counter
       Nfiles(1:Ngrids)=0
       DO i=1,LEN(label)
         label(i:i)=blank
@@ -117,10 +120,10 @@
 # ifdef SOLVE3D
       delta2T=0
       delta3T=0
-# endif 
+# endif
 !
 !  Set NetCDF library to process reading and writing the observation
-!  vectors. Since the input OBS(ng)%name file can be rewritten, we
+!  vectors. Since the input OBS(:,ng)%name file can be rewritten, we
 !  need to ensure that the output DAV(ng)%name is processed with the
 !  same library.
 !
@@ -210,6 +213,7 @@
               END DO
               Phase4DVAR=TRIM(ADJUSTL(Cval(Nval)))
 #  endif
+#  ifndef IODA_OBS
             CASE ('NextraObs')
               Npts=load_i(Nval, Rval, 1, Ivalue)
               NextraObs=Ivalue(1)
@@ -229,6 +233,7 @@
               IF (NextraObs.gt.0) THEN
                 ExtraName(Nval)=TRIM(Cval(Nval))
               END IF
+#  endif
             CASE ('tl_M2diff')
               Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
             CASE ('tl_M3diff')
@@ -407,21 +412,21 @@
                 DO i=1,2
                   Dirac(i,isFsur,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isUbar)')
-              Npts=load_i(Nval, Rval, 2, Ngrids, delta2) 
+              Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isUbar,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVbar)')
               Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isVbar,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
 #  ifdef SOLVE3D
             CASE ('Dirac(isUvel)')
               Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
@@ -429,14 +434,14 @@
                 DO i=1,3
                   Dirac(i,isUvel,ng)=delta3(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVvel)')
               Npts=load_i(Nval, Rval, 3, Ngrids, delta3)
               DO ng=1,Ngrids
                 DO i=1,3
                   Dirac(i,isVvel,ng)=delta3(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isTvar)')
               Npts=load_i(Nval, Rval, 3, MT, Ngrids, delta3T)
               DO ng=1,Ngrids
@@ -455,14 +460,14 @@
                 DO i=1,2
                   Dirac(i,isUstr,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
             CASE ('Dirac(isVstr)')
               Npts=load_i(Nval, Rval, 2, Ngrids, delta2)
               DO ng=1,Ngrids
                 DO i=1,2
                   Dirac(i,isVstr,ng)=delta2(i,ng)
                 END DO
-              END DO            
+              END DO
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
             CASE ('Dirac(isTsur)')
@@ -1330,10 +1335,42 @@
               label='NRM - surface forcing normalization'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
      &                      Ngrids, Nfiles, 4, 4, inp_lib, NRM)
+#  ifdef IODA_OBS
+            CASE ('NOBSFILES')
+              Npts=load_i(Nval, Rval, Ngrids, nOBSfiles)
+              DO ng=1,Ngrids
+                IF (nOBSfiles(ng).le.0) THEN
+                  IF (Master) WRITE (out,250) 'NOBSFILES',              &
+     &                                        nOBSfiles(ng),            &
+     &               'Must be equal or greater than one.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              allocate ( OBS(MAXVAL(nOBSfiles),Ngrids) )
+              allocate ( NOBScount(MAXVAL(nOBSfiles),Ngrids) )
+              NOBScount=0
             CASE ('OBSname')
-              label='OBS - data assimilation observations'
+              label='OBS - data assimilation IODA-type observations'
+              DO ng=1,Ngrids
+                IF (nOBSfiles(ng).lt.0) THEN
+                  IF (Master) WRITE (out,260) 'nOBSfiles = ',           &
+     &                                        nOBSfiles,                &
+     &               'KeyWord ''NOBSFILES'' unread or misssing from '// &
+     &               'input script ''s4dvar.in''.'
+                  exit_flag=4
+                  RETURN
+                END IF
+              END DO
+              Npts=load_s2d(Nval, Cval, Cdim, line, label, iobsfile,    &
+     &                      igrid, Ngrids, nOBSfiles, NOBScount,        &
+     &                      nOBSfiles(1), inp_lib, OBS)
+#  else
+            CASE ('OBSname')
+              label='OBS - data assimilation legacy observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, obs_lib, OBS)
+     &                      Ngrids, Nfiles, out_lib, OBS(1,:))
+#  endif
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
@@ -2076,7 +2113,7 @@
           END DO
 #     endif
 #    endif
-#    ifdef SOLVE3D      
+#    ifdef SOLVE3D
           WRITE (out,120) Vdecay(1,isUvel,ng), 'VdecayI(isUvel)',       &
      &            'IC Error decorrelation V-scale (m), 3D U-momentum.'
           WRITE (out,120) Vdecay(1,isVvel,ng), 'VdecayI(isVvel)',       &
@@ -2373,6 +2410,7 @@
 #    endif
 #   endif
 #  endif
+#  ifndef IODA_OBS
           IF (NextraObs.gt.0) THEN
             WRITE (out,80) NextraObs, 'NextraObs',                      &
      &            'Number of extra-observations classes to process.'
@@ -2382,7 +2420,7 @@
      &            TRIM(ExtraName(i))
             END DO
           END IF
-
+#  endif
 #  ifdef DIRAC
           WRITE (out,'(/,a,/)')                                         &
      &          ' Dirac Delta Functions (i,j,k) Locations:'
@@ -2570,14 +2608,27 @@
         END IF
 #    endif
 #   endif
+
 #   if !(defined CORRELATION || defined OPT_OBSERVATIONS)
-        fname=OBS(ng)%name
+#    ifdef IODA_OBS
+        DO i=1,nOBSfiles(ng)
+          fname=OBS(i,ng)%name
+          IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
+            IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+          ELSE
+            IF (Master.and.Lwrite) WRITE (out,165)                        &
+     &      '  Input IODA observations File ',i,':  ', TRIM(fname)
+          END IF
+        END DO
+#    else
+        fname=OBS(1,ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
           IF (Master.and.Lwrite) WRITE (out,160)                        &
      &      '          Input observations File:  ', TRIM(fname)
         END IF
+#    endif
 #   endif
 #   if !defined CORRELATION
         IF (Master.and.Lwrite) WRITE (out,160)                          &
@@ -2594,7 +2645,7 @@
 #  endif
 #  if !defined CORRELATION
 #   ifdef VERIFICATION
-        fname=OBS(ng)%name
+        fname=OBS(1,ng)%name
         IF (.not.find_file(ng, out, fname, 'OBSname')) THEN
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         ELSE
@@ -2705,6 +2756,7 @@
  150  FORMAT (/,' Input/Output Assimilation Files:',/)
 #  endif
  160  FORMAT (2x,a,a)
+ 165  FORMAT (2x,a,i2.2,a,a)
  170  FORMAT (3x,4(1x,l1),2x,a,t32,a)
  180  FORMAT (3x,4(1x,l1),2x,a,t32,a,i2.2,':',1x,a)
  190  FORMAT (1p,e11.4,2x,a,t32,a,a,'.')
@@ -2717,6 +2769,10 @@
      &        /,15x,a,/,15x,a)
  240  FORMAT (/,' READ_ASSPAR - Illegal parameter, ', a, ' = ', 1x, i0, &
      &        /,15x,a,/,15x,'correct input script: ',1x,'''',a,'''',/)
+ 250  FORMAT (/,' READ_ASSPAR - Invalid input parameter, ',a,i0,        &
+     &        /,15x,a)
+ 260  FORMAT (/,' READ_ASSPAR - Invalid dimension parameter, ',a,i0,    &
+     &        /,15x,a)
 # endif
 !
       RETURN

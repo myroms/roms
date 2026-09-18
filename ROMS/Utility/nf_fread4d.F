@@ -75,6 +75,13 @@
 #endif
       END INTERFACE nf_fread4d
 !
+      PUBLIC  :: nf_fread4d
+      PRIVATE :: nf90_fread4d
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: pio_fread4d
+#endif
+      PRIVATE
+!
       CONTAINS
 
 #if defined PARALLEL_IO && defined DISTRIBUTE

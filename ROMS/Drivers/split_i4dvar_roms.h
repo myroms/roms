@@ -82,7 +82,11 @@
       USE mct_coupler_mod,   ONLY : initialize_ocn2wav_coupling
 # endif
 #endif
+#ifdef IODA_OBS
+      USE roms_hofx_mod,     ONLY : hofx_finalize
+#else
       USE stats_modobs_mod,  ONLY : stats_modobs
+#endif
       USE stdinp_mod,        ONLY : getpar_i, getpar_s
       USE stdout_mod,        ONLY : Set_StdOutUnit, stdout_unit
       USE strings_mod,       ONLY : FoundError, uppercase
@@ -465,7 +469,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Fcount, ng, thread
+      integer :: Fcount, ng, tile, thread
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", ROMS_finalize"
@@ -475,20 +479,32 @@
 !  the next data assimilation cycle.
 !-----------------------------------------------------------------------
 !
+#ifdef DISTRIBUTE
+      tile=MyRank
+#else
+      tile=-1
+#endif
+!
       IF (Ldone.and.(exit_flag.eq.NoError)) THEN
         DO ng=1,Ngrids
           LdefDAI(ng)=.TRUE.
           CALL def_dai (ng)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-#ifdef DISTRIBUTE
-          CALL wrt_dai (ng, MyRank)
-#else
-          CALL wrt_dai (ng, -1)
-#endif
+          CALL wrt_dai (ng, tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END DO
       END IF
+
+#ifdef IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  Finalize model at observation locations, H(x) operators. Then, write
+!  ouput enhanced NetCDF-4 files.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_finalize (iNLM)
+#else
 !
 !-----------------------------------------------------------------------
 !  Compute and report model-observation comparison statistics.
@@ -496,13 +512,10 @@
 !
       IF (Ldone.or.(exit_flag.eq.1)) THEN
         DO ng=1,Ngrids
-#ifdef DISTRIBUTE
-          CALL stats_modobs (ng, MyRank)
-#else
-          CALL stats_modobs (ng, -1)
-#endif
+          CALL stats_modobs (ng, tile)
         END DO
       END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
@@ -523,11 +536,7 @@
             END IF
             blowup=exit_flag
             exit_flag=NoError
-#ifdef DISTRIBUTE
-            CALL wrt_rst (ng, MyRank)
-#else
-            CALL wrt_rst (ng, -1)
-#endif
+            CALL wrt_rst (ng, tile)
           END IF
         END DO
       END IF

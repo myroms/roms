@@ -1007,8 +1007,8 @@
 !
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-!>        Zt_avg1(i,j)=zeta(i,j,kstp)
-!>
+!^        Zt_avg1(i,j)=zeta(i,j,kstp)
+!^
           tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
         END DO
       END DO

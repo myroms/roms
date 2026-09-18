@@ -43,18 +43,18 @@
 !=======================================================================
 !
         USE mod_kinds
-        USE mod_param
 !
         implicit none
 !
-        PUBLIC :: allocate_sources
-        PUBLIC :: deallocate_sources
+        PUBLIC  :: allocate_sources
+        PUBLIC  :: deallocate_sources
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_SOURCES structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_SOURCES
+        TYPE, PUBLIC :: T_SOURCES
 
           integer, pointer :: Isrc(:)
           integer, pointer :: Jsrc(:)
@@ -87,14 +87,14 @@
 
         END TYPE T_SOURCES
 !
-        TYPE (T_SOURCES), allocatable :: SOURCES(:)
+        TYPE (T_SOURCES), public, allocatable :: SOURCES(:)
 !
 !-----------------------------------------------------------------------
 !  Define other variables in module.
 !-----------------------------------------------------------------------
 !
-        integer, allocatable :: Msrc(:)
-        integer, allocatable :: Nsrc(:)
+        integer, public, allocatable :: Msrc(:)
+        integer, public, allocatable :: Nsrc(:)
 !
       CONTAINS
 !
@@ -123,7 +123,7 @@
 !
 !  Imported variable declarations.
 !
-      integer :: ng
+      integer, intent(in) :: ng
 !
 !  Local variable declarations.
 !
@@ -337,15 +337,15 @@
 !  grids.                                                              !
 !                                                                      !
 !=======================================================================
-
-#ifdef SUBOBJECT_DEALLOCATION
 !
+      USE mod_param,   ONLY : Ngrids
+#ifdef SUBOBJECT_DEALLOCATION
       USE destroy_mod, ONLY : destroy
 #endif
 !
 !  Imported variable declarations.
 !
-      integer :: ng
+      integer, intent(in) :: ng
 !
 !  Local variable declarations.
 !

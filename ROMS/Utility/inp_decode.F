@@ -93,6 +93,21 @@
       integer, parameter :: nCval = 200  ! size of Cval character vector
       integer, parameter :: nRval = 100  ! size of Rval real vector
 !
+      PUBLIC  :: nCval, nRval
+!
+      PUBLIC  :: decode_line
+      PUBLIC  :: find_file
+      PUBLIC  :: load_i
+      PUBLIC  :: load_l
+      PUBLIC  :: load_r
+      PUBLIC  :: load_lbc
+      PUBLIC  :: load_s1d
+      PUBLIC  :: load_s2d
+#ifdef SOLVE3D
+      PUBLIC  :: load_tadv
+#endif
+      PRIVATE
+!
       CONTAINS
 !
       FUNCTION decode_line (line_text, KeyWord, Nval, Cval, Rval)
@@ -314,7 +329,7 @@
                 Iblank=i
               ELSE
                 ie=i
-              ENDIF
+              END IF
               IF (decode.or.(i.eq.Lval)) THEN
                 Nval=Nval+1
 !
