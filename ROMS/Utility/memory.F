@@ -482,10 +482,11 @@
         END IF
       END IF
 !
-  10  FORMAT (/,' Computer Memory Available and Usage Summary (MB):',/)
+  10  FORMAT (/,' Computer Memory Availability and Usage Summary (MB):',&
+     &        /)
   20  FORMAT (5x,'MemTotal = ',f15.4,',  Total usable physical RAM',/,  &
      &        5x,'MemFree  = ',f15.4,',  Current unused physical RAM',/,&
-     &        5x,'MemAvail = ',f15.4,',  Avalilable memory',/)
+     &        5x,'MemAvail = ',f15.4,',  Available memory',/)
   30  FORMAT (5x,'VmPeak   = ',f15.4,',  Peak Virtual Memory Size',/,   &
      &        5x,'VmSize   = ',f15.4,',  Virtual Memory Size',/,        &
      &        5x,'VmHWM    = ',f15.4,',  Peak Resident Set Size ',      &
