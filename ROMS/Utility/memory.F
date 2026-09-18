@@ -248,6 +248,10 @@
         WRITE (stdout,"(/,80('<'))")
       END IF
 !
+!  If available, report computer memory usage.
+!
+      CALL report_memory_usage ()
+!
 !  Deallocate dynamic and automatic memory local arrays.
 !
       IF (allocated(Asize))  deallocate ( Asize )
@@ -281,3 +285,213 @@
 !
       RETURN
       END SUBROUTINE memory
+!
+      SUBROUTINE report_memory_usage
+!
+!=======================================================================
+!                                                                      !
+!  This routine check if the Linux files "/proc/meminfo" and           !
+!  "/proc/self/status" are available in the running computer.          !
+!  If so, it reports the available physical memory (RAM) and           !
+!  memory usage for the ROMS applicaton.                               !
+!                                                                      !
+!  The /proc/self is the current process on the current logical CPU    !
+!  that is reading the /proc/self/status file.                         !
+!                                                                      !
+!    ls -l /proc/self                                                  !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_kinds
+      USE mod_parallel, ONLY : Master, numthreads, tile_count
+      USE mod_iounits,  ONLY : stdout
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_reduce
+#endif
+!
+      implicit none
+!
+!  Local variable declarations.
+!
+      logical :: Lreport1, Lreport2
+!
+      integer, parameter :: ng = 1
+      integer, parameter :: model = 1
+!
+      integer :: ios1, ios2, lstr, unit_num
+      integer :: NSUB, my_value
+!
+      real(r8) :: MemTotal, MemFree, MemAvail
+      real(r8) :: VmPeak, VmSize, VmHWM, VmRSS
+
+#if defined DISTRIBUTE
+      real(r8), dimension(7) :: rbuffer
+!
+      character (len=3), dimension(7) :: io_handle
+#endif
+      character (len=4)   :: bunit
+      character (len=40)  :: string
+      character (len=200) :: line
+!
+!-----------------------------------------------------------------------
+!  If /proc/self/status Linux file exist, report memory consumption.
+!-----------------------------------------------------------------------
+!
+#ifdef DISTRIBUTE
+      NSUB=1
+#else
+      NSUB=numthreads
+#endif
+!
+!$OMP CRITICAL (VMEMORY)
+     IF (tile_count.eq.0) THEN
+       Lreport1=.FALSE.
+       Lreport2=.FALSE.
+       MemTotal=0.0_r8
+       MemFree =0.0_r8
+       MemAvail=0.0_r8
+       VmPeak  =0.0_r8
+       VmSize  =0.0_r8
+       VmHWM   =0.0_r8
+       VmRSS   =0.0_r8
+     END IF
+!
+!  Extract memory available, meassured in kiloBites (kB).
+!
+      OPEN (NEWUNIT=unit_num, FILE="/proc/meminfo", STATUS="old",   &
+     &      ACTION="read", IOSTAT=ios1)
+!
+      FOUND_MEMINFO : IF (ios1.eq.0) THEN
+        Lreport1=.TRUE.
+        DO WHILE (.TRUE.)
+          READ (unit_num, '(a)', IOSTAT=ios2) line
+          IF (ios2.ne.0) EXIT
+          lstr=LEN_TRIM(line)
+!
+          IF (INDEX(line,'MemTotal:').gt.0) THEN
+            string=line(10:lstr)
+            READ (string,*) my_value, bunit
+            MemTotal=REAL(my_value, r8)
+          END IF
+!
+          IF (INDEX(line,'MemFree:').gt.0) THEN
+            string=line(9:lstr)
+            READ (string,*) my_value, bunit
+            MemFree=REAL(my_value, r8)
+          END IF
+!
+          IF (INDEX(line,'MemAvailable:').gt.0) THEN
+            string=line(14:lstr)
+            READ (string,*) my_value, bunit
+            MemAvail=REAL(my_value, r8)
+          END IF
+        END DO
+      END IF FOUND_MEMINFO
+      CLOSE (unit_num)
+!
+!  Extract memory consumption, mesured in kiloBites (kB).
+!
+      OPEN (NEWUNIT=unit_num, FILE="/proc/self/status", STATUS="old",   &
+     &      ACTION="read", IOSTAT=ios1)
+!
+      FOUND_SELF : IF (ios1.eq.0) THEN
+        Lreport2=.TRUE.
+        DO WHILE (.TRUE.)
+          READ (unit_num, '(a)', IOSTAT=ios2) line
+          IF (ios2.ne.0) EXIT
+          lstr=LEN_TRIM(line)
+!
+          IF (INDEX(line,'VmPeak:').gt.0) THEN
+            string=line(8:lstr)
+            READ (string,*) my_value, bunit
+            VmPeak=VmPeak+REAL(my_value, r8)
+          END IF
+!
+          IF (INDEX(line,'VmSize:').gt.0) THEN
+            string=line(8:lstr)
+            READ (string,*) my_value, bunit
+            VmSize=VmSize+REAL(my_value, r8)
+          END IF
+!
+          IF (INDEX(line,'VmHWM:' ).gt.0) THEN
+            string=line(7:lstr)
+            READ (string,*) my_value, bunit
+            VmHWM=VmHWM+REAL(my_value, r8)
+          END IF
+!
+          IF (INDEX(line,'VmRSS:' ).gt.0) THEN
+            string=line(7:lstr)
+            READ (string,*) my_value, bunit
+            VmRSS=VmRSS+REAL(my_value, r8)
+          END IF
+        END DO
+      END IF FOUND_SELF
+      CLOSE (unit_num)
+!
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+#ifdef DISTRIBUTE
+        rbuffer(1)=MemTotal
+        rbuffer(2)=MemFree
+        rbuffer(3)=MemAvail
+        rbuffer(4)=VmPeak
+        rbuffer(5)=VmSize
+        rbuffer(6)=VmHWM
+        rbuffer(7)=VmRSS
+        io_handle(1)='MAX'
+        io_handle(2)='MAX'
+        io_handle(3)='MAX'
+        io_handle(4)='SUM'
+        io_handle(5)='SUM'
+        io_handle(6)='SUM'
+        io_handle(7)='SUM'
+        CALL mp_reduce (ng, model, 7, rbuffer, io_handle)
+        MemTotal=rbuffer(1)
+        MemFree =rbuffer(2)
+        MemAvail=rbuffer(3)
+        VmPeak  =rbuffer(4)
+        VmSize  =rbuffer(5)
+        VmHWM   =rbuffer(6)
+        VmRSS   =rbuffer(7)
+#endif
+        MemTotal=MemTotal/1024.0_r8  ! convert to megaBites
+        MemFree =MemFree/1024.0_r8
+        MemAvail=MemAvail/1024.0_r8
+        VmPeak  =VmPeak/1024.0_r8
+        VmSize  =VmSize/1024.0_r8
+        VmHWM   =VmHWM/1024.0_r8
+        VmRSS   =VmRSS/1024.0_r8
+      END IF
+!$OMP END CRITICAL (PSOURCE)
+!
+! Report.
+!
+      IF (Master) THEN
+        IF (Lreport1.or.Lreport2) THEN
+          WRITE (stdout,10)
+          IF (Lreport1) THEN
+            WRITE (stdout,20) MemTotal, MemFree, MemAvail
+          END IF
+          IF (Lreport2) THEN
+            WRITE (stdout,30) VmPeak, VmSize, VmHWM, VmRSS
+          END IF
+          WRITE (stdout,"(/,80('<'))")
+        END IF
+      END IF
+!
+  10  FORMAT (/,' Computer Memory Availability and Usage Summary (MB):',&
+     &        /)
+  20  FORMAT (5x,'MemTotal = ',f15.4,',  Total usable physical RAM',/,  &
+     &        5x,'MemFree  = ',f15.4,',  Current unused physical RAM',/,&
+     &        5x,'MemAvail = ',f15.4,',  Available memory',/)
+  30  FORMAT (5x,'VmPeak   = ',f15.4,',  Peak Virtual Memory Size',/,   &
+     &        5x,'VmSize   = ',f15.4,',  Virtual Memory Size',/,        &
+     &        5x,'VmHWM    = ',f15.4,',  Peak Resident Set Size ',      &
+     &                                '(High Water Mark)',/,            &
+     &        5x,'VmRSS    = ',f15.4,',  Resident Set Size')
+!
+      RETURN
+      END SUBROUTINE report_memory_usage

@@ -701,6 +701,22 @@
 #endif
 
 /*
+** Check for ROMS-JEDI required flags.
+*/
+
+#if defined JEDI
+# if !defined FORWARD_FLUXES
+#  define FORWARD_FLUXES
+# endif
+# if !defined GENERIC_DSTART
+#  define GENERIC_DSTART
+# endif
+# if !defined INITIALIZE_AUTOMATIC
+#  define INITIALIZE_AUTOMATIC
+# endif
+#endif
+
+/*
 ** Set internal weak constraint switches.
 */
 
