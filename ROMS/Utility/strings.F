@@ -19,6 +19,7 @@
 !    join_string      concatenate character array into a single string !
 !    nc_error         checks return flag from NetCDF libray calls      !
 !    lowercase        converts input string characters to lowercase    !
+!    thousands_marker number to string with thousands separator        !
 !    uppercase        converts input string characters to uppercase    !
 !                                                                      !
 !  Examples:                                                           !
@@ -55,6 +56,7 @@
       PUBLIC :: join_string
       PUBLIC :: lowercase
       PUBLIC :: nc_error
+      PUBLIC :: thousands_marker
       PUBLIC :: uppercase
 !
       CONTAINS
@@ -623,6 +625,125 @@
 !
       RETURN
       END FUNCTION lowercase
+!
+      FUNCTION thousands_marker (w, d, rvalue, rstring) RESULT (Lworked)
+!
+!=======================================================================
+!                                                                      !
+!  This function converts floating-point values to string and adds     !
+!  thousands separators for easy reading. It uses a comma a separator  !
+!  to diffentiate from the decimal point (GB and US English standard). !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      ! 
+!     w          Fortran format field width, Fw.d (integer)            !
+!     d          Fortran format decimal digits, Fw.d (integer)         !
+!     rvalue     Floating-point values (1D array)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     rstring    Formatted floating-point string (1D array)            !
+!     Lworked    Success switch                                        !
+!                                                                      !
+!  For example, w=15, r=4, rvalue=12345678.1234                        !
+!                                                                      !
+!               returns '  12,345,678.1234'                            !
+!                                                                      !
+!=======================================================================
+!
+      integer,   intent(in) :: w               !> field_width
+      integer,   intent(in) :: d               !> decimal digits
+      real (r8), intent(in) :: Rvalue(:)       !> floating-point values
+!
+      character (len=:), allocatable, intent(out) :: Rstring(:)
+!
+      logical               :: Lworked  
+      integer               :: Err, i, ic, j, k, nv
+      integer               :: iblk, idot, ldigits, lstr
+      integer               :: ncomma, max_commas
+!
+      character (len=1 ), parameter :: mark = CHAR(44)
+      character (len=10)            :: frmt
+      character (len=40)            :: digit
+      character (len=60)            :: string
+!
+!  Set requested format for floating point to string.
+!
+      WRITE (frmt,10) w, d                     ! field format Fw.d
+  10  FORMAT ('(F',i0,'.',i0,')')
+!
+!  Determine the maximum number of digits and commas before period.
+!
+      nv=SIZE(Rvalue, DIM=1)
+      ldigits=0
+      DO j=1,nv
+        IF (ABS(Rvalue(j)).gt.0.0_r8) THEN
+          ldigits=MAX(ldigits, INT(LOG10(ABS(Rvalue(j))))+1)
+        END IF
+      END DO
+      max_commas=(ldigits/3)
+      IF (MOD(ldigits, 3).eq.0) max_commas=max_commas-1
+!
+!  Convert floating-point to string.
+!
+      DO j=1,nv
+        string=CHAR(32)
+        Lworked = .FALSE.
+        WRITE (string, frmt) Rvalue(j)
+        lstr=LEN_TRIM(string)
+        idot=INDEX(string(1:lstr), CHAR(46))   ! decimal point location
+!
+!  Detemine number leading blanks and comma separations.
+!
+        iblk=0
+        DO i=1,idot
+          IF (string(i:i) .eq. CHAR(32)) iblk=iblk+1
+        END DO
+        ldigits=idot-iblk-1
+        ncomma=ldigits/3
+!
+!  Insert thousands separtion mark, comma=CHAR(44)
+!
+        k=ldigits+ncomma
+        ic=0
+        digit=CHAR(32)                            ! initialize to blank
+        DO i=idot-1,iblk+1,-1                     ! backwards
+          ic=ic+1
+          IF (ic.eq.4) THEN
+            ic=1
+            IF (string(i:i) .ne. CHAR(45)) THEN   ! negative sign
+              digit(k:k)=mark                     ! avoid having -,
+              k=k-1
+            END IF
+          END IF
+          digit(k:k)=string(i:i)
+          k=k-1
+        END DO
+!
+!  Allocate output string.
+!
+        IF (j.eq.1) THEN
+          IF (.not.allocated(Rstring)) THEN
+            allocate ( character (len=lstr+max_commas) :: Rstring(nv),  &
+     &                 STAT=Err)
+          ELSE
+            deallocate (Rstring)
+            allocate ( character (len=lstr+max_commas) :: Rstring(nv),  &
+     &                 STAT=Err )
+          END IF 
+        END IF
+!
+!  Construct output string.
+!
+        IF (Err .eq. 0) THEN
+          Lworked=.TRUE.
+          Rstring(j)=string(1:iblk-ncomma) // TRIM(digit) //            &
+     &               string(idot:lstr)
+        END IF
+      END DO
+!
+      RETURN
+      END FUNCTION thousands_marker
 !
       FUNCTION uppercase (Sinp) RESULT (Sout)
 !
