@@ -344,6 +344,12 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
+! Initialize these arrays to be 0 for the full field size.
+!-----------------------------------------------------------------------
+      FE_r=0.0_r8
+      FX_r=0.0_r8
+!
+!-----------------------------------------------------------------------
 ! Compute maximum bottom stress for MPM bedload or suspended load.
 !-----------------------------------------------------------------------
 !
@@ -433,7 +439,7 @@
         END DO
       END DO
 !
-      DO ised=NCS+1,NST
+      SED_LOOP : DO ised=NCS+1,NST
         smgd=(Srho(ised,ng)/rho0-1.0_r8)*g*Sd50(ised,ng)
         osmgd=1.0_r8/smgd
         smgdr=SQRT(smgd)*Sd50(ised,ng)*Srho(ised,ng)
@@ -774,7 +780,7 @@
      &          (FX_r(i-1,j)-2.0_r8*FX_r(i,j)+FX_r(i+1,j))**2+          &
      &          0.25_r8*                                                &
      &          (FX_r(i-1,j)-FX_r(i+1,j))**2
-!     &          (-FX_r(i-1,j)+FX_r(i+1,j))**2
+!    &          (-FX_r(i-1,j)+FX_r(i+1,j))**2
             S3p=thirtotwelv*                                            &
      &          (FX_r(i,j)-2.0_r8*FX_r(i+1,j)+FX_r(i+2,j))**2+          &
      &          0.25_r8*                                                &
@@ -878,7 +884,7 @@
      &          (FE_r(i,j-1)-2.0_r8*FE_r(i,j)+FE_r(i,j+1))**2+          &
      &          0.25_r8*                                                &
      &          (FE_r(i,j-1)-FE_r(i,j+1))**2
-!     &          (-FE_r(i,j-1)+FE_r(i,j+1))**2
+!    &          (-FE_r(i,j-1)+FE_r(i,j+1))**2
             S3p=thirtotwelv*                                            &
      &          (FE_r(i,j)-2.0_r8*FE_r(i,j+1)+FE_r(i,j+2))**2+          &
      &          0.25_r8*                                                &
@@ -1228,7 +1234,7 @@
             bedldv(i,j,ised)=FE(i,j)*(pm(i,j-1)+pm(i,j))*cff
           END DO
         END DO
-      END DO
+      END DO SED_LOOP
 !
 !  Need to update bed mass for the non-cohesive sediment types, becasue 
 !  they did not partake in the bedload transport.

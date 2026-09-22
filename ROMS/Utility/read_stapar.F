@@ -403,9 +403,11 @@
             CASE ('Sout(idTdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idTdif,1:Ngrids)=Lswitch(1:Ngrids)
+#  ifdef SALINITY
             CASE ('Sout(idSdif)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idSdif,1:Ngrids)=Lswitch(1:Ngrids)
+#  endif
             CASE ('Sout(idHsbl)')
               Npts=load_l(Nval, Cval, Ngrids, Lswitch)
               Sout(idHsbl,1:Ngrids)=Lswitch(1:Ngrids)
@@ -611,11 +613,16 @@
             WRITE (out,70) ng
             WRITE (out,80) Nstation(ng), 'Nstation',                    &
      &            'Number of stations to write out into stations file.'
-#if defined SEDIMENT && defined SED_MORPH
+# if defined SEDIMENT && defined SED_MORPH
             IF (Sout(idbath,ng)) WRITE (out,90) Sout(idbath,ng),        &
      &          'Sout(idbath)',                                         &
      &          'Write out free-surface.'
-#endif
+# endif
+# ifdef PRIMARY_PROD
+            IF (Sout(idNPP,ng)) WRITE (out,90) Sout(idNPP,ng),          &
+     &          'Sout(idNPP)',                                          &
+     &          'Write out net primary productivity.'
+# endif
             IF (Sout(idFsur,ng)) WRITE (out,90) Sout(idFsur,ng),        &
      &          'Sout(idFsur)',                                         &
      &          'Write out free-surface.'
@@ -890,15 +897,15 @@
      &         'Write out wave roller dissipation.'
 # endif
 # ifdef ROLLER_RENIERS
-            IF (Sout(idWrol,ng)) WRITE (out,170) Sout(idWrol,ng),       &
+            IF (Sout(idWrol,ng)) WRITE (out,90) Sout(idWrol,ng),        &
      &         'Sout(idWrol)',                                          &
      &         'Write out wave roller action density.'
 # endif
 # ifdef WAVES_DSPR
-            IF (Sout(idWvds,ng)) WRITE (out,170) Sout(idWvds,ng),       &
+            IF (Sout(idWvds,ng)) WRITE (out,90) Sout(idWvds,ng),        &
      &         'Sout(idWvds)',                                          &
      &         'Write out wave directional spread.'
-            IF (Sout(idWvqp,ng)) WRITE (out,170) Sout(idWvqp,ng),       &
+            IF (Sout(idWvqp,ng)) WRITE (out,90) Sout(idWvqp,ng),        &
      &         'Sout(idWvqp)',                                          &
      &         'Write out wave spectrum peakedness.'
 # endif
@@ -968,9 +975,11 @@
             IF (Sout(idTdif,ng)) WRITE (out,90) Sout(idTdif,ng),        &
      &          'Sout(idTdif)',                                         &
      &          'Write out vertical T-diffusion coefficient.'
+#  ifdef SALINITY
             IF (Sout(idSdif,ng)) WRITE (out,90) Sout(idSdif,ng),        &
      &          'Sout(idSdif)',                                         &
      &          'Write out vertical S-diffusion coefficient.'
+#  endif
 #  ifdef LMD_SKPP
             IF (Sout(idHsbl,ng)) WRITE (out,90) Sout(idHsbl,ng),        &
      &          'Sout(idHsbl)',                                         &

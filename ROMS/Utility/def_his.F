@@ -1846,6 +1846,27 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 # endif
+# if defined BULK_FLUXES
+!
+!  Define Cd.
+!
+        IF (Hout(idaoCd,ng)) THEN
+          Vinfo( 1)=Vname(1,idaoCd)
+          Vinfo( 2)=Vname(2,idaoCd)
+          Vinfo( 3)=Vname(3,idaoCd)
+          Vinfo(14)=Vname(4,idaoCd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(21)=Vname(6,idaoCd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idaoCd,ng),r8)
+          status=def_var(ng, model, HIS(ng)%ncid, HIS(ng)%Vid(idaoCd),  &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+# endif
 !
 !  Define surface active tracer fluxes.
 !
@@ -3038,16 +3059,6 @@
           END IF
 # endif
         END DO
-# ifdef SEDIMENT
-        DO i=1,NST
-          IF (.not.got_var(idfrac(i)).and.Hout(idfrac(i),ng)) THEN
-            IF (Master) WRITE (stdout,70) TRIM(Vname(1,idfrac(i))),     &
-     &                                    TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-# endif
 #endif
 
 #if (defined BBL_MODEL || defined WAVES_OUTPUT) && defined SOLVE3D
@@ -5109,6 +5120,31 @@
 !
           status=def_var(ng, model, HIS(ng)%pioFile,                    &
      &                   HIS(ng)%pioVar(idVaiN)%vd,                     &
+     &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+        END IF
+#  endif
+#  if defined BULK_FLUXES
+!
+!  Define Cd.
+!
+        IF (Hout(idaoCd,ng)) THEN
+          Vinfo( 1)=Vname(1,idaoCd)
+          Vinfo( 2)=Vname(2,idaoCd)
+          Vinfo( 3)=Vname(3,idaoCd)
+          Vinfo(14)=Vname(4,idaoCd)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(21)=Vname(6,idaoCd)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idaoCd,ng),r8)
+          HIS(ng)%pioVar(idaiCd)%dkind=PIO_FOUT
+          HIS(ng)%pioVar(idaiCd)%gtype=r2dvar
+!
+          status=def_var(ng, model, HIS(ng)%pioFile,                    &
+     &                   HIS(ng)%pioVar(idaoCd)%vd,                     &
      &                   PIO_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF

@@ -152,6 +152,7 @@
      &                     FORCES(ng) % Tair,                           &
      &                     FORCES(ng) % Uwind,                          &
      &                     FORCES(ng) % Vwind,                          &
+     &                     FORCES(ng) % Cd,                             &
 # ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
 # endif
@@ -225,7 +226,7 @@
 # ifdef WIND_MINUS_CURRENT
      &                           u, v,                                  &
 # endif
-     &                           Hair, Pair, Tair, Uwind, Vwind,        &
+     &                           Hair, Pair, Tair, Uwind, Vwind, Cd,    &
 # ifdef CLOUDS
      &                           cloud,                                 &
 # endif
@@ -299,6 +300,7 @@
       real(r8), intent(in   ) :: Tair(LBi:,LBj:)
       real(r8), intent(in   ) :: Uwind(LBi:,LBj:)
       real(r8), intent(in   ) :: Vwind(LBi:,LBj:)
+      real(r8), intent(inout) :: Cd(LBi:,LBj:)
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:,LBj:)
 #  endif
@@ -370,6 +372,7 @@
       real(r8), intent(in   ) :: Tair(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: Uwind(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: Vwind(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: Cd(LBi:UBi,LBj:UBj)
 #  ifdef CLOUDS
       real(r8), intent(in   ) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
@@ -431,7 +434,7 @@
       real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
 !
-      real(r8) :: Bf, Cd, Hl, Hlw, Hscale, Hs, Hsr, IER
+      real(r8) :: Bf, Hl, Hlw, Hscale, Hs, Hsr, IER
       real(r8) :: PairM,  RH, Taur
       real(r8) :: Wspeed, ZQoL, ZToL
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES
@@ -755,7 +758,7 @@
           Ch10(i)=0.00115_r8
           Ct10(i)=Ch10(i)/sqrt(Cd10(i))
           ZoT10(i)=10.0_r8/EXP(vonKar/Ct10(i))
-          Cd=(vonKar/LOG(blk_ZW(ng)/Zo10(i)))**2
+          Cd(i,j)=(vonKar/LOG(blk_ZW(ng)/Zo10(i)))**2
 !
 !  Compute Richardson number.
 # if defined FRC_COUPLING && defined PBLH
@@ -763,7 +766,7 @@
 # endif
 !
           Ct(i)=vonKar/LOG(blk_ZT(ng)/ZoT10(i))  ! T transfer coefficient
-          CC(i)=vonKar*Ct(i)/Cd
+          CC(i)=vonKar*Ct(i)/Cd(i,j)
           delTc(i)=0.0_r8
 # ifdef COOL_SKIN
           delTc(i)=blk_dter
@@ -975,6 +978,7 @@
 !  sensible heat (Ch), and latent heat (Ce).
 !
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
+          Cd(i,j)=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)
 !         Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps) ! used prior to 02/2024
 # if defined ICE_MODEL && defined ICE_BULK_FLUXES && defined ICE_THERMO
 !         Ch=Wstar(i)*Tstar(i)/(-Wspeed*delT(i)+0.0098_r8*blk_ZT(ng))
@@ -1306,7 +1310,18 @@
           stflux(i,j,isalt)=stflux(i,j,isalt)*rmask(i,j)
 #   endif
 #   ifdef WET_DRY
+#    ifdef EMINUSP_SHIMA
+!
+! If cell is dry, then EminusP can only be negative.
+!
+          IF (rmask_wet(i,j).lt.0.5_r8) THEN
+            IF (stflux(i,j,isalt).gt.0.0_r8) THEN
+              stflux(i,j,isalt)=stflux(i,j,isalt)*rmask_wet(i,j)
+            END IF
+          END IF
+#    else
           stflux(i,j,isalt)=stflux(i,j,isalt)*rmask_wet(i,j)
+#    endif
 #   endif
 #  endif
 # endif

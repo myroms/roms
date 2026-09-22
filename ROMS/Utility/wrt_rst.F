@@ -47,6 +47,12 @@
       USE nf_fwrite4d_mod, ONLY : nf_fwrite4d
 #endif
       USE strings_mod,     ONLY : FoundError
+#if defined VEGETATION && defined SOLVE3D
+      USE vegetation_output_mod, ONLY : vegetation_wrt_nf90
+# if defined PIO_LIB && defined DISTRIBUTE
+      USE vegetation_output_mod, ONLY : vegetation_wrt_pio
+# endif
+#endif
 !
       implicit none
 !
@@ -1201,6 +1207,17 @@
         CALL ice_wrt_nf90 (ng, model, tile,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Hout, RST)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#endif
+#if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the submerged acuatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_wrt_nf90 (ng, model, tile,                      &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            Hout, RST)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #endif
 #if !(defined OUT_NETCDF4 && defined DELAYED_SYNC_NF90)
@@ -2549,6 +2566,17 @@
         CALL ice_wrt_pio (ng, model, tile,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Hout, RST)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+# if defined VEGETATION && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Write out the submerged acuatic vegetation model variables.
+!-----------------------------------------------------------------------
+!
+        CALL vegetation_wrt_pio (ng, model, tile,                       &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           Hout, RST)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 # ifndef DELAYED_SYNC_PIO
