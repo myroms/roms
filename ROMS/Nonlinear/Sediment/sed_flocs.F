@@ -402,7 +402,7 @@
 !
       real(r8), intent(in)    :: Gval
       real(r8), intent(inout) :: f_g4(NCS,NCS,NCS)
-      real(r8), intent(inout) :: f_l4NCS,NCS)
+      real(r8), intent(inout) :: f_l4(NCS,NCS)
 !
 !  Local variable declarations.
 !
@@ -862,7 +862,7 @@
 !
 !!    logical, parameter :: l_testcase = .TRUE.
 
-      real(r8) :: htn, ustar, z, diss, nueau
+      real(r8) :: htn, ustar, z, nueau
 !
 !-----------------------------------------------------------------------
 !  Executable part.

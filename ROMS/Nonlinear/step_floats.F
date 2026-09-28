@@ -90,6 +90,9 @@
       USE mod_param
       USE mod_parallel
       USE mod_floats
+#ifdef FLOATS_WINDS
+      USE mod_forces
+#endif
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
@@ -154,6 +157,11 @@
       real(r8) :: HalfDT
 
       real(r8), dimension(Lstr:Lend) :: nudg
+
+# if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+      real(r8), allocatable :: u_tot(:,:,:)
+      real(r8), allocatable :: v_tot(:,:,:)
+# endif
 
 # ifdef DISTRIBUTE
       real(r8) :: Xstr, Xend, Ystr, Yend
@@ -344,6 +352,52 @@
 # endif
         END IF
       END DO
+# if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+      allocate (u_tot(LBi:UBi,LBj:UBj,N(ng)))
+      allocate (v_tot(LBi:UBi,LBj:UBj,N(ng)))
+!
+!  Add stokes and windage to u- Eulerian currents.
+!
+      u_tot=0.0_r8
+      DO j=LBj,UBj
+        DO i=LBi,UBi
+          DO k=1,N(ng)
+            u_tot(i,j,k)=u_tot(i,j,k)+OCEAN(ng)%u(i,j,k,nnew)
+#  if (defined FLOATS_STOKES && defined WEC)
+            u_tot(i,j,k)=u_tot(i,j,k)+OCEAN(ng)%u_stokes(i,j,k)
+#  endif
+#  if defined FLOATS_WINDS
+            IF (k.eq.N(ng)) THEN
+              cff1=0.5_r8*(FORCES(ng)%Uwind(i-1,j)+                     &
+     &                     FORCES(ng)%Uwind(i  ,j))
+              u_tot(i,j,k)=u_tot(i,j,k)+cff1*0.01_r8
+            END IF
+#  endif
+          END DO
+        END DO
+      END DO
+!
+!  Add stokes and windage to v- Eulerian currents.
+!
+      v_tot=0.0_r8
+      DO j=LBj,UBj
+        DO i=LBi,UBi
+          DO k=1,N(ng)
+            v_tot(i,j,k)=v_tot(i,j,k)+OCEAN(ng)%v(i,j,k,nnew)
+#  if (defined FLOATS_STOKES && defined WEC)
+            v_tot(i,j,k)=v_tot(i,j,k)+OCEAN(ng)%v_stokes(i,j,k)
+#  endif
+#  if defined FLOATS_WINDS
+            IF (k.eq.N(ng)) THEN
+              cff1=0.5_r8*(FORCES(ng)%Vwind(i,j-1)+                     &
+     &                     FORCES(ng)%Vwind(i,j  ))
+              v_tot(i,j,k)=v_tot(i,j,k)+cff1*0.01_r8
+            END IF
+#  endif
+          END DO
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Calculate slopes at new time-step.
@@ -359,7 +413,11 @@
 #  ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 #  endif
+#  if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+     &                    u_tot(:,:,:),                                 &
+#  else
      &                    OCEAN(ng) % u(:,:,:,nnew),                    &
+#  endif
      &                    my_thread, bounded, track)
 
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
@@ -371,7 +429,11 @@
 #  ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 #  endif
+#  if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+     &                    v_tot(:,:,:),                                 &
+#  else
      &                    OCEAN(ng) % v(:,:,:,nnew),                    &
+#  endif
      &                    my_thread, bounded, track)
 
 #  if !defined FLOAT_VWALK
@@ -761,7 +823,11 @@
 #  ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 #  endif
+#  if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+     &                    u_tot(:,:,:),                                 &
+#  else
      &                    OCEAN(ng) % u(:,:,:,nnew),                    &
+#  endif
      &                    my_thread, bounded, track)
 
       CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),             &
@@ -773,7 +839,11 @@
 #  ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 #  endif
+#  if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+     &                    v_tot(:,:,:),                                 &
+#  else
      &                    OCEAN(ng) % v(:,:,:,nnew),                    &
+#  endif
      &                    my_thread, bounded, track)
 
 #  if !defined FLOAT_VWALK
@@ -1047,6 +1117,9 @@
           bounded(l)=.FALSE.
         END IF
       END DO
+# endif
+# if (defined FLOATS_STOKES && defined WEC) || defined FLOATS_WINDS
+      deallocate (u_tot, v_tot)
 # endif
 !
       RETURN

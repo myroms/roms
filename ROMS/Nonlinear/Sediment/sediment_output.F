@@ -1038,7 +1038,7 @@
 !
 !  Set instantaneous fields.
 !
-      IF ((S(ng)%ncid.eq.S(ng)%ncid).or.                                &
+      IF ((S(ng)%ncid.eq.HIS(ng)%ncid).or.                              &
      &    (S(ng)%ncid.eq.QCK(ng)%ncid)) THEN
         Linstataneous=.TRUE.
       ELSE
@@ -1268,7 +1268,7 @@
       END DO
 # endif
 
-# if defined SEDIMENT && defined BEDLOAD && defined SED_BEDLOAD_VANDERA
+# if defined SEDIMENT && defined BEDLOAD && defined BEDLOAD_VANDERA
 !
 !  Write out Ursell number from skewed waveform parameters..
 !
@@ -2658,7 +2658,7 @@
       END DO
 #  endif
 
-#  if defined SEDIMENT && defined BEDLOAD && defined SED_BEDLOAD_VANDERA
+#  if defined SEDIMENT && defined BEDLOAD && defined BEDLOAD_VANDERA
 !
 !  Write out Ursell number from skewed waveform parameters.
 !

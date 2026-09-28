@@ -146,6 +146,13 @@
       integer :: DimIDs(nDimID)
       integer :: p2dgrd(3), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 
+# if defined WEC_VF && defined SOLVE3D
+      integer :: a3degrd(4)
+      integer :: u3degrd(4)
+      integer :: v3degrd(4)
+      integer :: t3degrd(4)
+# endif
+
 # ifdef SOLVE3D
 #  ifdef SEDIMENT
       integer :: b3dgrd(4)
@@ -247,6 +254,12 @@
 
         status=def_dim(ng, model, AVG(ng)%ncid, ncname, 'xy_psi',       &
      &                 IOBOUNDS(ng)%xy_psi, xy_pdim)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
+
+# if defined UV_BANIHASHEMI
+        status=def_dim(ng, model, AVG(ng)%ncid, ncname, 'MSCs',         &
+     &                 MSCs, DimIDs(39))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 
@@ -439,6 +452,30 @@
         p3dgrd(3)=DimIDs( 9)
         p3dgrd(4)=DimIDs(12)
 #  endif
+# endif
+# if defined WEC_VF && defined SOLVE3D
+!
+!  Define dimension vector for energy wave layer type variables.
+!
+        a3degrd(1)=DimIDs( 1)
+        a3degrd(2)=DimIDs( 5)
+        a3degrd(3)=DimIDs(37)
+        a3degrd(4)=DimIDs(12)
+
+        u3degrd(1)=DimIDs( 2)
+        u3degrd(2)=DimIDs( 6)
+        u3degrd(3)=DimIDs(37)
+        u3degrd(4)=DimIDs(12)
+
+        v3degrd(1)=DimIDs( 3)
+        v3degrd(2)=DimIDs( 7)
+        v3degrd(3)=DimIDs(37)
+        v3degrd(4)=DimIDs(12)
+
+        t3degrd(1)=DimIDs( 1)
+        t3degrd(2)=DimIDs( 5)
+        t3degrd(3)=DimIDs(38)
+        t3degrd(4)=DimIDs(12)
 # endif
 # ifdef SOLVE3D
 !
@@ -1840,7 +1877,8 @@
 !
         CALL wec_def_nf90 (ng, model, ldef, Aout, AVG,                  &
      &                     t2dgrd, u2dgrd, v2dgrd,                      &
-     &                     t3dgrd, u3dgrd, v3dgrd, w3dgrd)
+     &                     t3dgrd, u3dgrd, v3dgrd, w3dgrd,              &
+     &                     a3degrd, u3degrd, v3degrd, t3degrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 # endif
 !
@@ -2150,7 +2188,7 @@
              AVG(ng)%Tid(itrc)=var_id(i)
             END IF
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NT(ng)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,iHUTav(itrc)))) THEN
               got_var(iHUTav(itrc))=.TRUE.
               AVG(ng)%Vid(iHUTav(itrc))=var_id(i)
@@ -2725,6 +2763,13 @@
       integer :: DimIDs(nDimID)
       integer :: p2dgrd(3), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 
+#  if defined WEC_VF && defined SOLVE3D
+      integer :: a3degrd(4)
+      integer :: u3degrd(4)
+      integer :: v3degrd(4)
+      integer :: t3degrd(4)
+#  endif
+
 #  ifdef SOLVE3D
 #   ifdef SEDIMENT
       integer :: b3dgrd(4)
@@ -2827,6 +2872,12 @@
 
         status=def_dim(ng, model, AVG(ng)%pioFile, ncname, 'xy_psi',    &
      &                 IOBOUNDS(ng)%xy_psi, xy_pdim)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+#  endif
+
+#  if defined UV_BANIHASHEMI
+        status=def_dim(ng, model, AVG(ng)%pioFile, ncname, 'MSCs',      &
+     &                 MSCs, DimIDs(39))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 
@@ -3019,6 +3070,30 @@
         p3dgrd(3)=DimIDs( 9)
         p3dgrd(4)=DimIDs(12)
 #   endif
+#  endif
+#  if defined WEC_VF && defined SOLVE3D
+!
+!  Define dimension vector for energy wave layer type variables.
+!
+        a3degrd(1)=DimIDs( 1)
+        a3degrd(2)=DimIDs( 5)
+        a3degrd(3)=DimIDs(37)
+        a3degrd(4)=DimIDs(12)
+
+        u3degrd(1)=DimIDs( 2)
+        u3degrd(2)=DimIDs( 6)
+        u3degrd(3)=DimIDs(37)
+        u3degrd(4)=DimIDs(12)
+
+        v3degrd(1)=DimIDs( 3)
+        v3degrd(2)=DimIDs( 7)
+        v3degrd(3)=DimIDs(37)
+        v3degrd(4)=DimIDs(12)
+
+        t3degrd(1)=DimIDs( 1)
+        t3degrd(2)=DimIDs( 5)
+        t3degrd(3)=DimIDs(38)
+        t3degrd(4)=DimIDs(12)
 #  endif
 #  ifdef SOLVE3D
 !
@@ -4668,7 +4743,8 @@
 !
         CALL wec_def_pio (ng, model, ldef, Aout, AVG,                   &
      &                    t2dgrd, u2dgrd, v2dgrd,                       &
-     &                    t3dgrd, u3dgrd, v3dgrd, w3dgrd)
+     &                    t3dgrd, u3dgrd, v3dgrd, w3dgrd,               &
+     &                    a3degrd, u3degrd, v3degrd, t3degrd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif
 !
@@ -5116,7 +5192,7 @@
               AVG(ng)%pioTrc(itrc)%gtype=r3dvar
             END IF
           END DO
-          DO itrc=1,NAT
+          DO itrc=1,NT(ng)
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,iHUTav(itrc)))) THEN
               got_var(iHUTav(itrc))=.TRUE.
               AVG(ng)%pioVar(iHUTav(itrc))%vd=var_desc(i)
