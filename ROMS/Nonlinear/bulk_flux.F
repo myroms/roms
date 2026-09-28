@@ -640,6 +640,15 @@
 !  Treat input longwave data as downwelling radiation only and add
 !  outgoing IR from model sea surface temperature.
 !
+#  if defined FRC_COUPLING && !defined TIME_INTERP
+!
+!  Restore the downward longwave radiation retained from the last
+!  coupling exchange, as the atmosphere/ocean coupling step may be
+!  longer than the ROMS timestep. The net longwave flux is assigned to
+!  "lrflx" below for model output.
+!
+          lrflx(i,j)=FORCES(ng)%lrflxG(i,j,1)
+#  endif
           LRad(i,j)=lrflx(i,j)*Hscale-                                  &
      &              emmiss*StefBo*TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
 
