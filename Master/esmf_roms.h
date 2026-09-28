@@ -3483,6 +3483,16 @@
      &                              NghostPoints,                       &
      &                              EWperiodic(ng), NSperiodic(ng),     &
      &                              FORCES(ng)%lrflx)
+!
+!  Make sure to retain the imported downward longwave radiation,
+!  including any exchanged halos, for use at each ocean time step until
+!  the next coupling exchange. This step is essential when using the
+!  bulk flux parameterization, especially if the coupling step is longer
+!  than the ROMS timestep. It helps prevent excessive cooling because
+!  the longwave radiation flux (lrflx) is modified in the bulk_flux.F
+!  routine.
+!
+                FORCES(ng)%lrflxG(:,:,1)=FORCES(ng)%lrflx(:,:)
               END IF
 #  endif
 # endif
