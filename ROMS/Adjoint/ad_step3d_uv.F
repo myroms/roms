@@ -126,8 +126,10 @@
 # endif
      &                        OCEAN(ng) % ad_ubar,                      &
      &                        OCEAN(ng) % ad_vbar,                      &
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
      &                        OCEAN(ng) % ad_ubar_sol,                  &
      &                        OCEAN(ng) % ad_vbar_sol,                  &
+# endif
 # ifdef WEC_NOT_YET
      &                       OCEAN(ng) % ubar_stokes,                   &
      &                       OCEAN(ng) % tl_ubar_stokes,                &
@@ -182,7 +184,9 @@
      &                              ad_u_sol, ad_v_sol,                 &
 # endif
      &                              ad_ubar, ad_vbar,                   &
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
      &                              ad_ubar_sol, ad_vbar_sol,           &
+# endif
 # ifdef WEC_NOT_YET
      &                              ubar_stokes, ad_ubar_stokes,        &
      &                              vbar_stokes, ad_vbar_stokes,        &
@@ -267,9 +271,10 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_Huon(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_Hvom(LBi:,LBj:,:)
-
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       real(r8), intent(out) :: ad_ubar_sol(LBi:,LBj:)
       real(r8), intent(out) :: ad_vbar_sol(LBi:,LBj:)
+#  endif
 
 # else
 
@@ -330,18 +335,19 @@
       real(r8), intent(inout) :: ad_v_sol(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 #  ifdef WEC_NOT_YET
-      real(r8), intent(in) :: ad_ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ad_vbar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_vbar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_u_stokes(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_v_stokes(LBi:UBi,LBj:UBj,N(ng))
 #  endif
-      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,:)
       real(r8), intent(inout) :: ad_Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_Hvom(LBi:UBi,LBj:UBj,N(ng))
-
+#  if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
       real(r8), intent(out) :: ad_ubar_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: ad_vbar_sol(LBi:UBi,LBj:UBj)
+#  endif
 # endif
 !
 !  Local variable declarations.
@@ -432,6 +438,19 @@
 !-----------------------------------------------------------------------
 !
 # ifdef DISTRIBUTE
+#  if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!^    CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
+!^   &                    LBi, UBi, LBj, UBj,                           &
+!^   &                    NghostPoints,                                 &
+!^   &                    EWperiodic(ng), NSperiodic(ng),               &
+!^   &                    tl_ubar(:,:,knew), tl_vbar(:,:,knew))
+!^
+      CALL ad_mp_exchange2d (ng, tile, iADM, 2,                         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       EWperiodic(ng), NSperiodic(ng),            &
+     &                       ad_ubar(:,:,knew), ad_vbar(:,:,knew))
+#  else
 !^    CALL mp_exchange2d (ng, tile, iTLM, 4,                            &
 !^   &                    LBi, UBi, LBj, UBj,                           &
 !^   &                    NghostPoints,                                 &
@@ -445,7 +464,7 @@
      &                       EWperiodic(ng), NSperiodic(ng),            &
      &                       ad_ubar(:,:,1), ad_vbar(:,:,1),            &
      &                       ad_ubar(:,:,2), ad_vbar(:,:,2))
-
+#  endif
 !^    CALL mp_exchange3d (ng, tile, iTLM, 4,                            &
 !^   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !^   &                    NghostPoints,                                 &
@@ -463,6 +482,22 @@
 # endif
 
       IF (EWperiodic(ng).or.NSperiodic(ng)) THEN
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+!^      CALL exchange_v2d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj,                     &
+!^   &                          tl_vbar(:,:,knew))
+!^
+        CALL ad_exchange_v2d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             ad_vbar(:,:,knew))
+!^      CALL exchange_u2d_tile (ng, tile,                               &
+!^   &                          LBi, UBi, LBj, UBj,                     &
+!^   &                          tl_ubar(:,:,knew))
+!^
+        CALL ad_exchange_u2d_tile (ng, tile,                            &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             ad_ubar(:,:,knew))
+# else
         DO k=1,2
 !^        CALL exchange_v2d_tile (ng, tile,                             &
 !^   &                            LBi, UBi, LBj, UBj,                   &
@@ -479,6 +514,7 @@
      &                               LBi, UBi, LBj, UBj,                &
      &                               ad_ubar(:,:,k))
         END DO
+# endif
 !
         CALL exchange_v3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
@@ -846,13 +882,15 @@
 !!          END DO
 !!        END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
-!  Save adjoint solution for time-step iic(ng)-1 as the sum of time
-!  records 1 and 2.
+!  Save adjoint solution for time-step iic(ng)-1 as for I/O purposes.
 !
           DO i=IstrT,IendT
             ad_vbar_sol(i,j)=ad_vbar(i,j,1)+ad_vbar(i,j,2)
           END DO
+# endif
 !
 !  Compute adjoint thicknesses of V-boxes DC(i,1:N), total depth of the
 !  water column DC(i,0), and incorrect vertical mean CF(i,0).  Notice
@@ -867,16 +905,35 @@
 !!          DiaV2wrk(i,j,M2rate)=vbar(i,j,1)-                           &
 !!   &                           DiaV2int(i,j,M2rate)*DC(i,0)
 # endif
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+#  ifdef WET_DRY_NOT_YET
+!^          vbar(i,j,knew)=vbar(i,j,knew)*vmask_wet(i,j)
+!^
+!!          tl_vbar(i,j,knew)=tl_vbar(i,j,knew)*vmask_wet(i,j)
+#  endif
+!^          tl_vbar(i,j,knew)=tl_DC(i,0)*DV_avg1(i,j)+                  &
+!^   &                        DC(i,0)*tl_DV_avg1(i,j)
+!^
+            ad_DC(i,0)=ad_DC(i,0)+ad_vbar(i,j,knew)*DV_avg1(i,j)
+            ad_DV_avg1(i,j)=ad_DV_avg1(i,j)+ad_vbar(i,j,knew)*DC(i,0)
+            ad_vbar(i,j,knew)=0.0_r8
+# else
 !^          tl_vbar(i,j,2)=tl_vbar(i,j,1)
 !^
             ad_vbar(i,j,1)=ad_vbar(i,j,1)+ad_vbar(i,j,2)
             ad_vbar(i,j,2)=0.0_r8
+#  ifdef WET_DRY_NOT_YET
+!^          vbar(i,j,1)=vbar(i,j,1)*vmask_wet(i,j)
+!^
+!!          tl_vbar(i,j,1)=tl_vbar(i,j,1)*vmask_wet(i,j)
+#  endif
 !^          tl_vbar(i,j,1)=tl_DC(i,0)*DV_avg1(i,j)+                     &
 !^   &                     DC(i,0)*tl_DV_avg1(i,j)
 !^
             ad_DC(i,0)=ad_DC(i,0)+ad_vbar(i,j,1)*DV_avg1(i,j)
             ad_DV_avg1(i,j)=ad_DV_avg1(i,j)+ad_vbar(i,j,1)*DC(i,0)
             ad_vbar(i,j,1)=0.0_r8
+# endif
 # ifdef WEC_NOT_YET
 !^          tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                      &
 !^   &                  DC(i,0)*(tl_CFs(i,0)-tl_cff2)
@@ -1282,6 +1339,8 @@
 !!        END DO
 !!      END DO
 # endif
+
+# if !(defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3)
 !
 !  Save adjoint solution for time-step iic(ng)-1 as the sum of time
 !  records 1 and 2.
@@ -1289,6 +1348,7 @@
         DO i=IstrP,IendT
           ad_ubar_sol(i,j)=ad_ubar(i,j,1)+ad_ubar(i,j,2)
         END DO
+# endif
 !
 !  Compute thicknesses of U-boxes DC(i,1:N), total depth of the water
 !  column DC(i,0), and incorrect vertical mean CF(i,0).  Notice that
@@ -1300,16 +1360,35 @@
 !!        DiaU2int(i,j,M2rate)=ubar(i,j,1)*DC1(i,0)
 !!        DiaU2wrk(i,j,M2rate)=ubar(i,j,1)-DiaU2int(i,j,M2rate)*DC(i,0)
 # endif
+# if defined STEP2D_FB_AB3_AM4 || defined STEP2D_FB_LF_AM3
+#  ifdef WET_DRY_NOT_YET
+!^        ubar(i,j,knew)=ubar(i,j,knew)*umask_wet(i,j)
+!^
+!!        tl_ubar(i,j,knew)=tl_ubar(i,j,knew)*umask_wet(i,j)
+#  endif
+!^        tl_ubar(i,j,knew)=tl_DC(i,0)*DU_avg1(i,j)+                    &
+!^   &                      DC(i,0)*tl_DU_avg1(i,j)
+!^
+          ad_DC(i,0)=ad_DC(i,0)+ad_ubar(i,j,knew)*DU_avg1(i,j)
+          ad_DU_avg1(i,j)=ad_DU_avg1(i,j)+ad_ubar(i,j,knew)*DC(i,0)
+          ad_ubar(i,j,knew)=0.0_r8
+# else
 !^        tl_ubar(i,j,2)=tl_ubar(i,j,1)
 !^
           ad_ubar(i,j,1)=ad_ubar(i,j,1)+ad_ubar(i,j,2)
           ad_ubar(i,j,2)=0.0_r8
+#  ifdef WET_DRY_NOT_YET
+!^        ubar(i,j,1)=ubar(i,j,1)*umask_wet(i,j)
+!^
+!!        tl_ubar(i,j,1)=tl_ubar(i,j,1)*umask_wet(i,j)
+#  endif
 !^        tl_ubar(i,j,1)=tl_DC(i,0)*DU_avg1(i,j)+                       &
 !^   &                   DC(i,0)*tl_DU_avg1(i,j)
 !^
           ad_DC(i,0)=ad_DC(i,0)+ad_ubar(i,j,1)*DU_avg1(i,j)
           ad_DU_avg1(i,j)=ad_DU_avg1(i,j)+ad_ubar(i,j,1)*DC(i,0)
           ad_ubar(i,j,1)=0.0_r8
+# endif
 # ifdef WEC_NOT_YET
 !^        tl_CFs(i,0)=tl_DC(i,0)*(CFs1(i)-cff2)+                        &
 !^   &                DC(i,0)*(tl_CFs(i,0)-tl_cff2)
