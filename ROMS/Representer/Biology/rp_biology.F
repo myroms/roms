@@ -13,6 +13,8 @@
 
 # if defined BIO_FENNEL
 !!#  include <rp_fennel.h>
+# elif defined IOP_CDOM
+#  include <rp_iop_cdom.h>
 # elif defined NEMURO
 !!#  include <rp_nemuro.h>
 # elif defined NPZD_FRANKS
