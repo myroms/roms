@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 #
-# git $Id$
+# svn $Id: substitute 163 2020-04-30 01:14:50Z arango $
 #######################################################################
-# Copyright (c) 2002-2026 The ROMS Group                              #
+# Copyright (c) 2002-2020 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
-#   See License_ROMS.md                                               #
+#   See License_ROMS.txt                                              #
 ################################################## Hernan G. Arango ###
 #                                                                     #
 #  This script is used to globally substitute a string in specified   #
@@ -18,12 +18,13 @@
 #                                                                     #
 #           $ARGV[0]    file name                                     #
 #           $ARGV[1]    old string                                    #
-#           $ARGV[2]    new string                                    #
+#           $ARGV[2]    new string, it can be and array of values     #
 #                                                                     #
 #######################################################################
 
 use strict;
 my $file = $ARGV[0];
+my $numargs = @ARGV;
 my $tmp = "tmp.$$";
 open(FILE, "$file");
 open(TMP, ">$tmp") || die "Can't open tmp file";
@@ -31,7 +32,17 @@ $/=undef;
 my $string = <FILE>;
 close FILE;
 
-$string=~ s|$ARGV[1]|$ARGV[2]|g;
+# The $ARG[2] may contains an array of multiple values like observation
+# filenames.  Then, the values are substituted over various new lines.
+
+my $multi_values = $ARGV[2];
+if ($numargs > 3) {
+  for (my $item = 3; $item < $numargs; $item++) {
+    $multi_values = $multi_values . " \\\n                   " . $ARGV[$item];
+  }
+}
+
+$string=~ s|$ARGV[1]|$multi_values|g;
 
 print TMP "$string";
 close(TMP);

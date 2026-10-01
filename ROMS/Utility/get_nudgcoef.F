@@ -48,6 +48,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: get_nudgcoef_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

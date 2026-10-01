@@ -38,7 +38,17 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_scalars
+!
       implicit none
+!
+      PUBLIC  :: ad_exchange_p3d_tile
+      PUBLIC  :: ad_exchange_r3d_tile
+      PUBLIC  :: ad_exchange_u3d_tile
+      PUBLIC  :: ad_exchange_v3d_tile
+      PUBLIC  :: ad_exchange_w3d_tile
+      PRIVATE
 !
       CONTAINS
 !
@@ -47,9 +57,6 @@
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -449,7 +456,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE ad_exchange_p3d_tile
 
@@ -459,9 +466,6 @@
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -860,7 +864,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE ad_exchange_r3d_tile
 
@@ -870,9 +874,6 @@
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1271,7 +1272,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE ad_exchange_u3d_tile
 
@@ -1281,9 +1282,6 @@
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1681,7 +1679,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE ad_exchange_v3d_tile
 
@@ -1691,9 +1689,6 @@
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -2091,7 +2086,7 @@
           END IF
         END IF
       END IF
-
+!
       RETURN
       END SUBROUTINE ad_exchange_w3d_tile
 #endif

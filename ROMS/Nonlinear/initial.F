@@ -63,7 +63,9 @@
       USE set_massflux_mod,  ONLY : set_massflux
 #endif
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
+# ifndef IODA_OBS
       USE obs_initial_mod,   ONLY : obs_initial
+# endif
 #endif
 #ifdef MASKING
       USE set_masks_mod,     ONLY : set_masks
@@ -81,8 +83,6 @@
       implicit none
 !
 !  Local variable declarations.
-!
-      logical :: update = .FALSE.
 !
       integer :: Fcount
       integer :: ng, thread, tile
@@ -486,6 +486,7 @@
 #endif
 
 #if defined OBSERVATIONS && !defined RBL4DVAR_FCT_SENSITIVITY
+# ifndef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables
@@ -502,6 +503,7 @@
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END DO
 !$OMP BARRIER
+# endif
 #endif
 
 #if (defined ADJUST_BOUNDARY          || \

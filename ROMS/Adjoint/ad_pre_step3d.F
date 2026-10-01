@@ -2515,8 +2515,8 @@
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
-!>            tl_FX(i,j)=tl_z_w(i,j,k)-tl_z_w(i,j,0)
-!>
+!^            tl_FX(i,j)=tl_z_w(i,j,k)-tl_z_w(i,j,0)
+!^
               ad_z_w(i,j,k)=ad_z_w(i,j,k)+ad_FX(i,j)
               ad_z_w(i,j,0)=ad_z_w(i,j,0)-ad_FX(i,j)
               ad_FX(i,j)=0.0_r8

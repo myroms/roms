@@ -26,10 +26,12 @@
 !
 !  Local variable declarations.
 !
-      integer :: ic = 0
+      integer :: ic
       integer :: ifound
-
+!
       character (len=40) :: string
+!
+      ic=0
 !
 !-----------------------------------------------------------------------
 !  Report issues with various C-preprocessing options.

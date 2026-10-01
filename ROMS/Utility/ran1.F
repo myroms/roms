@@ -30,6 +30,8 @@
       USE ran_state, ONLY : iran0, jran0, kran0, nran0, mran0
       USE ran_state, ONLY : amm, lenran, rans
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       real(r8), intent(out) :: harvest

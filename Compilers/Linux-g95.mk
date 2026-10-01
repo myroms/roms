@@ -72,7 +72,7 @@ ifdef USE_ROMS
            FFLAGS += -ftrace=full
  else
            FFLAGS += -O3
-           FFLAGS += -ffast-math
+#          FFLAGS += -ffast-math
  endif
  ifdef SHARED
            FFLAGS += -fPIC

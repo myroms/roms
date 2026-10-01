@@ -422,8 +422,8 @@
 !  and state vector is located at the cell-center.
 !-----------------------------------------------------------------------
 !
-!>    CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
-!>
+!^    CALL tl_uv_C2A_grid (ng, tile, iTLM, nnew)
+!^
       CALL ad_uv_C2A_grid (ng, tile, iTLM, nnew)
 # endif
 !

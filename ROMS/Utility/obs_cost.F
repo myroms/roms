@@ -9,19 +9,12 @@
 !    See License_ROMS.md                                               !
 !=======================================================================
 
-# ifdef WEAK_CONSTRAINT
-#  if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
-      defined TL_R4DVAR
+# if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
+     defined TL_R4DVAR
 !                                                                      !
 !  This routine computes the data penalty function directly in during  !
 !  runs of the representer model:                                      !
 !                                                                      !
-#  else
-!                                                                      !
-!  This routine computes the data penalty function directly in during  !
-!  runs of the nonlinear model:                                        !
-!                                                                      !
-#  endif
 !         Jdata = transpose(H X - Xo) * O^(-1) * (H X - Xo)            !
 !                                                                      !
 !         H  : observation operator (linearized if incremental)        !

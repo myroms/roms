@@ -68,7 +68,7 @@
 !
       integer, intent(in) :: ng, model, ifield, nfiles
       integer, intent(in) :: LBi, UBi, UBj, UBk, Istr, Iend, Jrec
-      integer :: ncid
+      integer, intent(inout) :: ncid
 !
 #if defined PIO_LIB && defined DISTRIBUTE
       TYPE (File_desc_t), intent(inout) :: pioFile
@@ -142,7 +142,7 @@
 !
       integer, intent(in) :: ng, model, ifield, nfiles
       integer, intent(in) :: LBi, UBi, UBj, UBk, Istr, Iend, Jrec
-      integer :: ncid
+      integer, intent(inout) :: ncid
 !
       TYPE(T_IO), intent(inout) :: S(nfiles)
 !

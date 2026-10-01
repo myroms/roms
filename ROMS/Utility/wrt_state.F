@@ -75,6 +75,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_state_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

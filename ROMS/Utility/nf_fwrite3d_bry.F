@@ -82,6 +82,13 @@
 # endif
       END INTERFACE nf_fwrite3d_bry
 !
+      PUBLIC  :: nf_fwrite3d_bry
+      PRIVATE :: nf90_fwrite3d_bry
+# if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: pio_fwrite3d_bry
+# endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

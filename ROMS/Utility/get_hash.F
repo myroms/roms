@@ -59,6 +59,10 @@
 #ifdef CRC32_CHECKSUM
       PRIVATE :: crc32
       PRIVATE :: crc32_ini
+#endif
+      PRIVATE
+
+#ifdef CRC32_CHECKSUM
 !
 !  Declare module internal parameters.
 !
@@ -131,7 +135,7 @@
 !
       integer, intent(in) :: Asize
 
-      integer(i8b) :: hash
+      integer(i8b), intent(out) :: hash
 !
       real(r8), intent(in) :: A(:)
 !
@@ -188,7 +192,7 @@
 !
       integer, intent(in) :: Asize
 
-      integer(i8b) :: hash
+      integer(i8b), intent(out) :: hash
 !
       real(r8), intent(in) :: A(:)
 !

@@ -46,7 +46,7 @@
 !    DimIDs(32) => Number of sediment tracers                          !
 !    DimIDs(33) => Number of light spectral bands                      !
 !    DimIDs(34) => Number constant depth slices in 'extract_slice'     !
-!    DimIDs(35) => Number of submerged acuatic vegetation types        !                     
+!    DimIDs(35) => Number of submerged acuatic vegetation types        !
 !    DimIDs(36) => Number of correlation functions to be combined      !
 !                                                                      !
 !=======================================================================
@@ -78,6 +78,13 @@
         MODULE PROCEDURE def_info_pio
 #endif
       END INTERFACE def_info
+!
+      PUBLIC  :: def_info
+      PRIVATE :: def_info_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: def_info_pio
+#endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -142,7 +149,7 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=11 )    :: bryatt, clmatt, frcatt, obsatt
       character (len=50 )    :: tiling
       character (len=80 )    :: type
 #ifdef FOUR_DVAR
@@ -665,15 +672,30 @@
 #endif
 
 #ifdef FOUR_DVAR
+# ifdef IODA_OBS
+        IF (exit_flag.eq.NoError) THEN
+          DO i=1,nOBSfiles(ng)
+            WRITE (obsatt,'(a,i0)') 'obs_file_', i
+            status=nf90_put_att(ncid, nf90_global, TRIM(obsatt),        &
+     &                          TRIM(OBS(i,ng)%name))
+            IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
+              IF (Master) WRITE (stdout,20) TRIM(obsatt), TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END DO
+        END IF
+# else
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'obs_file',            &
-     &                        TRIM(OBS(ng)%name))
+     &                        TRIM(OBS(1,ng)%name))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
         END IF
+# endif
 #endif
 
 #ifdef RBL4DVAR_FCT_SENSITIVITY
@@ -996,30 +1018,6 @@
      &                        TRIM(git_rev))
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) WRITE (stdout,20) 'git_rev', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-#endif
-!
-!  SVN repository information.
-!
-        IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_att(ncid, nf90_global, 'svn_url',             &
-     &                        TRIM(svn_url))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,20) 'svn_url', TRIM(ncname)
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-
-#if !defined DEBUGGING && defined SVN_REV
-        IF (exit_flag.eq.NoError) THEN
-          status=nf90_put_att(ncid, nf90_global, 'svn_rev',             &
-     &                        TRIM(svn_rev))
-          IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
-            IF (Master) WRITE (stdout,20) 'svn_rev', TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -3770,7 +3768,7 @@
 !
       real(r8) :: Aval(6)
 !
-      character (len=11 )    :: bryatt, clmatt, frcatt
+      character (len=11 )    :: bryatt, clmatt, frcatt, obsatt
       character (len=50 )    :: tiling
       character (len=80 )    :: type
 # ifdef FOUR_DVAR
@@ -4298,15 +4296,30 @@
 # endif
 
 # ifdef FOUR_DVAR
+#  ifdef IODA_OBS
+      IF (exit_flag.eq.NoError) THEN
+        DO i=1,nOBSfiles(ng)
+          WRITE (obsatt,'(a,i0)') 'obs_file_', i
+          status=PIO_put_att(pioFile, PIO_global, TRIM(obsatt),         &
+     &                       TRIM(OBS(i,ng)%name))
+          IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+            IF (Master) WRITE (stdout,20) TRIM(obsatt), TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END DO
+      END IF
+#  else
       IF (exit_flag.eq.NoError) THEN
         status=PIO_put_att(pioFile, PIO_global, 'obs_file',             &
-     &                     TRIM(OBS(ng)%name))
+     &                     TRIM(OBS(1,ng)%name))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,20) 'obs_file', TRIM(ncname)
           exit_flag=3
           ioerror=status
         END IF
       END IF
+#  endif
 # endif
 
 # ifdef RBL4DVAR_FCT_SENSITIVITY
@@ -4629,30 +4642,6 @@
      &                     TRIM(git_rev))
         IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
           IF (Master) WRITE (stdout,20) 'git_rev', TRIM(ncname)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# endif
-!
-!  SVN repository information.
-!
-      IF (exit_flag.eq.NoError) THEN
-        status=PIO_put_att(pioFile, PIO_global, 'svn_url',              &
-     &                     TRIM(svn_url))
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,20) 'svn_url', TRIM(ncname)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-
-# if !defined DEBUGGING && defined SVN_REV
-      IF (exit_flag.eq.NoError) THEN
-        status=PIO_put_att(pioFile, PIO_global, 'svn_rev',              &
-     &                     TRIM(svn_rev))
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,20) 'svn_rev', TRIM(ncname)
           exit_flag=3
           ioerror=status
         END IF

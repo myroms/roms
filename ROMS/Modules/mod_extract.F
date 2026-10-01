@@ -71,15 +71,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_extract
-        PUBLIC :: deallocate_extract
-        PUBLIC :: initialize_extract
+        PUBLIC  :: allocate_extract
+        PUBLIC  :: deallocate_extract
+        PUBLIC  :: initialize_extract
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_EXTRACT structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_EXTRACT
+        TYPE, PUBLIC :: T_EXTRACT
 !
 !  Parameters.
 !
@@ -179,7 +180,7 @@
 
         END TYPE T_EXTRACT
 !
-        TYPE (T_EXTRACT), allocatable :: EXTRACT(:)
+        TYPE (T_EXTRACT), public, allocatable :: EXTRACT(:)
 !
       CONTAINS
 !

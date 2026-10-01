@@ -17,7 +17,9 @@
 !    assign_string    allocates and assign string                      !
 !    find_string      scans a character array for a specified string   !
 !    join_string      concatenate character array into a single string !
+!    nc_error         checks return flag from NetCDF libray calls      !
 !    lowercase        converts input string characters to lowercase    !
+!    thousands_marker number to string with thousands separator        !
 !    uppercase        converts input string characters to uppercase    !
 !                                                                      !
 !  Examples:                                                           !
@@ -32,6 +34,15 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_parallel
+!
+#if defined DISTRIBUTE && defined DISJOINTED
+      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
+#endif
+      USE mod_iounits,    ONLY : ioerror, stdout
+      USE mod_scalars,    ONLY : exit_flag
+      USE netcdf,         ONLY : nf90_strerror
+!
       implicit none
 !
       PRIVATE
@@ -44,6 +55,8 @@
       PUBLIC :: find_string
       PUBLIC :: join_string
       PUBLIC :: lowercase
+      PUBLIC :: nc_error
+      PUBLIC :: thousands_marker
       PUBLIC :: uppercase
 !
       CONTAINS
@@ -69,13 +82,10 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_iounits,  ONLY : stdout
-      USE mod_parallel, ONLY : Master
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: flag, NoErr, line
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -96,7 +106,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION FoundError
 !
@@ -131,18 +141,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_parallel
-      USE mod_iounits,    ONLY : stdout
-
-#if defined DISTRIBUTE && defined DISJOINTED
-      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
-#endif
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, NoErr, line
       integer, intent(inout) :: flag
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -191,7 +194,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION GlobalError
 !
@@ -226,18 +229,11 @@
 !                                                                      !
 !=======================================================================
 !
-      USE mod_parallel
-      USE mod_iounits,    ONLY : stdout
-
-#if defined DISTRIBUTE && defined DISJOINTED
-      USE distribute_mod, ONLY : mp_barrier, mp_bcasti
-#endif
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, NoErr, line
       integer, intent(inout) :: flag
-
+!
       character (len=*), intent(in) :: routine
 !
 !  Local variable declarations.
@@ -291,7 +287,7 @@
         END IF
         FLUSH (stdout)
       END IF
-
+!
       RETURN
       END FUNCTION TaskError
 !
@@ -439,7 +435,7 @@
       integer, intent(in) :: Asize
 
       integer, intent(out) :: Aindex
-
+!
       character (len=*), intent(in) :: A(Asize)
       character (len=*), intent(in) :: string
 !
@@ -462,7 +458,7 @@
           EXIT
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION find_string
 !
@@ -490,7 +486,7 @@
       integer, intent(in) :: Asize
 
       integer, intent(out) :: Lstring
-
+!
       character (len=*), intent(in) :: A(Asize)
       character (len=*), intent(out) :: string
 !
@@ -523,9 +519,61 @@
         END IF
       END DO
       Lstring=LEN_TRIM(string)-1
-
+!
       RETURN
       END SUBROUTINE join_string
+!
+      FUNCTION nc_error (flag, NoErr, line, routine) RESULT (foundit)
+!
+!=======================================================================
+!                                                                      !
+!  This logical function issues a NetCDF error when the return flag    !
+!  from library functions is different than NoErr value.               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     flag         ROMS execution flag (integer)                       !
+!     NoErr        No Error code (integer)                             !
+!     line         Calling model routine line (integer)                !
+!     routine      Calling model routine (string)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     foundit      The value of the result is TRUE/FALSE if the        !
+!                    execution flag is in error.                       !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: flag, NoErr, line
+!
+      character (len=*), intent(in) :: routine
+!
+!  Local variable declarations.
+!
+      logical :: foundit
+!
+!-----------------------------------------------------------------------
+!  Scan array for requested string.
+!-----------------------------------------------------------------------
+!
+      foundit=.FALSE.
+      IF (flag.ne.NoErr) THEN
+        foundit=.TRUE.
+        IF (Master) THEN
+          WRITE (stdout,10) flag, line, TRIM(routine),                  &
+     &                      TRIM(nf90_strerror(flag))
+  10      FORMAT (' Found Error: ', i0, t20, 'Line: ', i0,              &
+     &            t35, 'Source: ', a,/,t20,'Reason:',a)
+          exit_flag=3
+          ioerror=flag
+        END IF
+        FLUSH (stdout)
+      END IF
+!
+      RETURN
+      END FUNCTION nc_error
 !
       FUNCTION lowercase (Sinp) RESULT (Sout)
 !
@@ -556,9 +604,9 @@
 !  Local variable definitions.
 !
       integer :: i, j, lstr
-
+!
       character (LEN(Sinp)) :: Sout
-
+!
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 !
@@ -574,9 +622,128 @@
           Sout(i:i)=Lcase(j:j)
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION lowercase
+!
+      FUNCTION thousands_marker (w, d, rvalue, rstring) RESULT (Lworked)
+!
+!=======================================================================
+!                                                                      !
+!  This function converts floating-point values to string and adds     !
+!  thousands separators for easy reading. It uses a comma a separator  !
+!  to diffentiate from the decimal point (GB and US English standard). !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      ! 
+!     w          Fortran format field width, Fw.d (integer)            !
+!     d          Fortran format decimal digits, Fw.d (integer)         !
+!     rvalue     Floating-point values (1D array)                      !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     rstring    Formatted floating-point string (1D array)            !
+!     Lworked    Success switch                                        !
+!                                                                      !
+!  For example, w=15, r=4, rvalue=12345678.1234                        !
+!                                                                      !
+!               returns '  12,345,678.1234'                            !
+!                                                                      !
+!=======================================================================
+!
+      integer,   intent(in) :: w               !> field_width
+      integer,   intent(in) :: d               !> decimal digits
+      real (r8), intent(in) :: Rvalue(:)       !> floating-point values
+!
+      character (len=:), allocatable, intent(out) :: Rstring(:)
+!
+      logical               :: Lworked  
+      integer               :: Err, i, ic, j, k, nv
+      integer               :: iblk, idot, ldigits, lstr
+      integer               :: ncomma, max_commas
+!
+      character (len=1 ), parameter :: mark = CHAR(44)
+      character (len=10)            :: frmt
+      character (len=40)            :: digit
+      character (len=60)            :: string
+!
+!  Set requested format for floating point to string.
+!
+      WRITE (frmt,10) w, d                     ! field format Fw.d
+  10  FORMAT ('(F',i0,'.',i0,')')
+!
+!  Determine the maximum number of digits and commas before period.
+!
+      nv=SIZE(Rvalue, DIM=1)
+      ldigits=0
+      DO j=1,nv
+        IF (ABS(Rvalue(j)).gt.0.0_r8) THEN
+          ldigits=MAX(ldigits, INT(LOG10(ABS(Rvalue(j))))+1)
+        END IF
+      END DO
+      max_commas=(ldigits/3)
+      IF (MOD(ldigits, 3).eq.0) max_commas=max_commas-1
+!
+!  Convert floating-point to string.
+!
+      DO j=1,nv
+        string=CHAR(32)
+        Lworked = .FALSE.
+        WRITE (string, frmt) Rvalue(j)
+        lstr=LEN_TRIM(string)
+        idot=INDEX(string(1:lstr), CHAR(46))   ! decimal point location
+!
+!  Detemine number leading blanks and comma separations.
+!
+        iblk=0
+        DO i=1,idot
+          IF (string(i:i) .eq. CHAR(32)) iblk=iblk+1
+        END DO
+        ldigits=idot-iblk-1
+        ncomma=ldigits/3
+!
+!  Insert thousands separtion mark, comma=CHAR(44)
+!
+        k=ldigits+ncomma
+        ic=0
+        digit=CHAR(32)                            ! initialize to blank
+        DO i=idot-1,iblk+1,-1                     ! backwards
+          ic=ic+1
+          IF (ic.eq.4) THEN
+            ic=1
+            IF (string(i:i) .ne. CHAR(45)) THEN   ! negative sign
+              digit(k:k)=mark                     ! avoid having -,
+              k=k-1
+            END IF
+          END IF
+          digit(k:k)=string(i:i)
+          k=k-1
+        END DO
+!
+!  Allocate output string.
+!
+        IF (j.eq.1) THEN
+          IF (.not.allocated(Rstring)) THEN
+            allocate ( character (len=lstr+max_commas) :: Rstring(nv),  &
+     &                 STAT=Err)
+          ELSE
+            deallocate (Rstring)
+            allocate ( character (len=lstr+max_commas) :: Rstring(nv),  &
+     &                 STAT=Err )
+          END IF 
+        END IF
+!
+!  Construct output string.
+!
+        IF (Err .eq. 0) THEN
+          Lworked=.TRUE.
+          Rstring(j)=string(1:iblk-ncomma) // TRIM(digit) //            &
+     &               string(idot:lstr)
+        END IF
+      END DO
+!
+      RETURN
+      END FUNCTION thousands_marker
 !
       FUNCTION uppercase (Sinp) RESULT (Sout)
 !
@@ -607,9 +774,9 @@
 !  Local variable definitions.
 !
       integer :: i, j, lstr
-
+!
       character (LEN(Sinp)) :: Sout
-
+!
       character (26), parameter :: Lcase = 'abcdefghijklmnopqrstuvwxyz'
       character (26), parameter :: Ucase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 !
@@ -625,8 +792,8 @@
           Sout(i:i)=Ucase(j:j)
         END IF
       END DO
-
+!
       RETURN
       END FUNCTION uppercase
-
+!
       END MODULE strings_mod

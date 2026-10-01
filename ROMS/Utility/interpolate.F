@@ -154,11 +154,14 @@
       PUBLIC  :: cinterp2d
       PUBLIC  :: hindices
 !
+      PUBLIC  :: roms_datum_interp
+      PUBLIC  :: roms_horiz_interp
       PUBLIC  :: roms_interp_delete
       PUBLIC  :: roms_interp_fractional
 !
       PRIVATE :: inside
       PRIVATE :: try_range
+      PRIVATE
 !
 !-----------------------------------------------------------------------
       CONTAINS
@@ -348,7 +351,7 @@
 !
 !  Local variable declarations.
 !
-      integer i, ic, iter, i1, i2, j, jc, j1, j2
+      integer :: i, ic, iter, i1, i2, j, jc, j1, j2
 !
       real(r8) :: a11, a12, a21, a22
       real(r8) :: e11, e12, e21, e22

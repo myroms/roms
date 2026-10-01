@@ -64,6 +64,10 @@
         MODULE PROCEDURE extract_field4d
       END INTERFACE extract_field
 !
+# ifdef ADJUST_BOUNDARY
+      PUBLIC  :: extract_boundary
+# endif
+      PUBLIC  :: extract_field
       PUBLIC  :: interp_coords
 !
 # ifdef ADJUST_BOUNDARY
@@ -84,6 +88,7 @@
       PRIVATE :: interp_field4d
       PRIVATE :: regrid_field2d
       PRIVATE :: regrid_field3d
+      PRIVATE
 !
 !  Module parameters.
 !
