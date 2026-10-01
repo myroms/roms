@@ -1893,7 +1893,11 @@
                       string='Observation screening flag, '//           &
      &                       '0:reject and 1:accept'
                     CASE (2)
+# ifdef VERIFICATION
+                      string='nonlinear model at observation locations'
+# else
                       string='background error at observation locations'
+# endif
                     CASE (3)
                       string='model background at observation locations'
                     CASE (4)

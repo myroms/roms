@@ -300,11 +300,6 @@
 !  Close output NetCDF files.
 !
       DO ng=1,Ngrids
-        CALL close_file (ng, iNLM, RST(ng), RST(ng)%name, Lupdate)
-#if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
-        CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name, Lupdate)
-        CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name, Lupdate)
-#endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
         IF (FWD(ng)%IOtype.eq.io_nf90) THEN
           IF ((FWD(ng)%ncid.ne.-1).and.                                 &
@@ -322,7 +317,8 @@
         CALL close_file (ng, iNLM, FWD(ng), FWD(ng)%name, Lupdate)
 #endif
         CALL close_file (ng, iNLM, RST(ng), RST(ng)%name, Lupdate)
-#if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
+#if defined FOUR_DVAR    || defined ENKF_RESTART || \
+   (defined VERIFICATION && !defined IODA_OBS)
         CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name, Lupdate)
         CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name, Lupdate)
 #endif

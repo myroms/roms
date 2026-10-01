@@ -1364,12 +1364,12 @@
               END DO
               Npts=load_s2d(Nval, Cval, Cdim, line, label, iobsfile,    &
      &                      igrid, Ngrids, nOBSfiles, NOBScount,        &
-     &                      nOBSfiles(1), inp_lib, OBS)
+     &                      nOBSfiles(1), io_nf90, OBS)
 #  else
             CASE ('OBSname')
               label='OBS - data assimilation legacy observations'
               Npts=load_s1d(Nval, Cval, Cdim, line, label, igrid,       &
-     &                      Ngrids, Nfiles, out_lib, OBS(1,:))
+     &                      Ngrids, Nfiles, io_nf90, OBS(1,:))
 #  endif
             CASE ('HSSname')
               label='HSS - Hessian eigenvectors'

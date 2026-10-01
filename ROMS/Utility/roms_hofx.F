@@ -609,12 +609,15 @@
 !
       CALL hofx_output_ioda (ng, model)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifndef VERIFICATION
 !
 !  Write aggregated H(x) observation data to a single Data Assimilation
 !  Variables (DAV) NetCDF output file.
 !
       CALL hofx_output_dav (ng, model)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
 !  Report observation-model statistics.
 !
@@ -4727,6 +4730,8 @@
      &                                          SUM(Ncount)
         WRITE (stdout,'(1x)')
       END IF
+
+# ifndef VERIFICATION
 !
 !  Write out observations and nonlinear H(x) statistics into output
 !  4D-Var data assimilation file.
@@ -4784,6 +4789,7 @@
      &                      (/1/), (/NobsVar(ng)/),                     &
      &                      ncid = DAV(ng)%ncid)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+# endif
 !
  10   FORMAT (/,' Model-Observations Comparison Statistics:',/)
  20   FORMAT (t22,*(a11,1x))

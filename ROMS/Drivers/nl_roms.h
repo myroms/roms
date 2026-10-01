@@ -29,7 +29,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
-#ifdef VERIFICATION
+#if defined VERIFICATION && !defined IODA_OBS
       USE def_mod_mod,       ONLY : def_mod
 #endif
       USE close_io_mod,      ONLY : close_inp, close_out
@@ -43,9 +43,7 @@
 # endif
 #endif
 #ifdef VERIFICATION
-# ifdef IODA_OBS
-      USE roms_hofx_mod,     ONLY : hofx_finalize
-# else
+# ifndef IODA_OBS
       USE stats_modobs_mod,  ONLY : stats_modobs
 # endif
 #endif
@@ -218,7 +216,7 @@
 !
       Nrun=1
 
-#ifdef VERIFICATION
+#if defined VERIFICATION && !defined IODA_OBS
 !
 !  Create NetCDF file for model solution at observation locations.
 !
@@ -355,16 +353,7 @@
         END DO
       END IF
 #endif
-#ifdef VERIFICATION
-# ifdef IODA_OBS
-!
-!-----------------------------------------------------------------------
-!  Finalize model at observation locations, H(x). Then, write ouput
-!  enhanced NetCDF-4 files.
-!-----------------------------------------------------------------------
-!
-      CALL hofx_finalize (iNLM)
-# else
+#if defined VERIFICATION && !defined IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Compute and report model-observation comparison statistics.
@@ -373,7 +362,6 @@
       DO ng=1,Ngrids
         CALL stats_modobs (ng, tile)
       END DO
-# endif
 #endif
 !
 !-----------------------------------------------------------------------
