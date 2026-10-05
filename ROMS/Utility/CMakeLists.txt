@@ -78,6 +78,7 @@ list( APPEND _files
       ROMS/Utility/get_varcoords.F
       ROMS/Utility/get_wetdry.F
       ROMS/Utility/grid_coords.F
+      ROMS/Utility/hindices.F
       ROMS/Utility/ini_adjust.F
       ROMS/Utility/ini_hmixcoef.F
       ROMS/Utility/ini_lanczos.F

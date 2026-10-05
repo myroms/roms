@@ -77,6 +77,7 @@
       USE distribute_mod,    ONLY : mp_reduce
 #endif
       USE get_varcoords_mod, ONLY : get_varcoords
+      USE hindices_mod,      ONLY : hindices
 #if defined DISTRIBUTE && defined REGRID_SHAPIRO
       USE mp_exchange_mod,   ONLY : mp_exchange2d
 #endif

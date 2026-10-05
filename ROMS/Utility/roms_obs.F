@@ -33,8 +33,8 @@
       USE distribute_mod,       ONLY : mp_assemble, mp_bcasti
 #endif
       USE get_hash_mod,         ONLY : get_hash
+      USE hindices_mod,         ONLY : hindices
       USE mod_ncparam,          ONLY : date_str
-      USE roms_interpolate_mod, ONLY : hindices
       USE strings_mod,          ONLY : FoundError, lowercase, nc_error
       USE unique_mod,           ONLY : unique
 !
@@ -164,8 +164,8 @@
         real (r8),     allocatable :: value_min(:)
         real (r8),     allocatable :: value_max(:)
 !
-        real (r8) :: time_min
-        real (r8) :: time_max
+        real (dp) :: time_min
+        real (dp) :: time_max
 !
         character (len=22) :: date_min
         character (len=22) :: date_max
@@ -375,8 +375,8 @@
       CALL hindices (ng, LBi, UBi, LBj, UBj,                            &
      &               IstrR, IendR, JstrR, JendR,                        &
      &               GRID(ng)%angler, GRID(ng)%lonr, GRID(ng)%latr,     &
-     &               1, self%nlocs, 1, 1,                               &
-     &               1, self%nlocs, 1, 1,                               &
+     &               1, self%nlocs,                                     &
+     &               1, self%nlocs,                                     &
      &               self%lon, self%lat,                                &
      &               self%Xgrid, self%Ygrid,                            &
      &               IJspv, rectangular)
@@ -696,8 +696,10 @@
       logical,          intent(in   ) :: isDayUnits ! days or seconds
 !
       integer (i8b)                   :: checksum
-      integer                         :: i
+      integer                         :: i, j
       real (dp)                       :: Tmin, Tmax
+      real (r8)                       :: Eavg, Emin, Emax, Eval
+      real (r8)                       :: Vavg, Vmin, Vmax, Vval
 !
       character (len=*),    parameter :: MyFile =                       &
      &    __FILE__//", obs_data_stats"
@@ -721,18 +723,35 @@
         CALL datestr (Tmax, .FALSE., self%date_max)
       END IF
 !
-      DO i=1,self%nvars
-        self%error_avg(i)=SUM(self%error(:,i))/REAL(self%nlocs, r8)
-        self%error_min(i)=MINVAL(self%error(:,i))
-        self%error_max(i)=MAXVAL(self%error(:,i))
-        CALL get_hash (self%error(:,i), self%nlocs, checksum, .FALSE.)
-        self%error_hash(i)=checksum
+      DO j=1,self%nvars
+        Eavg=0.0_r8
+        Emin=REAL(self%error(1,j), r8)
+        Emax=REAL(self%error(1,j), r8)
+        Vavg=0.0_r8
+        Vmin=REAL(self%value(1,j), r8)
+        Vmax=REAL(self%value(1,j), r8)
+        DO i=1,self%nlocs
+          Eval=REAL(self%error(i,j), r8)
+          Eavg=Eavg+Eval
+          Emin=MIN(Emin, Eval)
+          Emax=MAX(Emax, Eval)
 !
-        self%value_avg(i)=SUM(self%value(:,i))/REAL(self%nlocs, r8)
-        self%value_min(i)=MINVAL(self%value(:,i))
-        self%value_max(i)=MAXVAL(self%value(:,i))
-        CALL get_hash (self%value(:,i), self%nlocs, checksum, .FALSE.)
-        self%value_hash(i)=checksum
+          Vval=REAL(self%value(i,j), r8)
+          Vavg=Eavg+Vval
+          Vmin=MIN(Vmin, Vval)
+          Vmax=MAX(Vmax, Vval)
+        END DO
+        self%error_avg(j)=Eavg/REAL(self%nlocs, r8)
+        self%error_min(j)=Emin
+        self%error_max(j)=Emax
+        CALL get_hash (self%error(:,j), self%nlocs, checksum, .FALSE.)
+        self%error_hash(j)=checksum
+!
+        self%value_avg(j)=Vavg/REAL(self%nlocs, r8)
+        self%value_min(j)=Vmin
+        self%value_max(j)=Vmax
+        CALL get_hash (self%value(:,j), self%nlocs, checksum, .FALSE.)
+        self%value_hash(j)=checksum
       END DO
 !
       RETURN
@@ -1232,13 +1251,13 @@
       IF (.not.allocated(self%pool(iobs)%dateTime)) THEN
         allocate ( self%pool(iobs)%dateTime(mobs) )
         self%pool(iobs)%dateTime = 0
-        Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+        Dmem(ng)=Dmem(ng)+REAL(mobs,sp)
       END IF
 
       IF (.not.allocated(self%pool(iobs)%provenance)) THEN
         allocate ( self%pool(iobs)%provenance(mobs) )
         self%pool(iobs)%provenance = 0
-        Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+        Dmem(ng)=Dmem(ng)+REAL(mobs,sp)
       END IF
 
       IF (.not.allocated(self%pool(iobs)%lon)) THEN
@@ -1261,47 +1280,47 @@
 
       IF (.not.allocated(self%pool(iobs)%time)) THEN
         allocate ( self%pool(iobs)%time(mobs) )
-        self%pool(iobs)%time = 0.0_r8
-        Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+        self%pool(iobs)%time = 0.0_dp
+        Dmem(ng)=Dmem(ng)+REAL(mobs,dp)
       END IF
 
       IF (self%pool(iobs)%IsAreaAveraged) THEN
         IF (.not.allocated(self%pool(iobs)%spatialAverage)) THEN
           allocate ( self%pool(iobs)%spatialAverage(mvar) )
           self%pool(iobs)%spatialAverage=0.0_r8
-          Dmem(ng)=Dmem(ng)+REAL(mvar,r8)
+          Dmem(ng)=Dmem(ng)+REAL(mvar,dp)
         END IF
       END IF
 
       IF (self%pool(iobs)%IsTimeAveraged) THEN
         IF (.not.allocated(self%pool(iobs)%TimeStr)) THEN
           allocate ( self%pool(iobs)%TimeStr(mobs) )
-          self%pool(iobs)%TimeStr=0.0_r8
-          Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+          self%pool(iobs)%TimeStr=0.0_dp
+          Dmem(ng)=Dmem(ng)+REAL(mobs,dp)
         END IF
         IF (.not.allocated(self%pool(iobs)%TimeEnd)) THEN
           allocate ( self%pool(iobs)%TimeEnd(mobs) )
-          self%pool(iobs)%TimeEnd=0.0_r8
-          Dmem(ng)=Dmem(ng)+REAL(mobs,r8)
+          self%pool(iobs)%TimeEnd=0.0_dp
+          Dmem(ng)=Dmem(ng)+REAL(mobs,dp)
         END IF
       END IF
 
       IF (.not.allocated(self%pool(iobs)%stateID)) THEN
         allocate ( self%pool(iobs)%stateID(mvar) )
         self%pool(iobs)%stateID = 0
-        Dmem(ng)=Dmem(ng)+REAL(mvar,r8)
+        Dmem(ng)=Dmem(ng)+REAL(mvar,sp)
       END IF
 
       IF (.not.allocated(self%pool(iobs)%surveyIndex)) THEN
         allocate ( self%pool(iobs)%surveyIndex(msurvey) )
         self%pool(iobs)%surveyIndex = 0
-        Dmem(ng)=Dmem(ng)+REAL(msurvey,r8)
+        Dmem(ng)=Dmem(ng)+REAL(msurvey,sp)
       END IF
 
       IF (.not.allocated(self%pool(iobs)%surveyTime)) THEN
         allocate ( self%pool(iobs)%surveyTime(msurvey) )
-        self%pool(iobs)%surveyTime = 0.0_r8
-        Dmem(ng)=Dmem(ng)+REAL(msurvey,r8)
+        self%pool(iobs)%surveyTime = 0.0_dp
+        Dmem(ng)=Dmem(ng)+REAL(msurvey,dp)
       END IF
 
       IF (.not.allocated(self%pool(iobs)%Xgrid)) THEN
