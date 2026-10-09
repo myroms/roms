@@ -73,7 +73,7 @@
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_assemble
 #endif
-      USE hindices_mod,   ONLY : hindices
+      USE hindices_mod,   ONLY : hindices2d
       USE mod_iounits,    ONLY : stdout
       USE strings_mod,    ONLY : FoundError
 !
@@ -176,7 +176,7 @@
 !  to locations (Xout,Yout).  To facilitate the  interpolation  within !
 !  any irregularly gridded 2D field,  the fractional grid cell indices !
 !  (Iout,Jout) with respect Finp are needed at input.  Notice that the !
-!  routine "hindices" can be used to compute these indices.            !
+!  routine "hindices2d" can be used to compute these indices.          !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -290,8 +290,8 @@
 !  routine performs bicubic interpolation at locations (Xout,Yout).    !
 !  To facilitate the interpolation within any  irregularly  gridded    !
 !  field, the fractional grid cell indices (Iout,Jout) with respect    !
-!  Finp are needed at input. Notice that the routine "hindices" can    !
-!  be used to compute these indices.                                   !
+!  Finp are needed at input. Notice that the routine "hindices2d"      !
+!  can be used to compute these indices.                               !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -1391,14 +1391,14 @@
 !  Determine the horizontal fractional coordinates: S%x_dst and S%y_dst.
 !-----------------------------------------------------------------------
 !
-      CALL hindices (S%ng,                                              &
-     &               S%LBi_src,   S%UBi_src,  S%LBj_src,  S%UBj_src,    &
-     &               S%Istr_src , S%Iend_src, S%Jstr_src, S%Jend_src,   &
-     &               S%angle_src, S%lon_src,  S%lat_src,                &
-     &               S%LBi_dst,   S%UBi_dst,  S%LBj_dst,  S%UBj_dst,    &
-     &               S%Istr_dst,  S%Iend_dst, S%Jstr_dst, S%Jend_dst,   &
-     &               S%lon_dst,   S%lat_dst,  S%x_dst,    S%y_dst,      &
-     &               S%spval,     S%rectangular)
+      CALL hindices2d (S%ng,                                            &
+     &                 S%LBi_src,   S%UBi_src,  S%LBj_src,  S%UBj_src,  &
+     &                 S%Istr_src , S%Iend_src, S%Jstr_src, S%Jend_src, &
+     &                 S%angle_src, S%lon_src,  S%lat_src,              &
+     &                 S%LBi_dst,   S%UBi_dst,  S%LBj_dst,  S%UBj_dst,  &
+     &                 S%Istr_dst,  S%Iend_dst, S%Jstr_dst, S%Jend_dst, &
+     &                 S%lon_dst,   S%lat_dst,  S%x_dst,    S%y_dst,    &
+     &                 S%spval,     S%rectangular)
 
 #ifdef DISTRIBUTE
 !

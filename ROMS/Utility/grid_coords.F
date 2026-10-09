@@ -21,11 +21,11 @@
 # endif
       USE mod_grid
       USE mod_scalars
-      USE roms_interpolate_mod
 !
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
 # endif
+      USE hindices_mod,   ONLY : hindices1d
 !
       implicit none
 !
@@ -92,16 +92,16 @@
         IF (Lfloats(ng)) THEN
           mc=DRIFTER(ng)%Findex(0)
           IF (DRIFTER(ng)%Findex(0).gt.0) THEN
-            CALL hindices (ng, LBi, UBi, LBj, UBj,                      &
-     &                     IstrR, Iend+1, JstrR, Jend+1,                &
-     &                     GRID(ng)%angler,                             &
-     &                     GRID(ng)%lonr,                               &
-     &                     GRID(ng)%latr,                               &
-     &                     1, mc, 1, 1,                                 &
-     &                     1, mc, 1, 1,                                 &
-     &                     DRIFTER(ng)%Flon,                            &
-     &                     DRIFTER(ng)%Flat,                            &
-     &                     Iflt, Jflt, spv, .FALSE.)
+            CALL hindices1d (ng, LBi, UBi, LBj, UBj,                    &
+     &                       IstrR, Iend+1, JstrR, Jend+1,              &
+     &                       GRID(ng)%angler,                           &
+     &                       GRID(ng)%lonr,                             &
+     &                       GRID(ng)%latr,                             &
+     &                       1, mc,                                     &
+     &                       1, mc,                                     &
+     &                       DRIFTER(ng)%Flon,                          &
+     &                       DRIFTER(ng)%Flat,                          &
+     &                       Iflt, Jflt, spv, .FALSE.)
 #  ifdef DISTRIBUTE
             CALL mp_collect (ng, model, mc, spv, Iflt)
             CALL mp_collect (ng, model, mc, spv, Jflt)
@@ -213,16 +213,16 @@
           END IF
         END DO
         IF (mc.gt.0) THEN
-          CALL hindices (ng, LBi, UBi, LBj, UBj,                        &
-     &                   IstrR, Iend+1, JstrR, Jend+1,                  &
-     &                   GRID(ng)%angler,                               &
-     &                   GRID(ng)%lonr,                                 &
-     &                   GRID(ng)%latr,                                 &
-     &                   1, mc, 1, 1,                                   &
-     &                   1, mc, 1, 1,                                   &
-     &                   Slon, Slat,                                    &
-     &                   Ista, Jsta,                                    &
-     &                   spv, .FALSE.)
+          CALL hindices1d (ng, LBi, UBi, LBj, UBj,                      &
+     &                     IstrR, Iend+1, JstrR, Jend+1,                &
+     &                     GRID(ng)%angler,                             &
+     &                     GRID(ng)%lonr,                               &
+     &                     GRID(ng)%latr,                               &
+     &                     1, mc,                                       &
+     &                     1, mc,                                       &
+     &                     Slon, Slat,                                  &
+     &                     Ista, Jsta,                                  &
+     &                     spv, .FALSE.)
 #  ifdef DISTRIBUTE
           CALL mp_collect (ng, model, mc, spv, Ista)
           CALL mp_collect (ng, model, mc, spv, Jsta)

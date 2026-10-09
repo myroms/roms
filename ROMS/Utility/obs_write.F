@@ -81,6 +81,13 @@
         UBi=BOUNDS(ng)%UBi(tile)
         LBj=BOUNDS(ng)%LBj(tile)
         UBj=BOUNDS(ng)%UBj(tile)
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+        CALL wclock_on (ng, model, 46, __LINE__, MyFile)
+# endif
 !
         CALL obs_operator (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -108,7 +115,6 @@
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
 !
 !-----------------------------------------------------------------------
 !  Set counters for the number of rejected observations for each state
@@ -206,6 +212,13 @@
           END IF
         END IF
 
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+        CALL wclock_off (ng, model, 46, __LINE__, MyFile)
+!
+# endif
       END IF H_OPERATOR
 !
   10  FORMAT (' OBS_WRITE - Illegal output file type, io_type = ',i0,   &

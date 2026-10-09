@@ -44,7 +44,8 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_gather2d, mp_gather2d_xtr
 # endif
-      USE roms_interpolate_mod, ONLY : cinterp2d, linterp2d, hindices
+      USE hindices_mod,         ONLY : hindices2d
+      USE roms_interpolate_mod, ONLY : cinterp2d, linterp2d
       USE strings_mod,          ONLY : FoundError
 !
       implicit none
@@ -2396,29 +2397,29 @@
 !  Iout and Jout indices once to avoid collecting communications when
 !  writing the extracted data.
 !
-      CALL hindices (ng,                                                &
-     &               1, Isize, 1, Jsize,                                &
-     &               1, Isize, 1, Jsize,                                &
-     &               Ainp, Xinp, Yinp,                                  &
-     &               1, Msize, 1, Nsize,                                &
-     &               1, Msize, 1, Nsize,                                &
-     &               Xout, Yout,                                        &
-     &               Iout, Jout,                                        &
-     &               0.0_r8, .FALSE.)
+      CALL hindices2d (ng,                                              &
+     &                 1, Isize, 1, Jsize,                              &
+     &                 1, Isize, 1, Jsize,                              &
+     &                 Ainp, Xinp, Yinp,                                &
+     &                 1, Msize, 1, Nsize,                              &
+     &                 1, Msize, 1, Nsize,                              &
+     &                 Xout, Yout,                                      &
+     &                 Iout, Jout,                                      &
+     &                 0.0_r8, .FALSE.)
 # else
 !
 !  Find the fractional indices (Iout,Jout) of the donor grid cells
 !  containing extracted field points.
 !
-      CALL hindices (ng,                                                &
-     &               1, Isize, 1, Jsize,                                &
-     &               1, Isize, 1, Jsize,                                &
-     &               Ainp, Xinp, Yinp,                                  &
-     &               LBi_out, UBi_out, LBj_out, UBj_out,                &
-     &               Is_out, Ie_out, Js_out, Je_out,                    &
-     &               Xout, Yout,                                        &
-     &               Iout, Jout,                                        &
-     &               0.0_r8, .FALSE.)
+      CALL hindices2d (ng,                                              &
+     &                 1, Isize, 1, Jsize,                              &
+     &                 1, Isize, 1, Jsize,                              &
+     &                 Ainp, Xinp, Yinp,                                &
+     &                 LBi_out, UBi_out, LBj_out, UBj_out,              &
+     &                 Is_out, Ie_out, Js_out, Je_out,                  &
+     &                 Xout, Yout,                                      &
+     &                 Iout, Jout,                                      &
+     &                 0.0_r8, .FALSE.)
 # endif
 !
 !  Deallocate.

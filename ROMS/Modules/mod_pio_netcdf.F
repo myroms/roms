@@ -40,25 +40,28 @@
 !  type parameter and data array rank.
 !
       INTERFACE pio_netcdf_get_fatt              ! reads attributes
-# ifdef SINGLE_PRECISION
         MODULE PROCEDURE pio_netcdf_get_fatt_dp
-# endif
-        MODULE PROCEDURE pio_netcdf_get_fatt_r8
+        MODULE PROCEDURE pio_netcdf_get_fatt_sp
       END INTERFACE pio_netcdf_get_fatt
 !
       INTERFACE pio_netcdf_get_fvar              ! reads floating-point
-# ifdef SINGLE_PRECISION
         MODULE PROCEDURE pio_netcdf_get_fvar_0dp
+        MODULE PROCEDURE pio_netcdf_get_fvar_0sp
+!
         MODULE PROCEDURE pio_netcdf_get_fvar_1dp
+        MODULE PROCEDURE pio_netcdf_get_fvar_1sp
+!
         MODULE PROCEDURE pio_netcdf_get_fvar_2dp
+        MODULE PROCEDURE pio_netcdf_get_fvar_2sp
+!
         MODULE PROCEDURE pio_netcdf_get_fvar_3dp
-# endif
-        MODULE PROCEDURE pio_netcdf_get_fvar_0d
-        MODULE PROCEDURE pio_netcdf_get_fvar_1d
-        MODULE PROCEDURE pio_netcdf_get_fvar_2d
-        MODULE PROCEDURE pio_netcdf_get_fvar_3d
-        MODULE PROCEDURE pio_netcdf_get_fvar_4d
-        MODULE PROCEDURE pio_netcdf_get_fvar_5d
+        MODULE PROCEDURE pio_netcdf_get_fvar_3sp
+!
+        MODULE PROCEDURE pio_netcdf_get_fvar_4dp
+        MODULE PROCEDURE pio_netcdf_get_fvar_4sp
+!
+        MODULE PROCEDURE pio_netcdf_get_fvar_5dp
+        MODULE PROCEDURE pio_netcdf_get_fvar_5sp
       END INTERFACE pio_netcdf_get_fvar
 !
       INTERFACE pio_netcdf_get_ivar              ! reads integer
@@ -90,18 +93,23 @@
       END INTERFACE pio_netcdf_get_time
 !
       INTERFACE pio_netcdf_put_fvar              ! writes floating-point
-# ifdef SINGLE_PRECISION
         MODULE PROCEDURE pio_netcdf_put_fvar_0dp
+        MODULE PROCEDURE pio_netcdf_put_fvar_0sp
+!
         MODULE PROCEDURE pio_netcdf_put_fvar_1dp
+        MODULE PROCEDURE pio_netcdf_put_fvar_1sp
+!
         MODULE PROCEDURE pio_netcdf_put_fvar_2dp
+        MODULE PROCEDURE pio_netcdf_put_fvar_2sp
+!
         MODULE PROCEDURE pio_netcdf_put_fvar_3dp
-# endif
-        MODULE PROCEDURE pio_netcdf_put_fvar_0d
-        MODULE PROCEDURE pio_netcdf_put_fvar_1d
-        MODULE PROCEDURE pio_netcdf_put_fvar_2d
-        MODULE PROCEDURE pio_netcdf_put_fvar_3d
-        MODULE PROCEDURE pio_netcdf_put_fvar_4d
-        MODULE PROCEDURE pio_netcdf_put_fvar_5d
+        MODULE PROCEDURE pio_netcdf_put_fvar_3sp
+!
+        MODULE PROCEDURE pio_netcdf_put_fvar_4dp
+        MODULE PROCEDURE pio_netcdf_put_fvar_4sp
+!
+        MODULE PROCEDURE pio_netcdf_put_fvar_5dp
+        MODULE PROCEDURE pio_netcdf_put_fvar_5sp
       END INTERFACE pio_netcdf_put_fvar
 !
       INTERFACE pio_netcdf_put_ivar              ! writes integer
@@ -135,10 +143,66 @@
       PUBLIC :: pio_netcdf_redef        ! puts file in definition mode
       PUBLIC :: pio_netcdf_sync         ! synchronize file to disk
 !
+      PRIVATE :: pio_netcdf_get_fatt_dp
+      PRIVATE :: pio_netcdf_get_fatt_sp
+!
+      PRIVATE :: pio_netcdf_get_fvar_0dp
+      PRIVATE :: pio_netcdf_get_fvar_0sp
+      PRIVATE :: pio_netcdf_get_fvar_1dp
+      PRIVATE :: pio_netcdf_get_fvar_1sp
+      PRIVATE :: pio_netcdf_get_fvar_2dp
+      PRIVATE :: pio_netcdf_get_fvar_2sp
+      PRIVATE :: pio_netcdf_get_fvar_3dp
+      PRIVATE :: pio_netcdf_get_fvar_3sp
+      PRIVATE :: pio_netcdf_get_fvar_4dp
+      PRIVATE :: pio_netcdf_get_fvar_4sp
+      PRIVATE :: pio_netcdf_get_fvar_5dp
+      PRIVATE :: pio_netcdf_get_fvar_5sp
+!
+      PRIVATE :: pio_netcdf_get_ivar_0d
+      PRIVATE :: pio_netcdf_get_ivar_1d
+      PRIVATE :: pio_netcdf_get_ivar_2d
+      PRIVATE :: pio_netcdf_get_lvar_0d
+      PRIVATE :: pio_netcdf_get_lvar_1d
+!
+      PRIVATE :: pio_netcdf_get_svar_0d
+      PRIVATE :: pio_netcdf_get_svar_1d
+      PRIVATE :: pio_netcdf_get_svar_2d
+      PRIVATE :: pio_netcdf_get_svar_3d
+!
+      PRIVATE :: pio_netcdf_get_time_0d
+      PRIVATE :: pio_netcdf_get_time_1d
+!
+      PRIVATE :: pio_netcdf_put_fvar_0dp
+      PRIVATE :: pio_netcdf_put_fvar_0sp
+      PRIVATE :: pio_netcdf_put_fvar_1dp
+      PRIVATE :: pio_netcdf_put_fvar_1sp
+      PRIVATE :: pio_netcdf_put_fvar_2dp
+      PRIVATE :: pio_netcdf_put_fvar_2sp
+      PRIVATE :: pio_netcdf_put_fvar_3dp
+      PRIVATE :: pio_netcdf_put_fvar_3sp
+      PRIVATE :: pio_netcdf_put_fvar_4dp
+      PRIVATE :: pio_netcdf_put_fvar_4sp
+      PRIVATE :: pio_netcdf_put_fvar_5dp
+      PRIVATE :: pio_netcdf_put_fvar_5sp
+!
+      PRIVATE :: pio_netcdf_put_ivar_0d
+      PRIVATE :: pio_netcdf_put_ivar_1d
+      PRIVATE :: pio_netcdf_put_ivar_2d
+      PRIVATE :: pio_netcdf_put_lvar_0d
+      PRIVATE :: pio_netcdf_put_lvar_1d
+      PRIVATE :: pio_netcdf_put_lvar_2d
+!
+      PRIVATE :: pio_netcdf_put_svar_0d
+      PRIVATE :: pio_netcdf_put_svar_1d
+      PRIVATE :: pio_netcdf_put_svar_2d
+      PRIVATE :: pio_netcdf_put_svar_3d
+!
+      PUBLIC
+!
 !  Switch indicating successful PIO initialization.
 !
       logical :: LpioInitialized = .FALSE.
-
 !
 !  Set PIO internal level of debug information. The default value is 0,
 !  allowed values 0-6.
@@ -2576,8 +2640,6 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_inq_varid
-
-# ifdef SINGLE_PRECISION
 !
       SUBROUTINE pio_netcdf_get_fatt_dp (ng, model, ncname, pioVar,     &
      &                                   AttName, AttValue, foundit,    &
@@ -2722,15 +2784,14 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_get_fatt_dp
-# endif
 !
-      SUBROUTINE pio_netcdf_get_fatt_r8 (ng, model, ncname, pioVar,     &
+      SUBROUTINE pio_netcdf_get_fatt_sp (ng, model, ncname, pioVar,     &
      &                                   AttName, AttValue, foundit,    &
      &                                   pioFile)
 !
 !=======================================================================
 !                                                                      !
-!  This routine gets requested variable floating-point attribute(s).   !
+!  This routine gets requested variable single-precision attribute(s). !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -2762,7 +2823,7 @@
 !
       logical, intent(out) :: foundit(:)
 !
-      real(r8), intent(out) :: AttValue(:)
+      real(sp), intent(out) :: AttValue(:)
 !
       TYPE (Var_desc_t),  intent(in) :: pioVar
       TYPE (File_desc_t), intent(in), optional :: pioFile
@@ -2775,7 +2836,7 @@
       character (len=40) :: my_Vname
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fatt"
+     &  __FILE__//", pio_netcdf_get_fatt_sp"
 !
       TYPE (File_desc_t) :: my_pioFile
 !
@@ -2788,7 +2849,7 @@
       natts=UBOUND(AttName, DIM=1)
       DO i=1,natts
         foundit(i)=.FALSE.
-        AttValue(i)=0.0_r8
+        AttValue(i)=0.0_sp
       END DO
 !
 !  If appropriate, open file for reading.
@@ -2855,18 +2916,18 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_GET_FATT_R8 - error while reading ',       &
+  10  FORMAT (/,' PIO_NETCDF_GET_FATT_SP - error while reading ',       &
      &        'attribute:',1x,a,'for variable',1x,a,                    &
      &        /,26x,'in input file:',2x,a,/,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FATT_R8 - error while inquiring ',     &
+  20  FORMAT (/,' PIO_NETCDF_GET_FATT_SP - error while inquiring ',     &
      &        'attribute:',1x,i2.2,'for variable',1x,a,                 &
      &        /,26x,'in input file:',2x,a,/,26x,'call from:',2x,a)
-  30  FORMAT (/,' PIO_NETCDF_GET_FATT_R8 - error while inquiring ',     &
+  30  FORMAT (/,' PIO_NETCDF_GET_FATT_SP - error while inquiring ',     &
      &        'number of attributes for variable:',1x,a,                &
      &        /,26x,'in input file:',2x,a,/,26x,'call from:',2x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_get_fatt_r8
+      END SUBROUTINE pio_netcdf_get_fatt_sp
 !
       SUBROUTINE pio_netcdf_get_satt_g (ng, model, ncname, varid,       &
      &                                  AttName, AttValue, foundit,     &
@@ -3155,8 +3216,6 @@
       RETURN
       END SUBROUTINE pio_netcdf_get_satt_v
 !
-# ifdef SINGLE_PRECISION
-!
       SUBROUTINE pio_netcdf_get_fvar_0dp (ng, model, ncname, myVarName, &
      &                                    A, pioFile, start, total,     &
      &                                    broadcast, min_val, max_val)
@@ -3293,6 +3352,142 @@
       RETURN
       END SUBROUTINE pio_netcdf_get_fvar_0dp
 !
+      SUBROUTINE pio_netcdf_get_fvar_0sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested single-precision scalar variable from  !
+!  specified NetCDF file.                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL). It is    !
+!                    ignored since PIO library broadcasts the values   !
+!                    to all member in the group by default.            !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read scalar variable (real)                         !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(1))      !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
+!
+      real(sp), intent(out) :: A
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      real(sp), dimension(1) :: my_A
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_0sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision scalar variable.
+!-----------------------------------------------------------------------
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, my_A)
+          A=my_A(1)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Compute minimum and maximum values of read variable. Notice that
+!  the same read value is assigned since a scalar variable was
+!  processed.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=A
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=A
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_0SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_0SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_0sp
+!
       SUBROUTINE pio_netcdf_get_fvar_1dp (ng, model, ncname, myVarName, &
      &                                    A, pioFile, start, total,     &
      &                                    broadcast, min_val, max_val)
@@ -3366,7 +3561,7 @@
 !
       real(dp) :: Afactor, Aoffset, Aspval
 
-      real(dp), parameter :: Aepsilon = 1.0E-8_r8
+      real(dp), parameter :: Aepsilon = 1.0E-8_dp
 
       real(dp), dimension(3) :: AttValue
 !
@@ -3507,6 +3702,220 @@
       RETURN
       END SUBROUTINE pio_netcdf_get_fvar_1dp
 !
+      SUBROUTINE pio_netcdf_get_fvar_1sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested single-precision 1D-array variable     !
+!  from specified NetCDF file.                                         !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!                                                                      !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL). It is    !
+!                    ignored since PIO library broadcasts the values   !
+!                    to all member in the group by default.            !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 1D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:))     !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(:,1))    !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
+
+      real(sp), intent(out) :: A(:)
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      logical, dimension(3) :: foundit
+!
+      integer :: i, status
+
+      integer, dimension(1) :: Asize
+!
+      real(sp) :: Afactor, Aoffset, Aspval
+
+      real(sp), parameter :: Aepsilon = 1.0E-8_sp
+
+      real(sp), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_1sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 1D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=1
+        DO i=1,SIZE(total)              ! this logic is for the case
+          Asize(1)=Asize(1)*total(i)    ! of reading multidimensional
+        END DO                          ! data into a compact 1D array
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+      END IF
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
+     &                          AttName, AttValue, foundit,             &
+     &                          pioFile = my_pioFile)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO i=1,Asize(1)                       ! zero out missing values
+          IF ((foundit(3).and.(ABS(A(i)-Aspval).lt.Aepsilon)).or.       &
+     &        (.not.foundit(3).and.(ABS(A(i)).ge.ABS(Aspval)))) THEN
+            A(i)=0.0_r8
+          END IF
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO i=1,Asize(1)
+            A(i)=Afactor*A(i)
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO i=1,Asize(1)
+            A(i)=A(i)+Aoffset
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_1SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_1SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_1sp
+!
       SUBROUTINE pio_netcdf_get_fvar_2dp (ng, model, ncname, myVarName, &
      &                                    A, pioFile, start, total,     &
      &                                    broadcast, min_val, max_val)
@@ -3565,7 +3974,7 @@
 !
       real(dp), intent(out), optional :: min_val
       real(dp), intent(out), optional :: max_val
-
+!
       real(dp), intent(out) :: A(:,:)
 !
       TYPE (File_desc_t), intent(in), optional :: pioFile
@@ -3580,7 +3989,7 @@
 !
       real(dp) :: Afactor, Aoffset, Aspval
 
-      real(dp), parameter :: Aepsilon = 1.0E-8_r8
+      real(dp), parameter :: Aepsilon = 1.0E-8_dp
 
       real(dp), dimension(3) :: AttValue
 !
@@ -3593,7 +4002,7 @@
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a double-precision 2D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -3726,6 +4135,225 @@
       RETURN
       END SUBROUTINE pio_netcdf_get_fvar_2dp
 !
+      SUBROUTINE pio_netcdf_get_fvar_2sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested single-precision 2D-array variable     !
+!  from specified NetCDF file.                                         !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL). It is    !
+!                    ignored since PIO library broadcasts the values   !
+!                    to all member in the group by default.            !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 2D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:,:))   !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:,0:))  !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(:,:,1))  !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
+
+      real(sp), intent(out) :: A(:,:)
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      logical, dimension(3) :: foundit
+!
+      integer :: i, j, status
+
+      integer, dimension(2) :: Asize
+!
+      real(sp) :: Afactor, Aoffset, Aspval
+
+      real(sp), parameter :: Aepsilon = 1.0E-8_sp
+
+      real(sp), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_2sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 2D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=total(1)
+        Asize(2)=total(2)
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+      END IF
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
+     &                          AttName, AttValue, foundit,             &
+     &                          pioFile = my_pioFile)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO j=1,Asize(2)                       ! zero out missing values
+          DO i=1,Asize(1)
+            IF ((foundit(3).and.(ABS(A(i,j)-Aspval).lt.Aepsilon)).or.   &
+     &          (.not.foundit(3).and.(ABS(A(i,j)).ge.ABS(Aspval)))) THEN
+              A(i,j)=0.0_r8
+            END IF
+          END DO
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO j=1,Asize(2)
+            DO i=1,Asize(1)
+              A(i,j)=Afactor*A(i,j)
+            END DO
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO j=1,Asize(2)
+            DO i=1,Asize(1)
+              A(i,j)=A(i,j)+Aoffset
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_2SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_2SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_2sp
+!
       SUBROUTINE pio_netcdf_get_fvar_3dp (ng, model, ncname, myVarName, &
      &                                    A, pioFile, start, total,     &
      &                                    broadcast, min_val, max_val)
@@ -3796,7 +4424,7 @@
 !
       real(dp) :: Afactor, Aoffset, Aspval
 
-      real(dp), parameter :: Aepsilon = 1.0E-8_r8
+      real(dp), parameter :: Aepsilon = 1.0E-8_dp
 
       real(dp), dimension(3) :: AttValue
 !
@@ -3809,7 +4437,7 @@
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a double-precision 2D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -3951,585 +4579,15 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_get_fvar_3dp
-# endif
 !
-      SUBROUTINE pio_netcdf_get_fvar_0d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
-!
-!=======================================================================
-!                                                                      !
-!  This routine reads requested floating-point scalar variable from    !
-!  specified NetCDF file.                                              !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng           Nested grid number (integer)                        !
-!     model        Calling model identifier (integer)                  !
-!     ncname       NetCDF file name (string)                           !
-!     myVarName    Variable name (string)                              !
-!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
-!                    pioFile%fh         file handler                   !
-!                    pioFile%iosystem   IO system descriptor (struct)  !
-!     start        Starting index where the first of the data values   !
-!                    will be read along each dimension (integer,       !
-!                    OPTIONAL)                                         !
-!     total        Number of data values to be read along each         !
-!                    dimension (integer, OPTIONAL)                     !
-!     broadcast    Switch to broadcast read values from root to all    !
-!                    members of the communicator in distributed-       !
-!                    memory applications (logical, OPTIONAL). It is    !
-!                    ignored since PIO library broadcasts the values   !
-!                    to all member in the group by default.            !
-!                                                                      !
-!  On Ouput:                                                           !
-!                                                                      !
-!     A            Read scalar variable (real)                         !
-!     min_val      Read data minimum value (real, OPTIONAL)            !
-!     max_val      Read data maximum value (real, OPTIONAL)            !
-!                                                                      !
-!  Examples:                                                           !
-!                                                                      !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(1))      !
-!                                                                      !
-!=======================================================================
-!
-!  Imported variable declarations.
-!
-      logical, intent(in), optional :: broadcast
-!
-      integer, intent(in) :: ng, model
-
-      integer, intent(in), optional :: start(:)
-      integer, intent(in), optional :: total(:)
-!
-      character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: myVarName
-!
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
-
-      real(r8), intent(out) :: A
-!
-      TYPE (File_desc_t), intent(in), optional :: pioFile
-!
-!  Local variable declarations.
-!
-      integer :: status
-!
-      real(r8), dimension(1) :: my_A
-!
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_0d"
-!
-      TYPE (File_desc_t) :: my_pioFile
-      TYPE (Var_desc_t)  :: my_pioVar
-!
-!-----------------------------------------------------------------------
-!  Read in a floating-point scalar variable.
-!-----------------------------------------------------------------------
-!
-!  If file descriptor is not provided, open NetCDF for reading.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      ELSE
-        my_pioFile=pioFile
-      END IF
-!
-!  Read in variable.
-!
-      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
-      IF (status.eq.PIO_noerr) THEN
-        IF (PRESENT(start).and.PRESENT(total)) THEN
-          status=PIO_get_var(my_pioFile, my_pioVar, start, total, my_A)
-          A=my_A(1)
-        ELSE
-          status=PIO_get_var(my_pioFile, my_pioVar, A)
-        END IF
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
-     &                                  TRIM(SourceFile)
-          exit_flag=2
-          ioerror=status
-        END IF
-      ELSE
-        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
-     &                                TRIM(SourceFile)
-        exit_flag=2
-        ioerror=status
-      END IF
-!
-!  Compute minimum and maximum values of read variable. Notice that
-!  the same read value is assigned since a scalar variable was
-!  processed.
-!
-      IF (PRESENT(min_val)) THEN
-        min_val=A
-      END IF
-      IF (PRESENT(max_val)) THEN
-        max_val=A
-      END IF
-!
-!  If file descriptor is not provided, close input NetCDF file.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
-      END IF
-!
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_0D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
-!
-      RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_0d
-!
-      SUBROUTINE pio_netcdf_get_fvar_1d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
+      SUBROUTINE pio_netcdf_get_fvar_3sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
-!  This routine reads requested floating-point 1D-array variable from  !
-!  specified NetCDF file.                                              !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng           Nested grid number (integer)                        !
-!     model        Calling model identifier (integer)                  !
-!     ncname       NetCDF file name (string)                           !
-!     myVarName    Variable name (string)                              !
-!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
-!                    pioFile%fh         file handler                   !
-!                    pioFile%iosystem   IO system descriptor (struct)  !
-!     start        Starting index where the first of the data values   !
-!                    will be read along each dimension (integer,       !
-!                    OPTIONAL)                                         !
-!     total        Number of data values to be read along each         !
-!                    dimension (integer, OPTIONAL)                     !
-!                                                                      !
-!     broadcast    Switch to broadcast read values from root to all    !
-!                    members of the communicator in distributed-       !
-!                    memory applications (logical, OPTIONAL). It is    !
-!                    ignored since PIO library broadcasts the values   !
-!                    to all member in the group by default.            !
-!                                                                      !
-!  On Ouput:                                                           !
-!                                                                      !
-!     A            Read 1D-array variable (real)                       !
-!     min_val      Read data minimum value (real, OPTIONAL)            !
-!     max_val      Read data maximum value (real, OPTIONAL)            !
-!                                                                      !
-!  Examples:                                                           !
-!                                                                      !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:))     !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(:,1))    !
-!                                                                      !
-!=======================================================================
-!
-!  Imported variable declarations.
-!
-      logical, intent(in), optional :: broadcast
-!
-      integer, intent(in) :: ng, model
-
-      integer, intent(in), optional :: start(:)
-      integer, intent(in), optional :: total(:)
-!
-      character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: myVarName
-!
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
-
-      real(r8), intent(out) :: A(:)
-!
-      TYPE (File_desc_t), intent(in), optional :: pioFile
-!
-!  Local variable declarations.
-!
-      logical, dimension(3) :: foundit
-!
-      integer :: i, status
-
-      integer, dimension(1) :: Asize
-!
-      real(r8) :: Afactor, Aoffset, Aspval
-
-      real(r8), parameter :: Aepsilon = 1.0E-8_r8
-
-      real(r8), dimension(3) :: AttValue
-!
-      character (len=12), dimension(3) :: AttName
-
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_1d"
-!
-      TYPE (File_desc_t) :: my_pioFile
-      TYPE (Var_desc_t)  :: my_pioVar
-!
-!-----------------------------------------------------------------------
-!  Read in a floating-point 1D-array variable.
-!-----------------------------------------------------------------------
-!
-      IF (PRESENT(start).and.PRESENT(total)) THEN
-        Asize(1)=1
-        DO i=1,SIZE(total)              ! this logic is for the case
-          Asize(1)=Asize(1)*total(i)    ! of reading multidimensional
-        END DO                          ! data into a compact 1D array
-      ELSE
-        Asize(1)=UBOUND(A, DIM=1)
-      END IF
-!
-!  If file descriptor is not provided, open NetCDF for reading.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      ELSE
-        my_pioFile=pioFile
-      END IF
-!
-!  Read in variable.
-!
-      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
-      IF (status.eq.PIO_noerr) THEN
-        IF (PRESENT(start).and.PRESENT(total)) THEN
-          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
-        ELSE
-          status=PIO_get_var(my_pioFile, my_pioVar, A)
-        END IF
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
-     &                                  TRIM(SourceFile)
-          exit_flag=2
-          ioerror=status
-        END IF
-      ELSE
-        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
-     &                                TRIM(SourceFile)
-        exit_flag=2
-        ioerror=status
-      END IF
-!
-!  Check if the following attributes: "scale_factor", "add_offset", and
-!  "_FillValue" are present in the input NetCDF variable:
-!
-!  If the "scale_value" attribute is present, the data is multiplied by
-!  this factor after reading.
-!  If the "add_offset" attribute is present, this value is added to the
-!  data after reading.
-!  If both "scale_factor" and "add_offset" attributes are present, the
-!  data are first scaled before the offset is added.
-!  If the "_FillValue" attribute is present, the data having this value
-!  is treated as missing and it is replaced with zero. This feature it
-!  is usually related with the land/sea masking.
-!
-      AttName(1)='scale_factor'
-      AttName(2)='add_offset  '
-      AttName(3)='_FillValue  '
-
-      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
-     &                          AttName, AttValue, foundit,             &
-     &                          pioFile = my_pioFile)
-
-      IF (exit_flag.eq.NoError) THEN
-        IF (.not.foundit(1)) THEN
-          Afactor=1.0_r8
-        ELSE
-          Afactor=AttValue(1)
-        END IF
-
-        IF (.not.foundit(2)) THEN
-          Aoffset=0.0_r8
-        ELSE
-          Aoffset=AttValue(2)
-        END IF
-
-        IF (.not.foundit(3)) THEN
-          Aspval=spval_check
-        ELSE
-          Aspval=AttValue(3)
-        END IF
-
-        DO i=1,Asize(1)                       ! zero out missing values
-          IF ((foundit(3).and.(ABS(A(i)-Aspval).lt.Aepsilon)).or.       &
-     &        (.not.foundit(3).and.(ABS(A(i)).ge.ABS(Aspval)))) THEN
-            A(i)=0.0_r8
-          END IF
-        END DO
-
-        IF (foundit(1)) THEN                  ! scale data
-          DO i=1,Asize(1)
-            A(i)=Afactor*A(i)
-          END DO
-        END IF
-
-        IF (foundit(2)) THEN                  ! add data offset
-          DO i=1,Asize(1)
-            A(i)=A(i)+Aoffset
-          END DO
-        END IF
-      END IF
-!
-!  Compute minimum and maximum values of read variable.
-!
-      IF (PRESENT(min_val)) THEN
-        min_val=MINVAL(A)
-      END IF
-      IF (PRESENT(max_val)) THEN
-        max_val=MAXVAL(A)
-      END IF
-!
-!  If file descriptor is not provided, close input NetCDF file.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
-      END IF
-!
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_1D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
-!
-      RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_1d
-!
-      SUBROUTINE pio_netcdf_get_fvar_2d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
-!
-!=======================================================================
-!                                                                      !
-!  This routine reads requested floating-point 2D-array variable from  !
-!  specified NetCDF file.                                              !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng           Nested grid number (integer)                        !
-!     model        Calling model identifier (integer)                  !
-!     ncname       NetCDF file name (string)                           !
-!     myVarName    Variable name (string)                              !
-!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
-!                    pioFile%fh         file handler                   !
-!                    pioFile%iosystem   IO system descriptor (struct)  !
-!     start        Starting index where the first of the data values   !
-!                    will be read along each dimension (integer,       !
-!                    OPTIONAL)                                         !
-!     total        Number of data values to be read along each         !
-!                    dimension (integer, OPTIONAL)                     !
-!     broadcast    Switch to broadcast read values from root to all    !
-!                    members of the communicator in distributed-       !
-!                    memory applications (logical, OPTIONAL). It is    !
-!                    ignored since PIO library broadcasts the values   !
-!                    to all member in the group by default.            !
-!                                                                      !
-!  On Ouput:                                                           !
-!                                                                      !
-!     A            Read 2D-array variable (real)                       !
-!     min_val      Read data minimum value (real, OPTIONAL)            !
-!     max_val      Read data maximum value (real, OPTIONAL)            !
-!                                                                      !
-!  Examples:                                                           !
-!                                                                      !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:,:))   !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(0:,0:))  !
-!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A(:,:,1))  !
-!                                                                      !
-!=======================================================================
-!
-!  Imported variable declarations.
-!
-      logical, intent(in), optional :: broadcast
-!
-      integer, intent(in) :: ng, model
-
-      integer, intent(in), optional :: start(:)
-      integer, intent(in), optional :: total(:)
-!
-      character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: myVarName
-!
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
-
-      real(r8), intent(out) :: A(:,:)
-!
-      TYPE (File_desc_t), intent(in), optional :: pioFile
-!
-!  Local variable declarations.
-!
-      logical, dimension(3) :: foundit
-!
-      integer :: i, j, status
-
-      integer, dimension(2) :: Asize
-!
-      real(r8) :: Afactor, Aoffset, Aspval
-
-      real(r8), parameter :: Aepsilon = 1.0E-8_r8
-
-      real(r8), dimension(3) :: AttValue
-!
-      character (len=12), dimension(3) :: AttName
-
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_2d"
-!
-      TYPE (File_desc_t) :: my_pioFile
-      TYPE (Var_desc_t)  :: my_pioVar
-!
-!-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
-!-----------------------------------------------------------------------
-!
-      IF (PRESENT(start).and.PRESENT(total)) THEN
-        Asize(1)=total(1)
-        Asize(2)=total(2)
-      ELSE
-        Asize(1)=UBOUND(A, DIM=1)
-        Asize(2)=UBOUND(A, DIM=2)
-      END IF
-!
-!  If file descriptor is not provided, open NetCDF for reading.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      ELSE
-        my_pioFile=pioFile
-      END IF
-!
-!  Read in variable.
-!
-      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
-      IF (status.eq.PIO_noerr) THEN
-        IF (PRESENT(start).and.PRESENT(total)) THEN
-          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
-        ELSE
-          status=PIO_get_var(my_pioFile, my_pioVar, A)
-        END IF
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
-     &                                  TRIM(SourceFile)
-          exit_flag=2
-          ioerror=status
-        END IF
-      ELSE
-        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
-     &                                TRIM(SourceFile)
-        exit_flag=2
-        ioerror=status
-      END IF
-!
-!  Check if the following attributes: "scale_factor", "add_offset", and
-!  "_FillValue" are present in the input NetCDF variable:
-!
-!  If the "scale_value" attribute is present, the data is multiplied by
-!  this factor after reading.
-!  If the "add_offset" attribute is present, this value is added to the
-!  data after reading.
-!  If both "scale_factor" and "add_offset" attributes are present, the
-!  data are first scaled before the offset is added.
-!  If the "_FillValue" attribute is present, the data having this value
-!  is treated as missing and it is replaced with zero. This feature it
-!  is usually related with the land/sea masking.
-!
-      AttName(1)='scale_factor'
-      AttName(2)='add_offset  '
-      AttName(3)='_FillValue  '
-
-      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
-     &                          AttName, AttValue, foundit,             &
-     &                          pioFile = my_pioFile)
-
-      IF (exit_flag.eq.NoError) THEN
-        IF (.not.foundit(1)) THEN
-          Afactor=1.0_r8
-        ELSE
-          Afactor=AttValue(1)
-        END IF
-
-        IF (.not.foundit(2)) THEN
-          Aoffset=0.0_r8
-        ELSE
-          Aoffset=AttValue(2)
-        END IF
-
-        IF (.not.foundit(3)) THEN
-          Aspval=spval_check
-        ELSE
-          Aspval=AttValue(3)
-        END IF
-
-        DO j=1,Asize(2)                       ! zero out missing values
-          DO i=1,Asize(1)
-            IF ((foundit(3).and.(ABS(A(i,j)-Aspval).lt.Aepsilon)).or.   &
-     &          (.not.foundit(3).and.(ABS(A(i,j)).ge.ABS(Aspval)))) THEN
-              A(i,j)=0.0_r8
-            END IF
-          END DO
-        END DO
-
-        IF (foundit(1)) THEN                  ! scale data
-          DO j=1,Asize(2)
-            DO i=1,Asize(1)
-              A(i,j)=Afactor*A(i,j)
-            END DO
-          END DO
-        END IF
-
-        IF (foundit(2)) THEN                  ! add data offset
-          DO j=1,Asize(2)
-            DO i=1,Asize(1)
-              A(i,j)=A(i,j)+Aoffset
-            END DO
-          END DO
-        END IF
-      END IF
-!
-!  Compute minimum and maximum values of read variable.
-!
-      IF (PRESENT(min_val)) THEN
-        min_val=MINVAL(A)
-      END IF
-      IF (PRESENT(max_val)) THEN
-        max_val=MAXVAL(A)
-      END IF
-!
-!  If file descriptor is not provided, close input NetCDF file.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
-      END IF
-!
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_2D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
-!
-      RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_2d
-!
-      SUBROUTINE pio_netcdf_get_fvar_3d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
-!
-!=======================================================================
-!                                                                      !
-!  This routine reads requested floating-point 3D-array variable from  !
-!  specified NetCDF file.                                              !
+!  This routine reads requested single-precision 3D-array variable     !
+!  from specified NetCDF file.                                         !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -4575,10 +4633,10 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
 !
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
 
-      real(r8), intent(out) :: A(:,:,:)
+      real(sp), intent(out) :: A(:,:,:)
 !
       TYPE (File_desc_t), intent(in), optional :: pioFile
 !
@@ -4590,22 +4648,22 @@
 
       integer, dimension(3) :: Asize
 !
-      real(r8) :: Afactor, Aoffset, Aspval
+      real(sp) :: Afactor, Aoffset, Aspval
 
-      real(r8), parameter :: Aepsilon = 1.0E-8_r8
+      real(sp), parameter :: Aepsilon = 1.0E-8_sp
 
       real(r8), dimension(3) :: AttValue
 !
       character (len=12), dimension(3) :: AttName
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_3d"
+     &  __FILE__//", pio_netcdf_get_fvar_3sp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 3D-array variable.
+!  Read in a single-precision 3D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4738,24 +4796,24 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_3D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_3D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_3SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_3SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_3d
+      END SUBROUTINE pio_netcdf_get_fvar_3sp
 !
-      SUBROUTINE pio_netcdf_get_fvar_4d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
+      SUBROUTINE pio_netcdf_get_fvar_4dp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
-!  This routine reads requested floating-point 4D-array variable from  !
-!  specified NetCDF file.                                              !
+!  This routine reads requested double-precision 4D-array variable     !
+!  from specified NetCDF file.                                         !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -4800,10 +4858,10 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
 !
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
+      real(dp), intent(out), optional :: min_val
+      real(dp), intent(out), optional :: max_val
 
-      real(r8), intent(out) :: A(:,:,:,:)
+      real(dp), intent(out) :: A(:,:,:,:)
 !
       TYPE (File_desc_t), intent(in), optional :: pioFile
 !
@@ -4815,22 +4873,22 @@
 
       integer, dimension(4) :: Asize
 !
-      real(r8) :: Afactor, Aoffset, Aspval
+      real(dp) :: Afactor, Aoffset, Aspval
 
-      real(r8), parameter :: Aepsilon = 1.0E-8_r8
+      real(dp), parameter :: Aepsilon = 1.0E-8_dp
 
-      real(r8), dimension(3) :: AttValue
+      real(dp), dimension(3) :: AttValue
 !
       character (len=12), dimension(3) :: AttName
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_4d"
+     &  __FILE__//", pio_netcdf_get_fvar_4dp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 4D-array variable.
+!  Read in a double-precision 4D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -4971,24 +5029,257 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_4D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_4D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_4DP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_4DP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_4d
+      END SUBROUTINE pio_netcdf_get_fvar_4dp
 !
-      SUBROUTINE pio_netcdf_get_fvar_5d (ng, model, ncname, myVarName,  &
-     &                                   A, pioFile, start, total,      &
-     &                                   broadcast, min_val, max_val)
+      SUBROUTINE pio_netcdf_get_fvar_4sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
 !
 !=======================================================================
 !                                                                      !
-!  This routine reads requested floating-point 5D-array variable from  !
-!  specified NetCDF file.                                              !
+!  This routine reads requested single-precision 4D-array variable     !
+!  from specified NetCDF file.                                         !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL,           !
+!                    default=TRUE)                                     !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 4D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
+
+      real(sp), intent(out) :: A(:,:,:,:)
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      logical, dimension(3) :: foundit
+!
+      integer :: i, j, k, l, status
+
+      integer, dimension(4) :: Asize
+!
+      real(sp) :: Afactor, Aoffset, Aspval
+
+      real(sp), parameter :: Aepsilon = 1.0E-8_sp
+
+      real(sp), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_4sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 4D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=total(1)
+        Asize(2)=total(2)
+        Asize(3)=total(3)
+        Asize(4)=total(4)
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+        Asize(4)=UBOUND(A, DIM=4)
+      END IF
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
+     &                          AttName, AttValue, foundit,             &
+     &                          pioFile = my_pioFile)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO l=1,Asize(4)                       ! zero out missing values
+          DO k=1,Asize(3)
+            DO j=1,Asize(2)
+              DO i=1,Asize(1)
+                IF ((foundit(3).and.                                    &
+     &               (ABS(A(i,j,k,l)-Aspval).lt.Aepsilon)).or.          &
+     &              (.not.foundit(3).and.                               &
+     &               (ABS(A(i,j,k,l)).ge.ABS(Aspval)))) THEN
+                  A(i,j,k,l)=0.0_r8
+                END IF
+              END DO
+            END DO
+          END DO
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO l=1,Asize(4)
+            DO k=1,Asize(3)
+              DO j=1,Asize(2)
+                DO i=1,Asize(1)
+                  A(i,j,k,l)=Afactor*A(i,j,k,l)
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO l=1,Asize(4)
+            DO k=1,Asize(3)
+              DO j=1,Asize(2)
+                DO i=1,Asize(1)
+                  A(i,j,k,l)=A(i,j,k,l)+Aoffset
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_4SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_4SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_4sp
+!
+      SUBROUTINE pio_netcdf_get_fvar_5dp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested double-precision 5D-array variable     !
+!  from specified NetCDF file.                                         !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -5033,10 +5324,10 @@
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
 !
-      real(r8), intent(out), optional :: min_val
-      real(r8), intent(out), optional :: max_val
+      real(dp), intent(out), optional :: min_val
+      real(dp), intent(out), optional :: max_val
 
-      real(r8), intent(out) :: A(:,:,:,:,:)
+      real(dp), intent(out) :: A(:,:,:,:,:)
 !
       TYPE (File_desc_t), intent(in), optional :: pioFile
 !
@@ -5048,22 +5339,22 @@
 
       integer, dimension(5) :: Asize
 !
-      real(r8) :: Afactor, Aoffset, Aspval
+      real(dp) :: Afactor, Aoffset, Aspval
 
-      real(r8), parameter :: Aepsilon = 1.0E-8_r8
+      real(dp), parameter :: Aepsilon = 1.0E-8_dp
 
-      real(r8), dimension(3) :: AttValue
+      real(dp), dimension(3) :: AttValue
 !
       character (len=12), dimension(3) :: AttName
 
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_get_fvar_5d"
+     &  __FILE__//", pio_netcdf_get_fvar_5dp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 5D-array variable.
+!  Read in a double-precision 5D-array variable.
 !-----------------------------------------------------------------------
 !
       IF (PRESENT(start).and.PRESENT(total)) THEN
@@ -5212,15 +5503,256 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_5D - error while reading ',       &
-     &        'variable:',2x,a,/,26x,'in input file:',2x,a,             &
-     &        /,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_5D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in input file:',   &
-     &        2x,a,/,26x,'call from:',2x,a)
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_5DP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_5DP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_get_fvar_5d
+      END SUBROUTINE pio_netcdf_get_fvar_5dp
+!
+      SUBROUTINE pio_netcdf_get_fvar_5sp (ng, model, ncname, myVarName, &
+     &                                    A, pioFile, start, total,     &
+     &                                    broadcast, min_val, max_val)
+!
+!=======================================================================
+!                                                                      !
+!  This routine reads requested single-precision 5D-array variable     !
+!  from specified NetCDF file.                                         !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     start        Starting index where the first of the data values   !
+!                    will be read along each dimension (integer,       !
+!                    OPTIONAL)                                         !
+!     total        Number of data values to be read along each         !
+!                    dimension (integer, OPTIONAL)                     !
+!     broadcast    Switch to broadcast read values from root to all    !
+!                    members of the communicator in distributed-       !
+!                    memory applications (logical, OPTIONAL,           !
+!                    default=TRUE)                                     !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     A            Read 5D-array variable (real)                       !
+!     min_val      Read data minimum value (real, OPTIONAL)            !
+!     max_val      Read data maximum value (real, OPTIONAL)            !
+!                                                                      !
+!  Examples:                                                           !
+!                                                                      !
+!    CALL pio_netcdf_get_fvar (ng, iNLM, 'f.nc', 'VarName', A)         !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: broadcast
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(in), optional :: start(:)
+      integer, intent(in), optional :: total(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      real(sp), intent(out), optional :: min_val
+      real(sp), intent(out), optional :: max_val
+
+      real(sp), intent(out) :: A(:,:,:,:,:)
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+!
+!  Local variable declarations.
+!
+      logical, dimension(3) :: foundit
+!
+      integer :: i, j, k, l, m, status
+
+      integer, dimension(5) :: Asize
+!
+      real(sp) :: Afactor, Aoffset, Aspval
+
+      real(sp), parameter :: Aepsilon = 1.0E-8_sp
+
+      real(sp), dimension(3) :: AttValue
+!
+      character (len=12), dimension(3) :: AttName
+
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_get_fvar_5sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 5D-array variable.
+!-----------------------------------------------------------------------
+!
+      IF (PRESENT(start).and.PRESENT(total)) THEN
+        Asize(1)=total(1)
+        Asize(2)=total(2)
+        Asize(3)=total(3)
+        Asize(4)=total(4)
+        Asize(5)=total(5)
+      ELSE
+        Asize(1)=UBOUND(A, DIM=1)
+        Asize(2)=UBOUND(A, DIM=2)
+        Asize(3)=UBOUND(A, DIM=3)
+        Asize(4)=UBOUND(A, DIM=4)
+        Asize(5)=UBOUND(A, DIM=5)
+      END IF
+!
+!  If file descriptor is not provided, open NetCDF for reading.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 0, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  Read in variable.
+!
+      status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+      IF (status.eq.PIO_noerr) THEN
+        IF (PRESENT(start).and.PRESENT(total)) THEN
+          status=PIO_get_var(my_pioFile, my_pioVar, start, total, A)
+        ELSE
+          status=PIO_get_var(my_pioFile, my_pioVar, A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=2
+          ioerror=status
+        END IF
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),    &
+     &                                TRIM(SourceFile)
+        exit_flag=2
+        ioerror=status
+      END IF
+!
+!  Check if the following attributes: "scale_factor", "add_offset", and
+!  "_FillValue" are present in the input NetCDF variable:
+!
+!  If the "scale_value" attribute is present, the data is multiplied by
+!  this factor after reading.
+!  If the "add_offset" attribute is present, this value is added to the
+!  data after reading.
+!  If both "scale_factor" and "add_offset" attributes are present, the
+!  data are first scaled before the offset is added.
+!  If the "_FillValue" attribute is present, the data having this value
+!  is treated as missing and it is replaced with zero. This feature it
+!  is usually related with the land/sea masking.
+!
+      AttName(1)='scale_factor'
+      AttName(2)='add_offset  '
+      AttName(3)='_FillValue  '
+
+      CALL pio_netcdf_get_fatt (ng, model, ncname, my_pioVar,           &
+     &                          AttName, AttValue, foundit,             &
+     &                          pioFile = my_pioFile)
+
+      IF (exit_flag.eq.NoError) THEN
+        IF (.not.foundit(1)) THEN
+          Afactor=1.0_r8
+        ELSE
+          Afactor=AttValue(1)
+        END IF
+
+        IF (.not.foundit(2)) THEN
+          Aoffset=0.0_r8
+        ELSE
+          Aoffset=AttValue(2)
+        END IF
+
+        IF (.not.foundit(3)) THEN
+          Aspval=spval_check
+        ELSE
+          Aspval=AttValue(3)
+        END IF
+
+        DO m=1,Asize(5)                       ! zero out missing values
+          DO l=1,Asize(4)
+            DO k=1,Asize(3)
+              DO j=1,Asize(2)
+                DO i=1,Asize(1)
+                  IF ((foundit(3).and.                                    &
+     &                 (ABS(A(i,j,k,l,m)-Aspval).lt.Aepsilon)).or.        &
+     &                (.not.foundit(3).and.                               &
+     &                 (ABS(A(i,j,k,l,m)).ge.ABS(Aspval)))) THEN
+                    A(i,j,k,l,m)=0.0_r8
+                  END IF
+                END DO
+              END DO
+            END DO
+          END DO
+        END DO
+
+        IF (foundit(1)) THEN                  ! scale data
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,m)=Afactor*A(i,j,k,l,m)
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+
+        IF (foundit(2)) THEN                  ! add data offset
+          DO m=1,Asize(5)
+            DO l=1,Asize(4)
+              DO k=1,Asize(3)
+                DO j=1,Asize(2)
+                  DO i=1,Asize(1)
+                    A(i,j,k,l,m)=A(i,j,k,l,m)+Aoffset
+                  END DO
+                END DO
+              END DO
+            END DO
+          END DO
+        END IF
+      END IF
+!
+!  Compute minimum and maximum values of read variable.
+!
+      IF (PRESENT(min_val)) THEN
+        min_val=MINVAL(A)
+      END IF
+      IF (PRESENT(max_val)) THEN
+        max_val=MAXVAL(A)
+      END IF
+!
+!  If file descriptor is not provided, close input NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_GET_FVAR_5SP - error while reading ',      &
+     &        'variable:',2x,a,/,27x,'in input file:',2x,a,             &
+     &        /,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_GET_FVAR_5SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in input file:',   &
+     &        2x,a,/,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_get_fvar_5sp
 !
       SUBROUTINE pio_netcdf_get_lvar_0d (ng, model, ncname, myVarName,  &
      &                                   A, pioFile, start, total)
@@ -6917,8 +7449,6 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_get_time_1d
-
-#ifdef SINGLE_PRECISION
 !
       SUBROUTINE pio_netcdf_put_fvar_0dp (ng, model, ncname, myVarName, &
      &                                    A, start, total,              &
@@ -6926,9 +7456,9 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine writes a floating-point scalar variable into a NetCDF  !
-!  file.  If the file descritor is not provided, it opens the file,    !
-!  writes data, and then closes the file.                              !
+!  This routine writes a double_precision scalar variable into a file. !
+!  If the file descritor is not provided, it opens the file, writes    !
+!  data, and then closes the file.                                     !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -6983,7 +7513,7 @@
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point scalar variable.
+!  Read in a double-precision scalar variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -7042,13 +7572,135 @@
       RETURN
       END SUBROUTINE pio_netcdf_put_fvar_0dp
 !
+      SUBROUTINE pio_netcdf_put_fvar_0sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes a single-precision scalar variable into a file. !
+!  If the file descritor is not provided, it opens the file, writes    !
+!  data, and then closes the file.                                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (real)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     pioVar       PIO variable descriptor, TYPE(Var_desc_t), OPTIONAL !
+!                    pioVar%varID       Variable ID                    !
+!                    pioVar%ncid        File ID                        !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: start(:), total(:)
+!
+      real(sp), intent(in) :: A
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+      TYPE (Var_desc_t),  intent(in), optional :: pioVar
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      real(sp), dimension(1) :: my_A
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_put_fvar_0sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision scalar variable.
+!-----------------------------------------------------------------------
+!
+!  If file descriptor is not provided, open file for writing.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 1, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  If variable descriptor is not provided, inquire its value.
+!
+      IF (.not.PRESENT(pioVar)) THEN
+        status=pio_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      ELSE
+        my_pioVar=pioVar
+      END IF
+!
+!  Write out data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
+          status=PIO_put_var(my_pioFile, my_pioVar, A)
+        ELSE
+          my_A(1)=A
+          status=PIO_put_var(my_pioFile, my_pioVar, start, total, my_A)
+        END IF
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+!
+!  Close NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0SP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_put_fvar_0sp
+!
       SUBROUTINE pio_netcdf_put_fvar_1dp (ng, model, ncname, myVarName, &
      &                                    A, start, total,              &
      &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 1D-array variable into a NetCDF file.    !
+!  It writes a double-precision 1D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7157,13 +7809,128 @@
       RETURN
       END SUBROUTINE pio_netcdf_put_fvar_1dp
 !
+      SUBROUTINE pio_netcdf_put_fvar_1sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
+!
+!=======================================================================
+!                                                                      !
+!  It writes a single-precision 1D-array variable into a NetCDF file.  !
+!  If the file descritor is not provided, it opens the file, writes    !
+!  data, and then closes the file.                                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (real)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     pioVar       PIO variable descriptor, TYPE(Var_desc_t), OPTIONAL !
+!                    pioVar%varID       Variable ID                    !
+!                    pioVar%ncid        File ID                        !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: start(:), total(:)
+!
+      real(sp), intent(in) :: A(:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+      TYPE (Var_desc_t),  intent(in), optional :: pioVar
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_put_fvar_1sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 1D-array variable.
+!-----------------------------------------------------------------------
+!
+!  If file descriptor is not provided, open file for writing.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 1, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  If variable descriptor is not provided, inquire its value.
+!
+      IF (.not.PRESENT(pioVar)) THEN
+        status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      ELSE
+        my_pioVar=pioVar
+      END IF
+!
+!  Write out data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        status=PIO_put_var(my_pioFile, my_pioVar, start, total, A)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+!
+!  Close NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1SP - error while writing ',       &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_put_fvar_1sp
+!
       SUBROUTINE pio_netcdf_put_fvar_2dp (ng, model, ncname, myVarName, &
      &                                    A, start, total,              &
      &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 2D-array variable into a NetCDF file.    !
+!  It writes a double-precision 2D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7271,6 +8038,121 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_put_fvar_2dp
+!
+      SUBROUTINE pio_netcdf_put_fvar_2sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
+!
+!=======================================================================
+!                                                                      !
+!  It writes a single-precision 2D-array variable into a NetCDF file.  !
+!  If the file descritor is not provided, it opens the file, writes    !
+!  data, and then closes the file.                                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncname       NetCDF file name (string)                           !
+!     myVarName    Variable name (string)                              !
+!     A            Data value(s) to be written (real)                  !
+!     start        Starting index where the first of the data values   !
+!                    will be written along each dimension (integer)    !
+!     total        Number of data values to be written along each      !
+!                    dimension (integer)                               !
+!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
+!                    pioFile%fh         file handler                   !
+!                    pioFile%iosystem   IO system descriptor (struct)  !
+!     pioVar       PIO variable descriptor, TYPE(Var_desc_t), OPTIONAL !
+!                    pioVar%varID       Variable ID                    !
+!                    pioVar%ncid        File ID                        !
+!                                                                      !
+!  On Ouput:                                                           !
+!                                                                      !
+!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
+!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
+!                                                                      !
+!  Notice: This routine must be used to write only nontiled variables. !
+!                                                                      !
+!=======================================================================
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: start(:), total(:)
+!
+      real(sp), intent(in) :: A(:,:)
+!
+      character (len=*), intent(in) :: ncname
+      character (len=*), intent(in) :: myVarName
+!
+      TYPE (File_desc_t), intent(in), optional :: pioFile
+      TYPE (Var_desc_t),  intent(in), optional :: pioVar
+!
+!  Local variable declarations.
+!
+      integer :: status
+!
+      character (len=*), parameter :: MyFile =                          &
+     &  __FILE__//", pio_netcdf_put_fvar_2sp"
+!
+      TYPE (File_desc_t) :: my_pioFile
+      TYPE (Var_desc_t)  :: my_pioVar
+!
+!-----------------------------------------------------------------------
+!  Read in a single-precision 2D-array variable.
+!-----------------------------------------------------------------------
+!
+!  If file descriptor is not provided, open file for writing.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_open (ng, model, TRIM(ncname), 1, my_pioFile)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      ELSE
+        my_pioFile=pioFile
+      END IF
+!
+!  If variable descriptor is not provided, inquire its value.
+!
+      IF (.not.PRESENT(pioVar)) THEN
+        status=PIO_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      ELSE
+        my_pioVar=pioVar
+      END IF
+!
+!  Write out data.
+!
+      IF (exit_flag.eq.NoError) THEN
+        status=PIO_put_var(my_pioFile, my_pioVar, start, total, A)
+        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
+          IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),  &
+     &                                  TRIM(SourceFile)
+          exit_flag=3
+          ioerror=status
+        END IF
+      END IF
+!
+!  Close NetCDF file.
+!
+      IF (.not.PRESENT(pioFile)) THEN
+        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
+      END IF
+!
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2SP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a)
+!
+      RETURN
+      END SUBROUTINE pio_netcdf_put_fvar_2sp
 !
       SUBROUTINE pio_netcdf_put_fvar_3dp (ng, model, ncname, myVarName, &
      &                                    A, start, total,              &
@@ -7386,137 +8268,14 @@
 !
       RETURN
       END SUBROUTINE pio_netcdf_put_fvar_3dp
-#endif
 !
-      SUBROUTINE pio_netcdf_put_fvar_0d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
-!
-!=======================================================================
-!                                                                      !
-!  This routine writes a floating-point scalar variable into a NetCDF  !
-!  file.  If the file descritor is not provided, it opens the file,    !
-!  writes data, and then closes the file.                              !
-!                                                                      !
-!  On Input:                                                           !
-!                                                                      !
-!     ng           Nested grid number (integer)                        !
-!     model        Calling model identifier (integer)                  !
-!     ncname       NetCDF file name (string)                           !
-!     myVarName    Variable name (string)                              !
-!     A            Data value(s) to be written (real)                  !
-!     start        Starting index where the first of the data values   !
-!                    will be written along each dimension (integer)    !
-!     total        Number of data values to be written along each      !
-!                    dimension (integer)                               !
-!     pioFile      PIO file descriptor, TYPE(File_desc_t), OPTIONAL    !
-!                    pioFile%fh         file handler                   !
-!                    pioFile%iosystem   IO system descriptor (struct)  !
-!     pioVar       PIO variable descriptor, TYPE(Var_desc_t), OPTIONAL !
-!                    pioVar%varID       Variable ID                    !
-!                    pioVar%ncid        File ID                        !
-!                                                                      !
-!  On Ouput:                                                           !
-!                                                                      !
-!     exit_flag    Error flag (integer) stored in MOD_SCALARS          !
-!     ioerror      NetCDF return code (integer) stored in MOD_IOUNITS  !
-!                                                                      !
-!  Notice: This routine must be used to write only nontiled variables. !
-!                                                                      !
-!=======================================================================
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, model
-      integer, intent(in) :: start(:), total(:)
-!
-      real(r8), intent(in) :: A
-!
-      character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: myVarName
-!
-      TYPE (File_desc_t), intent(in), optional :: pioFile
-      TYPE (Var_desc_t),  intent(in), optional :: pioVar
-!
-!  Local variable declarations.
-!
-      integer :: status
-!
-      real(r8), dimension(1) :: my_A
-!
-      character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_0d"
-!
-      TYPE (File_desc_t) :: my_pioFile
-      TYPE (Var_desc_t)  :: my_pioVar
-!
-!-----------------------------------------------------------------------
-!  Read in a floating-point scalar variable.
-!-----------------------------------------------------------------------
-!
-!  If file descriptor is not provided, open file for writing.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_open (ng, model, TRIM(ncname), 1, my_pioFile)
-        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-      ELSE
-        my_pioFile=pioFile
-      END IF
-!
-!  If variable descriptor is not provided, inquire its value.
-!
-      IF (.not.PRESENT(pioVar)) THEN
-        status=pio_inq_varid(my_pioFile, TRIM(myVarName), my_pioVar)
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,10) TRIM(myVarName), TRIM(ncname),  &
-     &                                  TRIM(SourceFile)
-          exit_flag=3
-          ioerror=status
-        END IF
-      ELSE
-        my_pioVar=pioVar
-      END IF
-!
-!  Write out data.
-!
-      IF (exit_flag.eq.NoError) THEN
-        IF ((start(1).eq.0).and.(total(1).eq.0)) THEN
-          status=PIO_put_var(my_pioFile, my_pioVar, A)
-        ELSE
-          my_A(1)=A
-          status=PIO_put_var(my_pioFile, my_pioVar, start, total, my_A)
-        END IF
-        IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
-          IF (Master) WRITE (stdout,20) TRIM(myVarName), TRIM(ncname),  &
-     &                                  TRIM(SourceFile)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-!
-!  Close NetCDF file.
-!
-      IF (.not.PRESENT(pioFile)) THEN
-        CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
-      END IF
-!
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_0D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a)
-!
-      RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_0d
-!
-      SUBROUTINE pio_netcdf_put_fvar_1d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
+      SUBROUTINE pio_netcdf_put_fvar_3sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 1D-array variable into a NetCDF file.    !
+!  It writes a single-precision 3D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7552,7 +8311,7 @@
       integer, intent(in) :: ng, model
       integer, intent(in) :: start(:), total(:)
 !
-      real(r8), intent(in) :: A(:)
+      real(sp), intent(in) :: A(:,:,:)
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
@@ -7565,13 +8324,13 @@
       integer :: status
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_1d"
+     &  __FILE__//", pio_netcdf_put_fvar_3sp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 1D-array variable.
+!  Read in a single-precision 3D-array variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -7615,23 +8374,23 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_1D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a)
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3SP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_1d
+      END SUBROUTINE pio_netcdf_put_fvar_3sp
 !
-      SUBROUTINE pio_netcdf_put_fvar_2d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
+      SUBROUTINE pio_netcdf_put_fvar_4dp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 2D-array variable into a NetCDF file.    !
+!  It writes a double-precision 4D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7667,7 +8426,7 @@
       integer, intent(in) :: ng, model
       integer, intent(in) :: start(:), total(:)
 !
-      real(r8), intent(in) :: A(:,:)
+      real(dp), intent(in) :: A(:,:,:,:)
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
@@ -7680,13 +8439,13 @@
       integer :: status
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_2d"
+     &  __FILE__//", pio_netcdf_put_fvar_4dp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 2D-array variable.
+!  Read in a double-precision 4D-array variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -7730,23 +8489,23 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_2D  - error while writing ',      &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a)
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4DP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4DP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_2d
+      END SUBROUTINE pio_netcdf_put_fvar_4dp
 !
-      SUBROUTINE pio_netcdf_put_fvar_3d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
+      SUBROUTINE pio_netcdf_put_fvar_4sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 3D-array variable into a NetCDF file.    !
+!  It writes a single-precision 4D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7782,7 +8541,7 @@
       integer, intent(in) :: ng, model
       integer, intent(in) :: start(:), total(:)
 !
-      real(r8), intent(in) :: A(:,:,:)
+      real(sp), intent(in) :: A(:,:,:,:)
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
@@ -7795,13 +8554,13 @@
       integer :: status
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_3d"
+     &  __FILE__//", pio_netcdf_put_fvar_4sp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 3D-array variable.
+!  Read in a single-precision 4D-array variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -7845,23 +8604,23 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_3D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a,/,26x,a)
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4SP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_3d
+      END SUBROUTINE pio_netcdf_put_fvar_4sp
 !
-      SUBROUTINE pio_netcdf_put_fvar_4d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
+      SUBROUTINE pio_netcdf_put_fvar_5dp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 4D-array variable into a NetCDF file.    !
+!  It writes a double-precision 5D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -7897,7 +8656,7 @@
       integer, intent(in) :: ng, model
       integer, intent(in) :: start(:), total(:)
 !
-      real(r8), intent(in) :: A(:,:,:,:)
+      real(dp), intent(in) :: A(:,:,:,:,:)
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
@@ -7910,13 +8669,13 @@
       integer :: status
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_4d"
+     &  __FILE__//", pio_netcdf_put_fvar_5dp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 4D-array variable.
+!  Read in a double-precision 5D-array variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -7960,23 +8719,23 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_4D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a,/,26x,a)
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5DP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5DP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_4d
+      END SUBROUTINE pio_netcdf_put_fvar_5dp
 !
-      SUBROUTINE pio_netcdf_put_fvar_5d (ng, model, ncname, myVarName,  &
-     &                                   A, start, total,               &
-     &                                   pioFile, pioVar)
+      SUBROUTINE pio_netcdf_put_fvar_5sp (ng, model, ncname, myVarName, &
+     &                                    A, start, total,              &
+     &                                    pioFile, pioVar)
 !
 !=======================================================================
 !                                                                      !
-!  It writes a floating-point 5D-array variable into a NetCDF file.    !
+!  It writes a single-precision 5D-array variable into a NetCDF file.  !
 !  If the file descritor is not provided, it opens the file, writes    !
 !  data, and then closes the file.                                     !
 !                                                                      !
@@ -8012,7 +8771,7 @@
       integer, intent(in) :: ng, model
       integer, intent(in) :: start(:), total(:)
 !
-      real(r8), intent(in) :: A(:,:,:,:,:)
+      real(sp), intent(in) :: A(:,:,:,:,:)
 !
       character (len=*), intent(in) :: ncname
       character (len=*), intent(in) :: myVarName
@@ -8025,13 +8784,13 @@
       integer :: status
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", pio_netcdf_put_fvar_5d"
+     &  __FILE__//", pio_netcdf_put_fvar_5sp"
 !
       TYPE (File_desc_t) :: my_pioFile
       TYPE (Var_desc_t)  :: my_pioVar
 !
 !-----------------------------------------------------------------------
-!  Read in a floating-point 5D-array variable.
+!  Read in a single-precision 5D-array variable.
 !-----------------------------------------------------------------------
 !
 !  If file descriptor is not provided, open file for writing.
@@ -8075,15 +8834,15 @@
         CALL pio_netcdf_close (ng, model, my_pioFile, ncname, .FALSE.)
       END IF
 !
-  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5D - error while inquiring ',     &
-     &        'descriptor for variable:',2x,a,/,26x,'in output file:',  &
-     &        2x,a,/,26x,'call from:',2x,a,/,26x,a)
-  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5D - error while writing ',       &
-     &        'variable:',2x,a,/,26x,'in output file:',2x,a,            &
-     &        /,26x,'call from:',2x,a,/,26x,a)
+  10  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5SP - error while inquiring ',    &
+     &        'descriptor for variable:',2x,a,/,27x,'in output file:',  &
+     &        2x,a,/,27x,'call from:',2x,a,/,27x,a)
+  20  FORMAT (/,' PIO_NETCDF_PUT_FVAR_5SP - error while writing ',      &
+     &        'variable:',2x,a,/,27x,'in output file:',2x,a,            &
+     &        /,27x,'call from:',2x,a,/,27x,a)
 !
       RETURN
-      END SUBROUTINE pio_netcdf_put_fvar_5d
+      END SUBROUTINE pio_netcdf_put_fvar_5sp
 !
       SUBROUTINE pio_netcdf_put_ivar_0d (ng, model, ncname, myVarName,  &
      &                                   A, start, total,               &

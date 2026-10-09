@@ -53,6 +53,15 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 45, __LINE__, MyFile)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Write out time-averaged fields according to IO type.
@@ -71,6 +80,15 @@
           exit_flag=2
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END SELECT
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 45, __LINE__, MyFile)
+# endif
 !
   10  FORMAT (' OBS_READ - Illegal input file type, io_type = ',i0,     &
      &        /,12x,'Check KeyWord ''INP_LIB'' in ''roms.in''.')

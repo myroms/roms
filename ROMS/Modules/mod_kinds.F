@@ -44,6 +44,8 @@
 # else
         integer, parameter :: r8 = SELECTED_REAL_KIND(12,300)  ! 64-bit
 # endif
+        integer, parameter :: z4 = SELECTED_REAL_KIND(12,300)  ! 64-bit
+!!      integer, parameter :: z4 = SELECTED_REAL_KIND(6,30)    ! 32-bit
 #endif
 #if defined SUN || defined AIX || defined NEC || defined SGI || \
     defined CRAYX1 || defined DEC

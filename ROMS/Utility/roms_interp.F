@@ -24,7 +24,7 @@
 #ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_reduce
 #endif
-      USE hindices_mod,         ONLY : hindices
+      USE hindices_mod,         ONLY : hindices2d
       USE stats_mod,            ONLY : stats_2dfld,                     &
      &                                 stats_3dfld
       USE strings_mod,          ONLY : assign_string,                   &
@@ -386,14 +386,19 @@
 !  points using geogrpahical coordinates. It uses a half binary search
 !  and the inside/outside polygon algorithm, which affected by roundoff.
 !
-      CALL hindices (ng,                                                &
-     &               self%LBI_s,  self%UBI_s,  self%LBJ_s,  self%UBJ_s, &
-     &               self%Imin_s, self%Imax_s, self%Jmin_s, self%Jmax_s,&
-     &               self%Asrc,   self%Xsrc,   self%Ysrc,               &
-     &               self%LBI_d,  self%UBI_d,  self%LBJ_d,  self%UBJ_d, &
-     &               self%Imin_d, self%Imax_d, self%Jmin_d, self%Jmax_d,&
-     &               self%Xdst,   self%Ydst,   self%Idst,   self%Jdst,   &
-     &               self%IJspv,  self%rectangular)
+      CALL hindices2d (ng,                                              &
+     &                 self%LBI_s,  self%UBI_s,                         &
+     &                 self%LBJ_s,  self%UBJ_s,                         &
+     &                 self%Imin_s, self%Imax_s,                        &
+     &                 self%Jmin_s, self%Jmax_s,                        &
+     &                 self%Asrc,   self%Xsrc,   self%Ysrc,             &
+     &                 self%LBI_d,  self%UBI_d,                         &
+     &                 self%LBJ_d,  self%UBJ_d,                         &
+     &                 self%Imin_d, self%Imax_d,                        &
+     &                 self%Jmin_d, self%Jmax_d,                        &
+     &                 self%Xdst,   self%Ydst,                          &
+     &                 self%Idst,   self%Jdst,                          &
+     &                 self%IJspv,  self%rectangular)
 #endif
 !
       RETURN

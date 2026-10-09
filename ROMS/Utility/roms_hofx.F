@@ -268,6 +268,13 @@
       character (len=15)              :: name
       character (len=*),     parameter :: MyFile =                      &
      &    __FILE__//", hofx_initialize"
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+      CALL wclock_on (ng, iNLM, 46, __LINE__, MyFile)
+# endif
 !
 !  Get total observations count and area-averaged switch.
 !
@@ -370,6 +377,12 @@
         END IF
       END DO
 # endif
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+      CALL wclock_off (ng, iNLM, 46, __LINE__, MyFile)
+# endif
 !
   10  FORMAT (a,'(',i0,')')
 !
@@ -391,6 +404,13 @@
      &    __FILE__//", hofx_run"
 !
       SourceFile=MyFile
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+      CALL wclock_on (ng, model, 46, __LINE__, MyFile)
+# endif
 !
 !  Initialize observations processing switch.
 !
@@ -490,6 +510,13 @@
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+      CALL wclock_off (ng, model, 46, __LINE__, MyFile)
+# endif
 !
   10  FORMAT (/,' ROMS_HOFX::HOFX_RUN: illegal identifier, model = ',i0)
 !
@@ -510,6 +537,13 @@
      &    __FILE__//", obs_finalize"
 !
       SourceFile=MyFile
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+      CALL wclock_on (ng, model, 46, __LINE__, MyFile)
+# endif
 !
 !  If appropiate, collect H(x) data from all tasks.  Then, write out to
 !  output NetCDF files.
@@ -624,6 +658,13 @@
       IF (model.eq.iNLM) THEN
         CALL nlm_hofx(ng)%stats (obs_store, ng, model)
       END IF
+
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+      CALL wclock_off (ng, model, 46, __LINE__, MyFile)
+# endif
 !
   10  FORMAT (/,1x,'ROMS_HOFX - ',a,': ',                               &
      &        'Finalizing H(x) Operator Computation:',/)

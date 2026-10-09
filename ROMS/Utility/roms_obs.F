@@ -33,7 +33,7 @@
       USE distribute_mod,       ONLY : mp_assemble, mp_bcasti
 #endif
       USE get_hash_mod,         ONLY : get_hash
-      USE hindices_mod,         ONLY : hindices
+      USE hindices_mod,         ONLY : hindices1d
       USE mod_ncparam,          ONLY : date_str
       USE strings_mod,          ONLY : FoundError, lowercase, nc_error
       USE unique_mod,           ONLY : unique
@@ -132,9 +132,9 @@
 !  Internally, time and surveyTime are in nearest integer seconds since
 !  ROMS reference date and time to avoid roundoff.
 !
-        real (r8), allocatable :: lon(:)        ! observation longitude
-        real (r8), allocatable :: lat(:)        ! observation latitude
-        real (r8), allocatable :: depth(:)      ! depth of observation
+        real (z4), allocatable :: lon(:)        ! observation longitude
+        real (z4), allocatable :: lat(:)        ! observation latitude
+        real (z4), allocatable :: depth(:)      ! depth of observation
         real (dp), allocatable :: time(:)       ! time  of observation
         real (dp), allocatable :: surveyTime(:) ! survey time
 !
@@ -146,8 +146,8 @@
 !  Otherwise, it is used for vectors or multiple observations at the
 !  exact spatial and time coordinates.
 !
-        real (r8), allocatable :: error(:,:)    ! observation error(s)
-        real (r8), allocatable :: value(:,:)    ! observation value(s)
+        real (z4), allocatable :: error(:,:)    ! observation error(s)
+        real (z4), allocatable :: value(:,:)    ! observation value(s)
 !
         character (len=:), allocatable :: vars(:) ! NetCDF variable name
 !
@@ -283,11 +283,25 @@
      &    __FILE__//", obs_initialize"
 !
       SourceFile=MyFile
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+      CALL wclock_on (ng, model, 45, __LINE__, MyFile)
+# endif
 !
 !  Creates and populates observation pool object.
 !
       CALL obs_pool_create (obs_store, ng, model, nfiles)
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+      CALL wclock_off (ng, model, 45, __LINE__, MyFile)
+# endif
 !
       RETURN
       END SUBROUTINE obs_initialize
@@ -372,14 +386,14 @@
       self%Xgrid=0.0_r8
       self%Ygrid=0.0_r8
 !
-      CALL hindices (ng, LBi, UBi, LBj, UBj,                            &
-     &               IstrR, IendR, JstrR, JendR,                        &
-     &               GRID(ng)%angler, GRID(ng)%lonr, GRID(ng)%latr,     &
-     &               1, self%nlocs,                                     &
-     &               1, self%nlocs,                                     &
-     &               self%lon, self%lat,                                &
-     &               self%Xgrid, self%Ygrid,                            &
-     &               IJspv, rectangular)
+      CALL hindices1d (ng, LBi, UBi, LBj, UBj,                          &
+     &                 IstrR, IendR, JstrR, JendR,                      &
+     &                 GRID(ng)%angler, GRID(ng)%lonr, GRID(ng)%latr,   &
+     &                 1, self%nlocs,                                   &
+     &                 1, self%nlocs,                                   &
+     &                 self%lon, self%lat,                              &
+     &                 self%Xgrid, self%Ygrid,                          &
+     &                 IJspv, rectangular)
 
 #ifdef DISTRIBUTE
 !
