@@ -9201,7 +9201,7 @@ metadata:
 
   - variable:       obs_type                                         # Input
     standard_name:  observation_type_indentifier_according_to_state_variable
-    long_name:      model state variable associated with observation
+    long_name:      model state variable ID associated with observation
     units:          nondimensional                                   # [nondimensional]
     field:          observation type
     time:           datum
@@ -9212,7 +9212,7 @@ metadata:
 
   - variable:       obs_provenance                                   # Input
     standard_name:  observation_provenance
-    long_name:      observation origin
+    long_name:      observation origin identifier
     units:          nondimensional                                   # [nondimensional]
     field:          observation provenance
     time:           datum
@@ -9223,7 +9223,7 @@ metadata:
 
   - variable:       obs_time                                         # Input
     standard_name:  observation_time
-    long_name:      time of observation
+    long_name:      elapsed observation time since reference
     units:          day                                              # [day]
     field:          observation time
     time:           datum
@@ -9255,8 +9255,8 @@ metadata:
     scale:          1.0d0
 
   - variable:       obs_depth                                        # Input/Output
-    standard_name:  depth_of_observation_below_sea_surface
-    long_name:      depth of observation
+    standard_name:  depth_of_observation_below_sea_level
+    long_name:      observation depth below sea level
     units:          meter                                            # [m]
     field:          observation depth
     time:           datum

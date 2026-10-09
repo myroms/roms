@@ -25,6 +25,8 @@
 !
       USE mod_kinds
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: n, np
@@ -37,7 +39,7 @@
 !  Local variable declarations.
 !
       integer :: i, ii, j, ll
-
+!
       real(r8) :: MySum
 !
 !-----------------------------------------------------------------------
@@ -67,6 +69,6 @@
         END IF
         b(i)=MySum/a(i,i)
       END DO
-
+!
       RETURN
       END SUBROUTINE lubksb

@@ -575,8 +575,8 @@
 !!        DiaRUfrc(i,j,3,M2sstr)=cff1
 #  endif
 #  ifdef WET_DRY_NOT_YET
-!>        tl_rufrc(i,j)=tl_rufrc(i,j)*umask_wet(i,j)
-!>
+!^        tl_rufrc(i,j)=tl_rufrc(i,j)*umask_wet(i,j)
+!^
           at_rufrc(i,j)=ad_rufrc(i,j)*umask_wet(i,j)
 #  endif
 !^        tl_rufrc(i,j)=tl_rufrc(i,j)+tl_cff1+tl_cff2

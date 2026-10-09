@@ -77,6 +77,7 @@
       USE distribute_mod,    ONLY : mp_reduce
 #endif
       USE get_varcoords_mod, ONLY : get_varcoords
+      USE hindices_mod,      ONLY : hindices2d
 #if defined DISTRIBUTE && defined REGRID_SHAPIRO
       USE mp_exchange_mod,   ONLY : mp_exchange2d
 #endif
@@ -89,10 +90,11 @@
 !
 !  Interface for same name routine overloading.
 !
-      PUBLIC :: regrid_nf90
+      PUBLIC  :: regrid_nf90
 #if defined PIO_LIB && defined DISTRIBUTE
-      PUBLIC :: regrid_pio
+      PUBLIC  :: regrid_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !
@@ -285,13 +287,13 @@
 !  Find fractional indices (Iout,Jout) of the grid cells in Finp
 !  containing positions to intepolate.
 !
-      CALL hindices (ng, 1, Nx, 1, Ny, 1, Nx, 1, Ny,                    &
-     &               angle, Xinp, Yinp,                                 &
-     &               LBi, UBi, LBj, UBj,                                &
-     &               Istr, Iend, Jstr, Jend,                            &
-     &               MyXout, Yout,                                      &
-     &               Iout, Jout,                                        &
-     &               IJspv, rectangular)
+      CALL hindices2d (ng, 1, Nx, 1, Ny, 1, Nx, 1, Ny,                  &
+     &                 angle, Xinp, Yinp,                               &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Istr, Iend, Jstr, Jend,                          &
+     &                 MyXout, Yout,                                    &
+     &                 Iout, Jout,                                      &
+     &                 IJspv, rectangular)
 
       IF (iflag.eq.linear) THEN
         CALL linterp2d (ng, 1, Nx, 1, Ny,                               &
@@ -561,13 +563,13 @@
 !  Find fractional indices (Iout,Jout) of the grid cells in Finp
 !  containing positions to intepolate.
 !
-      CALL hindices (ng, 1, Nx, 1, Ny, 1, Nx, 1, Ny,                    &
-     &               angle, Xinp, Yinp,                                 &
-     &               LBi, UBi, LBj, UBj,                                &
-     &               Istr, Iend, Jstr, Jend,                            &
-     &               MyXout, Yout,                                      &
-     &               Iout, Jout,                                        &
-     &               IJspv, rectangular)
+      CALL hindices2d (ng, 1, Nx, 1, Ny, 1, Nx, 1, Ny,                  &
+     &                 angle, Xinp, Yinp,                               &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Istr, Iend, Jstr, Jend,                          &
+     &                 MyXout, Yout,                                    &
+     &                 Iout, Jout,                                      &
+     &                 IJspv, rectangular)
 
       IF (iflag.eq.linear) THEN
         CALL linterp2d (ng, 1, Nx, 1, Ny,                               &

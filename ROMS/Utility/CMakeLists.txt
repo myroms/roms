@@ -78,6 +78,7 @@ list( APPEND _files
       ROMS/Utility/get_varcoords.F
       ROMS/Utility/get_wetdry.F
       ROMS/Utility/grid_coords.F
+      ROMS/Utility/hindices.F
       ROMS/Utility/ini_adjust.F
       ROMS/Utility/ini_hmixcoef.F
       ROMS/Utility/ini_lanczos.F
@@ -136,7 +137,10 @@ list( APPEND _files
       ROMS/Utility/read_vegpar.F
       ROMS/Utility/regrid.F
       ROMS/Utility/rep_matrix.F
+      ROMS/Utility/roms_hofx.F
       ROMS/Utility/roms_interp.F
+      ROMS/Utility/roms_obs.F
+      ROMS/Utility/roms_vchange.F
       ROMS/Utility/roms_multiscale.F
       ROMS/Utility/round.F
       ROMS/Utility/rpcg_lanczos.F
@@ -178,6 +182,8 @@ list( APPEND _files
       ROMS/Utility/tile_indices.F
       ROMS/Utility/time_corr.F
       ROMS/Utility/timers.F
+      ROMS/Utility/tracer_index.F
+      ROMS/Utility/unique.F
       ROMS/Utility/tracer_metadata.F
       ROMS/Utility/uv_rotate.F
       ROMS/Utility/uv_var_change.F

@@ -85,6 +85,7 @@
       PUBLIC :: allocate_ncparam
       PUBLIC :: deallocate_ncparam
       PUBLIC :: initialize_ncparam
+      PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Define variables in module.
@@ -1545,7 +1546,7 @@
 !
         Ldone = io_metadata(FirstPass, Vinfo, scale, add_offset)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-        IF (Ldone) EXIT
+        IF (Ldone) EXIT METADATA_LOOP
 !
 !  Determine staggered C-grid variable.
 !

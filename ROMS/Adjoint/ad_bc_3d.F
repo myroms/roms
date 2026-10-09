@@ -37,7 +37,27 @@
 !                                                                      !
 !=======================================================================
 !
+      USE mod_param
+      USE mod_boundary
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_scalars
+!
+      USE ad_exchange_3d_mod, ONLY : ad_exchange_r3d_tile,              &
+     &                               ad_exchange_u3d_tile,              &
+     &                               ad_exchange_v3d_tile,              &
+     &                               ad_exchange_w3d_tile
+!
       implicit none
+!
+      PUBLIC  :: ad_bc_r3d_tile
+      PUBLIC  :: ad_bc_u3d_tile
+      PUBLIC  :: ad_bc_v3d_tile
+      PUBLIC  :: ad_bc_w3d_tile
+      PUBLIC  :: ad_dabc_r3d_tile
+      PUBLIC  :: ad_dabc_u3d_tile
+      PUBLIC  :: ad_dabc_v3d_tile
+      PRIVATE
 !
       CONTAINS
 !
@@ -46,13 +66,6 @@
      &                           LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                           ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_r3d_tile
 !
 !  Imported variable declarations.
 !
@@ -219,14 +232,6 @@
      &                           LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                           ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_u3d_tile
 !
 !  Imported variable declarations.
 !
@@ -476,14 +481,6 @@
      &                           ad_A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_v3d_tile
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -732,13 +729,6 @@
      &                           ad_A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_w3d_tile
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -904,13 +894,6 @@
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_r3d_tile
 !
 !  Imported variable declarations.
 !
@@ -1078,14 +1061,6 @@
      &                             ad_A)
 !***********************************************************************
 !
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_u3d_tile
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
@@ -1252,14 +1227,6 @@
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             ad_A)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_boundary
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-!
-      USE ad_exchange_3d_mod, ONLY : ad_exchange_v3d_tile
 !
 !  Imported variable declarations.
 !

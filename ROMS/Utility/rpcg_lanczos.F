@@ -45,7 +45,14 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
-      USE lapack_mod,     ONLY : DSTEQR
+# ifdef DSTEQR_SOLVER
+      USE lapack_mod,     ONLY : DSTEQR      ! legacy tridagonal solver
+# else
+      USE lapack_mod,     ONLY : DSTEVR      ! modern tridagonal solver
+# endif
+# ifdef IODA_OBS
+      USE roms_hofx_mod,  ONLY : adm_hofx
+# endif
       USE strings_mod,    ONLY : FoundError
 !
       implicit none
@@ -64,6 +71,7 @@
 # endif
       PRIVATE :: RPevecs
       PRIVATE :: rprecond
+      PRIVATE
 !
       CONTAINS
 !
@@ -81,8 +89,20 @@
 !
       logical :: Ltrans, Laug
 !
-      integer :: i, ic, j, iobs, ivec, Lscale, info
+      integer :: Lscale, Nrank
+# ifndef DSTEQR_SOLVER
+      integer :: Liwork, Lwork
+# endif
+      integer :: i, ic, j, iobs, ivec, info
+# ifndef DSTEQR_SOLVER
+      integer :: Meigen
+      integer, dimension(2*(NinnLoop))  :: isuppz
+      integer, dimension(10*(NinnLoop)) :: iwork
+# endif
 !
+# ifndef DSTEQR_SOLVER
+      real(dp), parameter :: zero = 0.0_dp
+# endif
       real(dp) :: zbet, eps, preducv, preducy
       real(dp) :: Jopt, Jf, Jmod, Jdata, Jb, Jobs, Jact, cff
 !
@@ -92,7 +112,13 @@
       real(dp), dimension(Ndatum(ng)+1) :: px, pgrad, zw, zt
       real(dp), dimension(Ndatum(ng)+1) :: zhv, zht, zd
       real(dp), dimension(Ninner,3) :: zwork
+# ifndef DSTEQR_SOLVER
+      real(dp), dimension(20*(NinnLoop)) :: work
+      real(dp), dimension(NinnLoop) :: zdia
+      real(dp), dimension(NinnLoop) :: zge
+# else
       real(dp), dimension(2*(NinnLoop-1)) :: work
+# endif
       real(dp), dimension(Ninner,Ninner) :: zgv
 !
       character (len=13) :: string
@@ -139,9 +165,17 @@
       eps=0.0_dp
       preducv=0.0_dp
       preducy=0.0_dp
+      work=0.0_dp
       zwork=0.0_dp
       zgv=0.0_dp
-
+# ifndef DSTEVR_SOLVER
+      zdia=0.0_dp
+      zge=0.0_dp
+!
+      Meigen=0
+      isuppz=0
+      iwork=0
+# endif
 !
       MASTER_THREAD : IF (Master) THEN
 !
@@ -270,7 +304,8 @@
 !
 !  Selime's code: t1=GDG'*z1=TLmodVal.
 !
-!  Complete the computation of the Lanczos vector from previous inner-loop
+!  Complete the computation of the Lanczos vector from previous inner
+!  loop.
 !
           IF (innLoop.EQ.1) THEN
             cg_Gnorm_v(outLoop)=0.0_dp
@@ -583,7 +618,7 @@
                 zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
                 zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
-              ENDIF
+              END IF
             END DO
 !
 !  AUGMENTED.
@@ -776,7 +811,7 @@
             WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
      &                        innLoop
             exit_flag=8
-            GO TO 10
+            EXIT MASTER_THREAD
           END IF
 !
 !  Selime code: w=w-alpha*v1
@@ -797,7 +832,7 @@
               zfact(ivec)=1.0_dp/cg_Gnorm_v(outLoop)
             ELSE
               zfact(ivec)=1.0_dp/cg_beta(ivec,outLoop)
-            ENDIF
+            END IF
           END DO
 !
 !  Selime's code: cg_dla=pgrad*HBH'*v1=pgrad*TLmodVal_S/zfact
@@ -964,28 +999,49 @@
         IF (innLoop.eq.NinnLoop) THEN
           IF (LhessianEV.or.Lprecond) THEN
             DO ivec=1,innLoop-1
+# ifdef DSTEQR_SOLVER
               cg_Ritz(ivec,outLoop)=cg_delta(ivec,outLoop)
+# else
+              zdia(ivec)=cg_delta(ivec,outLoop)
+# endif
             END DO
+
             DO ivec=1,innLoop-2
               zwork(ivec,1)=cg_beta(ivec+1,outLoop)
             END DO
 !
-!  Use the LAPACK routine DSTEQR to compute the eigenvectors and
-!  eigenvalues of the tridiagonal matrix. If applicable, the
-!  eigenpairs are computed by master thread only.
+!  The LAPACK routine DSTEQR (legacy) or DSTEVR (modern alternative) is
+!  used to compute the eigenvalues and eigenvectors of the tridiagonal
+!  matrix. These computations are performed exclusively by the master
+!  thread.
 !
-            CALL DSTEQR ('I', innLoop-1, cg_Ritz(1,outLoop), zwork(1,1),&
+            Nrank=innLoop-1
+# ifdef DSTEQR_SOLVER
+            CALL DSTEQR ('I', Nrank, cg_Ritz(:,outLoop), zwork(:,1),    &
      &                   zgv, Ninner, work, info)
+# else
+            Liwork=10*NinnLoop
+            Lwork=20*NinnLoop
+            CALL DSTEVR ('V', 'I', Nrank, zdia, zwork(:,1),             &
+     &                   zero, zero, 1, Nrank, zero,                    &
+     &                   Meigen, zge, zgv, Ninner,                      &
+     &                   isuppz, work, Lwork, iwork, Liwork, info)
+# endif
             IF (info.ne.0) THEN
               WRITE (stdout,*) ' RPCG_LANCZOS - Error in DSTEQR:',      &
      &                         ' info = ',info
               exit_flag=8
-              GO TO 10
+              EXIT MASTER_THREAD
             END IF
 !
+# ifndef DSTEQR_SOLVER
+            DO i=1,Meigen
+              cg_Ritz(i,outLoop)=zge(i)         ! load eigenvalues
+            END DO
+# endif
             DO j=1,Ninner
               DO i=1,Ninner
-                cg_zv(i,j,outLoop)=zgv(i,j)
+                cg_zv(i,j,outLoop)=zgv(i,j)     ! load eigenvectors
               END DO
             END DO
 !
@@ -1003,7 +1059,7 @@
                 WRITE (stdout,*) ' RPCG_LANCZOS - negative Ritz value', &
      &                           ' found.'
                 exit_flag=8
-                GO TO 10
+                EXIT MASTER_THREAD
               END IF
             END DO
 !
@@ -1046,7 +1102,6 @@
 !  Come here if not a possite definite algorithm.
 !-----------------------------------------------------------------------
 !
- 10   CONTINUE
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, model, exit_flag)
 # endif
@@ -1094,6 +1149,14 @@
       CALL mp_bcastf (ng, model, preducv)
       CALL mp_bcastf (ng, model, preducy)
 # endif
+
+# ifdef IODA_OBS
+!
+!  Update HofX adjout structure.
+!
+      IF (associated(adm_hofx(ng)%state)) nullify (adm_hofx(ng)%state)
+      adm_hofx(ng)%state => ADmodVal
+# endif
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors into 4D-Var NetCDF file.
@@ -1123,7 +1186,7 @@
      &        ' algorithm:',/,                                          &
      &        /,11x,'cg_delta = ',1p,e15.8,0p,3x,'(',i3.3,', ',i3.3,')')
  30   FORMAT (/,' RPCG_LANCZOS - Conjugate Gradient Information:',/,    &
-     &        /,11x,'Ndatum     = ',i0,/,  /,                           &
+     &        /,12x,'Ndatum = ',i0,/,  /,                               &
      &        1x,'(',i3.3,',',i3.3,'): ',                               &
      &        'Residual estimate,                      eps = ',         &
      &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
@@ -1225,7 +1288,7 @@
                 zfact=1.0_dp/cg_Gnorm_v(outLoop)
               ELSE
                 zfact=1.0_dp/cg_beta(jkk,outLoop)
-              ENDIF
+              END IF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jkk,outLoop)*                   &
      &                  zfact+                                          &
@@ -1336,7 +1399,7 @@
                 zfact=1.0_dp/cg_Gnorm_v(nol)
               ELSE
                 zfact=1.0_dp/cg_beta(jk,nol)
-              ENDIF
+              END IF
               zt(iobs)=zt(iobs)+                                        &
      &                 (TLmodVal_S(iobs,jk,nol)*                        &
      &                  zfact+                                          &

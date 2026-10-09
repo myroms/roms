@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE obs_write_mod
-#if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+#if (defined FOUR_DVAR    || defined VERIFICATION) && \
+     defined OBSERVATIONS && !defined IODA_OBS
 !
 !git $Id$
 !================================================== Hernan G. Arango ===
@@ -80,6 +81,13 @@
         UBi=BOUNDS(ng)%UBi(tile)
         LBj=BOUNDS(ng)%LBj(tile)
         UBj=BOUNDS(ng)%UBj(tile)
+
+# ifdef PROFILE
+!
+!  Turn on time clocks.
+!
+        CALL wclock_on (ng, model, 46, __LINE__, MyFile)
+# endif
 !
         CALL obs_operator (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -107,7 +115,6 @@
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-
 !
 !-----------------------------------------------------------------------
 !  Set counters for the number of rejected observations for each state
@@ -205,6 +212,13 @@
           END IF
         END IF
 
+# ifdef PROFILE
+!
+!  Turn off time clocks.
+!
+        CALL wclock_off (ng, model, 46, __LINE__, MyFile)
+!
+# endif
       END IF H_OPERATOR
 !
   10  FORMAT (' OBS_WRITE - Illegal output file type, io_type = ',i0,   &
@@ -1733,12 +1747,12 @@
 !
       IF ((Nrun.eq.1).and.                                              &
      &    (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-        CALL netcdf_put_fvar (ng, model, OBS(ng)%name,                  &
+        CALL netcdf_put_fvar (ng, model, OBS(1,ng)%name,                &
      &                        Vname(1,idObsZ),                          &
      &                        Zobs(Mstr:),                              &
      &                        (/NstrObs(ng)/), (/Nobs(ng)/),            &
-     &                        ncid = OBS(ng)%ncid,                      &
-     &                        varid = OBS(ng)%Vid(idObsZ))
+     &                        ncid = OBS(1,ng)%ncid,                    &
+     &                        varid = OBS(1,ng)%Vid(idObsZ))
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         IF (model.eq.iADM) THEN
@@ -1782,7 +1796,7 @@
 
 #  ifdef SOLVE3D
         IF (Nrun.eq.1) THEN
-          CALL netcdf_sync (ng, model, OBS(ng)%name, OBS(ng)%ncid)
+          CALL netcdf_sync (ng, model, OBS(1,ng)%name, OBS(1,ng)%ncid)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #  endif
@@ -2230,12 +2244,12 @@
 !
       IF ((Nrun.eq.1).and.                                              &
      &    (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-        CALL pio_netcdf_put_fvar (ng, model, OBS(ng)%name,              &
+        CALL pio_netcdf_put_fvar (ng, model, OBS(1,ng)%name,            &
      &                            Vname(1,idObsZ),                      &
      &                            Zobs(Mstr:Mend),                      &
      &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
-     &                            pioFile = OBS(ng)%pioFile,            &
-     &                            pioVar = OBS(ng)%pioVar(idObsZ)%vd)
+     &                            pioFile = OBS(1,ng)%pioFile,          &
+     &                            pioVar = OBS(1,ng)%pioVar(idObsZ)%vd)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         IF (model.eq.iADM) THEN
           Lwrote=ObsSurvey(ng).eq.1
@@ -2285,8 +2299,8 @@
 
 #   ifdef SOLVE3D
         IF (Nrun.eq.1) THEN
-          CALL pio_netcdf_sync (ng, model, OBS(ng)%name,                &
-     &                          OBS(ng)%pioFile)
+          CALL pio_netcdf_sync (ng, model, OBS(1,ng)%name,              &
+     &                          OBS(1,ng)%pioFile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
 #   endif

@@ -112,14 +112,15 @@
 !=======================================================================
 !
       USE mod_kinds
-
+!
       implicit none
-
-      PUBLIC extract_obs2d
+!
+      PUBLIC  :: extract_obs2d
 # ifdef SOLVE3D
-      PUBLIC extract_obs3d
+      PUBLIC  :: extract_obs3d
 # endif
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

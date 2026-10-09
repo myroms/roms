@@ -55,7 +55,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: ClosedState = -1
+      integer, parameter :: ClosedState = -1
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", close_file_nf90"
@@ -300,11 +300,6 @@
 !  Close output NetCDF files.
 !
       DO ng=1,Ngrids
-        CALL close_file (ng, iNLM, RST(ng), RST(ng)%name, Lupdate)
-#if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
-        CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name, Lupdate)
-        CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name, Lupdate)
-#endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
         IF (FWD(ng)%IOtype.eq.io_nf90) THEN
           IF ((FWD(ng)%ncid.ne.-1).and.                                 &
@@ -322,7 +317,8 @@
         CALL close_file (ng, iNLM, FWD(ng), FWD(ng)%name, Lupdate)
 #endif
         CALL close_file (ng, iNLM, RST(ng), RST(ng)%name, Lupdate)
-#if defined FOUR_DVAR || defined ENKF_RESTART || defined VERIFICATION
+#if defined FOUR_DVAR    || defined ENKF_RESTART || \
+   (defined VERIFICATION && !defined IODA_OBS)
         CALL close_file (ng, iNLM, DAI(ng), DAI(ng)%name, Lupdate)
         CALL close_file (ng, iNLM, DAV(ng), DAV(ng)%name, Lupdate)
 #endif
@@ -383,7 +379,13 @@
         CALL close_file (ng, iNLM, INI(ng), INI(ng)%name, .FALSE.)
 #endif
         CALL close_file (ng, iNLM, NUD(ng), NUD(ng)%name, .FALSE.)
-        CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name, .FALSE.)
+#ifdef IODA_OBS
+        DO i=1,nOBSfiles(ng)
+          CALL close_file (ng, iNLM, OBS(i,ng), OBS(i,ng)%name, .FALSE.)
+        END DO
+#else
+        CALL close_file (ng, iNLM, OBS(1,ng), OBS(1,ng)%name, .FALSE.)
+#endif
         CALL close_file (ng, iNLM, SSF(ng), SSF(ng)%name, .FALSE.)
         CALL close_file (ng, iNLM, TIDE(ng), TIDE(ng)%name, .FALSE.)
 !

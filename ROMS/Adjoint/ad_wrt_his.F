@@ -460,7 +460,7 @@
 # else
      &                         OCEAN(ng)% ad_zeta_sol)
 # endif
-          ENDIF
+          END IF
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idFsur)), ADM(ng)%Rindex
@@ -717,7 +717,7 @@
      &                         GRID(ng) % umask_full,                   &
 #    endif
      &                         OCEAN(ng) % ad_u_sol(:,:,:))
-          ENDIF
+          END IF
 #  endif
           IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
@@ -1657,7 +1657,7 @@
 #  else
      &                         OCEAN(ng)% ad_zeta_sol)
 #  endif
-          ENDIF
+          END IF
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN
               WRITE (stdout,20) TRIM(Vname(1,idFsur)), ADM(ng)%Rindex
@@ -1930,7 +1930,7 @@
      &                         GRID(ng) % umask_full,                   &
 #     endif
      &                         OCEAN(ng) % ad_u_sol(:,:,:))
-          ENDIF
+          END IF
 #   endif
           IF (FoundError(status, PIO_noerr, __LINE__, MyFile)) THEN
             IF (Master) THEN

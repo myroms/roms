@@ -47,6 +47,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_evolved_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

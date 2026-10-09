@@ -30,12 +30,12 @@
 !
       implicit none
 !
+      PUBLIC  :: ERF
+      PUBLIC  :: ERFC
+      PUBLIC  :: ERFCC
+      PUBLIC  :: GAMMP
+      PUBLIC  :: GAMMQ
       PRIVATE
-      PUBLIC :: ERF
-      PUBLIC :: ERFC
-      PUBLIC :: ERFCC
-      PUBLIC :: GAMMP
-      PUBLIC :: GAMMQ
 !
       CONTAINS
 !
@@ -64,7 +64,7 @@
         value=-GAMMP(0.5_r8, x**2)
       ELSE
         value= GAMMP(0.5_r8, x**2)
-      ENDIF
+      END IF
 
       RETURN
       END FUNCTION ERF
@@ -94,7 +94,7 @@
         value=1.0_r8+GAMMP(0.5_r8, x**2)
       ELSE
         value=GAMMQ(0.5_r8, x**2)
-      endif
+      END IF
 
       RETURN
       END FUNCTION ERFC
@@ -223,7 +223,7 @@
       ELSE
         CALL gcf (gammcf, a, x, gln)
         value=1.0_r8-gammcf          ! continued fraction representation
-      ENDIF
+      END IF
 
       RETURN
       END FUNCTION GAMMP
@@ -267,8 +267,8 @@
       ELSE
         CALL gcf (gammcf, a, x, gln)
         value=gammcf                 ! continued fraction representation
-      ENDIF
-
+      END IF
+!
       RETURN
       END FUNCTION GAMMQ
 !
@@ -335,7 +335,7 @@
      &          i4.4,/,8x,'a is too large')
         exit_flag=8
       END IF
-
+!
       RETURN
       END SUBROUTINE gser
 !
@@ -402,7 +402,7 @@
      &          i4.4,/,8x,'a is too large')
         exit_flag=8
       END IF
-
+!
       RETURN
       END SUBROUTINE gcf
 !
@@ -466,8 +466,8 @@
       ELSE
         value=my_sign
       END IF
-
+!
       RETURN
       END FUNCTION AERF
-
+!
       END MODULE erf_mod

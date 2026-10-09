@@ -74,15 +74,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_clima
-        PUBLIC :: deallocate_clima
-        PUBLIC :: initialize_clima
+        PUBLIC  :: allocate_clima
+        PUBLIC  :: deallocate_clima
+        PUBLIC  :: initialize_clima
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_CLIMA structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_CLIMA
+        TYPE, PUBLIC :: T_CLIMA
 !
 !  Climatology/Nudging arrays.
 !
@@ -150,7 +151,7 @@
 
         END TYPE T_CLIMA
 !
-        TYPE (T_CLIMA), allocatable :: CLIMA(:)
+        TYPE (T_CLIMA), public, allocatable :: CLIMA(:)
 !
       CONTAINS
 !
