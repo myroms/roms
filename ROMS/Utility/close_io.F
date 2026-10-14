@@ -27,7 +27,7 @@
 #endif
       USE mod_scalars
 !
-      USE dateclock_mod, ONLY : get_date
+      USE dateclock_mod, ONLY : get_date, get_etime
       USE strings_mod,   ONLY : FoundError
 !
       implicit none
@@ -546,6 +546,7 @@
       ELSE IF (exit_flag.eq.NoError) THEN
         CALL get_date (date_str)
         IF (Master) WRITE (stdout,60) TRIM(date_str)
+        CALL get_etime (.FALSE.)
       ELSE IF (exit_flag.eq.2) THEN
         IF (Master) WRITE (stdout,70) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.3) THEN

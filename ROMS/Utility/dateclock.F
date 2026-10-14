@@ -31,6 +31,8 @@
 !    get_date     Retuns today date string of the form:                !
 !                   DayOfWeak - Month day, year - hh:mm:ss ?M          !
 !                                                                      !
+!    get_etime    Computes and reports run elapsed time.               !
+!                                                                      !
 !    ref_clock    Sets application time clock/reference and loads its  !
 !                   to structure Rclock of TYPE T_CLOCK.               !
 !                                                                      !
@@ -52,6 +54,11 @@
 !
       USE mod_kinds
 !
+      USE mod_parallel, ONLY : Master
+      USE mod_scalars,  ONLY : Rclock, time_ref
+      USE mod_iounits,  ONLY : stdout
+      USE round_mod,    ONLY : ROUND
+!
       implicit none
 !
       PUBLIC :: caldate
@@ -60,12 +67,21 @@
       PUBLIC :: datevec
       PUBLIC :: day_code
       PUBLIC :: get_date
+      PUBLIC :: get_etime
       PUBLIC :: ref_clock
       PUBLIC :: ROMS_clock
       PUBLIC :: time_iso8601
       PUBLIC :: time_string
       PUBLIC :: time_units
       PUBLIC :: yearday
+!
+      PRIVATE
+!
+!  Module variables.
+!
+      integer (i8b) :: start_tick      ! start of wall-clock count
+      integer (i8b) :: end_tick        ! end   of wall-clock count
+      integer (i8b) :: clock_rate      ! number of counts per second
 !
       CONTAINS
 !
@@ -107,11 +123,6 @@
 !  the calendar.                                                       !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-!
-      USE round_mod, ONLY : ROUND
 !
 !  Imported variable declarations.
 !
@@ -302,8 +313,6 @@
 !                    DateValue(2) => fractional seconds                !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_scalars, ONLY : time_ref
 !
 !  Imported variable declarations.
 !
@@ -541,9 +550,6 @@
 !     F_hour       Fractional hours (real)                             !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_scalars, ONLY : Rclock, time_ref
-      USE round_mod,   ONLY : ROUND
 !
 !  Imported variable declarations.
 !
@@ -968,6 +974,66 @@
       END SUBROUTINE get_date
 !
 !***********************************************************************
+      SUBROUTINE get_etime (Lstart)
+!***********************************************************************
+!                                                                      !
+!  This routine computes and reports ROMS run elapsed time (wall-clock !
+!  time). It uses SYSTEM_CLOCK intrinsic function.                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Lstart     Elapsed time switch (logical)                         !
+!                  Lstart = .TRUE.    starts elapsed time clock        !
+!                  Lstart = .FALSE.   reports elapsed time             !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      logical, intent(in) :: Lstart
+!
+!  Local variable declarations.
+!
+      integer (i8b) :: remainder, total_seconds
+      integer       :: days, hours, minutes, seconds       
+!
+      real (dp)     :: etime
+!
+      character (len=40) :: string
+!
+!-----------------------------------------------------------------------
+!  Compute and report run elapsed time.
+!-----------------------------------------------------------------------
+!
+!  Compute ROMS run wall-clock time in seconds.
+!
+      IF (Lstart) THEN
+        CALL system_clock (start_tick)
+      ELSE
+        CALL system_clock (end_tick, clock_rate)
+        etime=REAL(end_tick-start_tick, dp)/REAL(clock_rate, dp)
+      END IF
+!
+!  Report elapsed time in DD hh:mm:sec.
+!
+      IF (.not.Lstart.and.Master) THEN
+        total_seconds=INT(etime)
+        days=total_seconds/86400
+        remainder=MOD(total_seconds, 86400)
+        hours=remainder/3600
+        remainder=MOD(remainder, 3600)
+        minutes=remainder/60
+        seconds=MOD(remainder, 60)
+        WRITE (string,10) days, hours, minutes, seconds
+ 10     FORMAT ('ROMS: Wall-Clock Time = ',                             &
+     &          i2.2, 1x, i2.2, ':', i2.2, ':', i2.2)
+        WRITE (stdout,'(1x,a)') TRIM(string)
+      END IF
+!
+      RETURN
+      END SUBROUTINE get_etime
+!
+!***********************************************************************
       SUBROUTINE ref_clock (r_time)
 !***********************************************************************
 !                                                                      !
@@ -998,9 +1064,6 @@
 !                  Rclock%calendar   => date calendar                  !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1175,9 +1238,6 @@
 !                  from reference time (real)                          !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
