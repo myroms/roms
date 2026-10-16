@@ -95,6 +95,13 @@
 #endif
       END INTERFACE def_var
 !
+      PUBLIC  :: def_var
+      PRIVATE :: def_var_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: def_var_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -139,8 +146,8 @@
       integer :: i, j, latt
       integer :: status
 !
-      character (len=  5) location
-      character (len=160) text
+      character (len=  5) :: location
+      character (len=160) :: text
 
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__//", def_var_nf90"

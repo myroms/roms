@@ -25,6 +25,12 @@
         MODULE PROCEDURE get_env_s                ! gets string  value
       END INTERFACE get_env
 !
+      PUBLIC  :: get_env
+      PRIVATE :: get_env_i
+      PRIVATE :: get_env_l
+      PRIVATE :: get_env_s
+      PRIVATE
+!
       CONTAINS
 !
       FUNCTION get_env_i (name, value) RESULT (status)

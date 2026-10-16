@@ -21,7 +21,7 @@
 # ifdef FLOATS
       USE mod_floats
 # endif
-# if defined FOUR_DVAR || defined VERIFICATION
+# if (defined FOUR_DVAR || defined VERIFICATION)
       USE mod_fourdvar
 # endif
       USE mod_iounits
@@ -50,9 +50,14 @@
 # ifdef DISTRIBUTE
       USE distribute_mod,  ONLY : mp_bcasts
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_read_mod,    ONLY : obs_read
       USE obs_write_mod,   ONLY : obs_write
+# endif
+# if defined OBSERVATIONS && defined IODA_OBS
+      USE roms_hofx_mod,   ONLY : hofx_finalize,                        &
+     &                            hofx_run,                             &
+     &                            nlm_hofx
 # endif
       USE strings_mod,     ONLY : FoundError
 # ifdef AVERAGES
@@ -89,6 +94,7 @@
       logical :: Ldefine, Lupdate, NewFile
 !
       integer :: Fcount, ifile, status, tile
+      integer :: i
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
@@ -707,8 +713,34 @@
 
 # if (defined FOUR_DVAR              || \
       defined VERIFICATION)          && \
-     !defined I4DVAR_ANA_SENSITIVITY
-#  ifdef OBSERVATIONS
+     !defined I4DVAR_ANA_SENSITIVITY && \
+     defined OBSERVATIONS
+#  if defined IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  Execute the H(x) operator: If applicable, extract nonlinear model
+!  control variables at the observation locations.
+#   ifdef BGQC
+!  Extract background error at the observation location to accept or
+!  reject observation in terms of background error quality control.
+#   endif
+!-----------------------------------------------------------------------
+!
+      CALL hofx_run (ng, tile, iNLM)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  At the final time step, complete the nonlinear H(x) operator
+!  computation. If needed, perform a parallel exchange. Next, link
+!  the aggregated control vector to the "NLmodVal" pointer for data
+!  assimilation. Also, load the observation screening and quality
+!  control scale (0: reject, 1: accept).
+!
+      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
+        CALL hofx_finalize (ng, iNLM)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+
+#  else
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process and write model state at observation

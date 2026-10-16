@@ -41,6 +41,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_impulse_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

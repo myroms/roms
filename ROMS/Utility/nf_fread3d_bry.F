@@ -72,6 +72,13 @@
 #endif
       END INTERFACE nf_fread3d_bry
 !
+      PUBLIC  :: nf_fread3d_bry
+      PRIVATE :: nf90_fread3d_bry
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: pio_fread3d_bry
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

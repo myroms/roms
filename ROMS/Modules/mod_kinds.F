@@ -23,6 +23,7 @@
         integer, parameter :: i8b= ESMF_KIND_I8                ! 32-bit
         integer, parameter :: c8 = SELECTED_REAL_KIND(6,30)    ! 32-bit
         integer, parameter :: dp = ESMF_KIND_R8                ! 64-bit
+        integer, parameter :: sp = ESMF_KIND_R4                ! 32-bit
         integer, parameter :: r4 = ESMF_KIND_R4                ! 32-bit
 # ifdef SINGLE_PRECISION
         integer, parameter :: r8 = ESMF_KIND_R4                ! 32-bit
@@ -36,12 +37,15 @@
         integer, parameter :: i8b= SELECTED_INT_KIND(8)        ! 32-bit
         integer, parameter :: c8 = SELECTED_REAL_KIND(6,30)    ! 32-bit
         integer, parameter :: dp = SELECTED_REAL_KIND(12,300)  ! 64-bit
+        integer, parameter :: sp = SELECTED_REAL_KIND(6,30)    ! 32-bit
         integer, parameter :: r4 = SELECTED_REAL_KIND(6,30)    ! 32-bit
 # ifdef SINGLE_PRECISION
         integer, parameter :: r8 = SELECTED_REAL_KIND(6,30)    ! 32-bit
 # else
         integer, parameter :: r8 = SELECTED_REAL_KIND(12,300)  ! 64-bit
 # endif
+        integer, parameter :: z4 = SELECTED_REAL_KIND(12,300)  ! 64-bit
+!!      integer, parameter :: z4 = SELECTED_REAL_KIND(6,30)    ! 32-bit
 #endif
 #if defined SUN || defined AIX || defined NEC || defined SGI || \
     defined CRAYX1 || defined DEC
@@ -49,5 +53,6 @@
 #else
         integer, parameter :: r16 = SELECTED_REAL_KIND(15,300) !128-bit
 #endif
-
+!
+        PUBLIC
       END MODULE mod_kinds

@@ -22,6 +22,8 @@
       USE mod_kinds
       USE nrutil, ONLY : ran1
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       real(r8), intent(out) :: harvest
@@ -67,10 +69,10 @@
         g=v2*rsq
         gaus_stored=.TRUE.
       END IF
-
+!
       RETURN
       END SUBROUTINE gasdev_s
-
+!
       SUBROUTINE gasdev_v (harvest)
 !
 !=======================================================================
@@ -89,6 +91,8 @@
       USE mod_kinds
       USE nrutil, ONLY : array_copy
       USE nrutil, ONLY : ran1
+!
+      implicit none
 !
 !  Imported variable declarations.
 !
@@ -170,6 +174,6 @@
         g=v2*rsq
         gaus_stored=.TRUE.
       END IF
-
+!
       RETURN
       END SUBROUTINE gasdev_v

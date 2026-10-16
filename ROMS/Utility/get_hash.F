@@ -51,7 +51,14 @@
 !
       implicit none
 !
+      INTERFACE get_hash
+        MODULE PROCEDURE get_hash_dp
+        MODULE PROCEDURE get_hash_sp
+      END INTERFACE get_hash
+!
       PUBLIC  :: get_hash
+      PRIVATE :: get_hash_dp
+      PRIVATE :: get_hash_sp
 #ifdef ADLER32_CHECKSUM
       PRIVATE :: adler32
 #endif
@@ -59,6 +66,10 @@
 #ifdef CRC32_CHECKSUM
       PRIVATE :: crc32
       PRIVATE :: crc32_ini
+#endif
+      PRIVATE
+
+#ifdef CRC32_CHECKSUM
 !
 !  Declare module internal parameters.
 !
@@ -68,7 +79,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE get_hash (A, Asize, hash, Lreduce)
+      SUBROUTINE get_hash_dp (A, Asize, hash, Lreduce)
 !***********************************************************************
 !
 !
@@ -79,42 +90,101 @@
       integer, intent(in) :: Asize
       integer(i8b), intent(out) :: hash
 !
-      real(r8), intent(in) :: A(:)
+      real(dp), intent(in) :: A(:)
 !
 !  Local variable declarations.
 !
       logical, save :: first = .TRUE.
+      integer  :: i
+      real(r8) :: Awrk(Asize)
 !
 !-----------------------------------------------------------------------
 !  Compute checksum for the requested floating point vector.
 !-----------------------------------------------------------------------
 !
       hash=0_i8b
+      DO i=1,Asize
+        Awrk(i)=REAL(A(i), r8)
+      END DO
 !
       SELECT CASE (uppercase(TRIM(HashMethod)))
 #ifdef ADLER32_CHECKSUM
         CASE ('ADLER32')
-          CALL adler32 (A, Asize, hash)
+          CALL adler32 (Awrk, Asize, hash)
 #endif
         CASE ('BITSUM')
-          CALL bitsum (A, Asize, hash, Lreduce)
+          CALL bitsum (Awrk, Asize, hash, Lreduce)
 #ifdef CRC32_CHECKSUM
         CASE ('CRC32')
           IF (first) THEN
             first=.FALSE.
             CALL crc32_ini                  ! compute CRC-32 look table
           END IF
-          CALL crc32 (A, Asize, hash)
+          CALL crc32 (Awrk, Asize, hash)
 #endif
         CASE DEFAULT
           WRITE (stdout,10) TRIM(HashMethod)
           exit_flag=5
       END SELECT
 !
-  10  FORMAT (/,' GET_HASH - Illegal checksum method: ',a)
+  10  FORMAT (/,' GET_HASH_DP - Illegal checksum method: ',a)
 !
       RETURN
-      END SUBROUTINE get_hash
+      END SUBROUTINE get_hash_dp
+!
+!***********************************************************************
+      SUBROUTINE get_hash_sp (A, Asize, hash, Lreduce)
+!***********************************************************************
+!
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: Lreduce
+!
+      integer, intent(in) :: Asize
+      integer(i8b), intent(out) :: hash
+!
+      real(sp), intent(in) :: A(:)
+!
+!  Local variable declarations.
+!
+      logical, save :: first = .TRUE.
+      integer  :: i
+      real(r8) :: Awrk(Asize)
+!
+!-----------------------------------------------------------------------
+!  Compute checksum for the requested floating point vector.
+!-----------------------------------------------------------------------
+!
+      hash=0_i8b
+      DO i=1,Asize
+        Awrk(i)=REAL(A(i), r8)
+      END DO
+!
+      SELECT CASE (uppercase(TRIM(HashMethod)))
+#ifdef ADLER32_CHECKSUM
+        CASE ('ADLER32')
+          CALL adler32 (Awrk, Asize, hash)
+#endif
+        CASE ('BITSUM')
+          CALL bitsum (Awrk, Asize, hash, Lreduce)
+#ifdef CRC32_CHECKSUM
+        CASE ('CRC32')
+          IF (first) THEN
+            first=.FALSE.
+            CALL crc32_ini                  ! compute CRC-32 look table
+          END IF
+          CALL crc32 (Awrk, Asize, hash)
+#endif
+        CASE DEFAULT
+          WRITE (stdout,10) TRIM(HashMethod)
+          exit_flag=5
+      END SELECT
+!
+  10  FORMAT (/,' GET_HASH_SP - Illegal checksum method: ',a)
+!
+      RETURN
+      END SUBROUTINE get_hash_sp
 
 #ifdef ADLER32_CHECKSUM
 !
@@ -131,7 +201,7 @@
 !
       integer, intent(in) :: Asize
 
-      integer(i8b) :: hash
+      integer(i8b), intent(out) :: hash
 !
       real(r8), intent(in) :: A(:)
 !
@@ -188,7 +258,7 @@
 !
       integer, intent(in) :: Asize
 
-      integer(i8b) :: hash
+      integer(i8b), intent(out) :: hash
 !
       real(r8), intent(in) :: A(:)
 !

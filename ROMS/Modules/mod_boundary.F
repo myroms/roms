@@ -370,9 +370,10 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_boundary
-        PUBLIC :: deallocate_boundary
-        PUBLIC :: initialize_boundary
+        PUBLIC  :: allocate_boundary
+        PUBLIC  :: deallocate_boundary
+        PUBLIC  :: initialize_boundary
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Lateral boundary condition apply switches.
@@ -384,20 +385,20 @@
 !  processed by nesting are set to FALSE to allow mixed boundary
 !  conditions along the grid edges.
 !
-        TYPE T_APPLY
+        TYPE, PUBLIC :: T_APPLY
           logical, pointer :: west(:)
           logical, pointer :: east(:)
           logical, pointer :: south(:)
           logical, pointer :: north(:)
-        END TYPE
+        END TYPE T_APPLY
 
-        TYPE (T_APPLY), allocatable :: LBC_apply(:)
+        TYPE (T_APPLY), public, allocatable :: LBC_apply(:)
 !
 !-----------------------------------------------------------------------
 !  Define T_BOUNDARY structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_BOUNDARY
+        TYPE, PRIVATE :: T_BOUNDARY
 !
 !  Nonlinear model state.
 !
@@ -760,7 +761,7 @@
 
         END TYPE T_BOUNDARY
 !
-        TYPE (T_BOUNDARY), allocatable ::BOUNDARY(:)
+        TYPE (T_BOUNDARY), public, allocatable ::BOUNDARY(:)
 !
       CONTAINS
 !

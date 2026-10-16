@@ -164,15 +164,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_grid
-        PUBLIC :: deallocate_grid
-        PUBLIC :: initialize_grid
+        PUBLIC  :: allocate_grid
+        PUBLIC  :: deallocate_grid
+        PUBLIC  :: initialize_grid
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_GRID structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_GRID
+        TYPE, PUBLIC :: T_GRID
 !
 !  Nonlinear model state.
 !
@@ -362,7 +363,7 @@
 #endif
         END TYPE T_GRID
 !
-        TYPE (T_GRID), allocatable :: GRID(:)
+        TYPE (T_GRID), public, allocatable :: GRID(:)
 !
       CONTAINS
 !

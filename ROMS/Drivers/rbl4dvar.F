@@ -162,6 +162,9 @@
       USE roms_multiscale_mod,  ONLY : multiscale_get_scales
 #  endif
 # endif
+# if defined SPLIT_4DVAR && defined IODA_OBS
+      USE roms_hofx_mod,        ONLY : nlm_hofx
+# endif
 # ifdef RPCG
       USE rpcg_lanczos_mod,     ONLY : rpcg_lanczos
 #  ifdef SPLIT_4DVAR
@@ -591,6 +594,7 @@
      &                            TRIM(string)
               END IF
             END DO
+            WRITE (stdout,'(1x)')
           END IF
 !
 !  Write out initial data penalty function to NetCDF file.
@@ -706,7 +710,7 @@
       real(dp) :: stime
 # endif
 !
-      character (len=8 ) :: driver = 'rbl4dvar'
+      character (len=8 ), parameter :: driver = 'rbl4dvar'
       character (len=10) :: suffix
 
       character (len=*), parameter :: MyFile =                          &
@@ -824,16 +828,32 @@
         ng=1
         SELECT CASE (DAV(ng)%IOtype)
           CASE (io_nf90)
+#  ifdef IODA_OBS
+            CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,               &
+     &                            Vname(1,idNLmi),                      &
+     &                            nlm_hofx(ng)%state,                   &
+     &                            ncid = DAV(ng)%ncid)
+            IF (associated (NLmodVal)) nullify (NLmodVal)
+            NLmodVal => nlm_hofx(ng)%state
+#  else
             CALL netcdf_get_fvar (ng, iTLM, DAV(ng)%name,               &
      &                            Vname(1,idNLmi), NLmodVal,            &
      &                            ncid = DAV(ng)%ncid)
-
+#  endif
 #  if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
+#   ifdef IODA_OBS
+            CALL pio_netcdf_get_fvar (ng, iTLM, DAV(ng)%name,           &
+     &                                Vname(1,idNLmi),                  &
+     &                                nlm_hofx(ng)%state,               &
+     &                                pioFile = DAV(ng)%pioFile)
+            IF (associated (NLmodVal)) nullify (NLmodVal)
+            NLmodVal => nlm_hofx(ng)%state
+#   else
             CALL pio_netcdf_get_fvar (ng, iTLM, DAV(ng)%name,           &
      &                                Vname(1,idNLmi), NLmodVal,        &
      &                                pioFile = DAV(ng)%pioFile)
-
+#   endif
 #  endif
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -854,34 +874,43 @@
 #  endif
       END SELECT
       IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+
+#  ifdef IODA_OBS
 !
-!  In the split 4D-Var alorithm, we also need to read in ObsVal
+!  In the split 4D-Var algorithm with IODA observation operators, there
+!  not need to read ObsVal or ObsErr since those variables are already
+!  loaded from the "obs_store" object in routine "initialize_fourdvar". 
+!
+#  else
+!
+!  In the split 4D-Var algorithm, we also need to read in ObsVal
 !  ("obs_value") and ObsErr ("obs_error") from the observation file.
 !  They are used in the initialization of the conjugate gradient
 !  algorithm.
 !
       ng=1
-      SELECT CASE (OBS(ng)%IOtype)
+      SELECT CASE (OBS(1,ng)%IOtype)
         CASE (io_nf90)
-          CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                 &
+          CALL netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOval), ObsVal)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-          CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                 &
+          CALL netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOerr), ObsErr)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  if defined PIO_LIB && defined DISTRIBUTE
+#   if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
-          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(ng)%name,             &
+          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,           &
      &                              Vname(1,idOval), ObsVal)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(ng)%name,             &
+          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,           &
      &                              Vname(1,idOerr), ObsErr)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
       END SELECT
+#  endif
 !
 !  Set nonlinear output history file to be used as the basic state
 !  trajectory. The 4D-Var increment phase is computed by a different
@@ -2776,6 +2805,7 @@
      &                            TRIM(string)
               END IF
             END DO
+            WRITE (stdout,'(1x)')
           END IF
 !
 !  Write out final data penalty function to NetCDF file.

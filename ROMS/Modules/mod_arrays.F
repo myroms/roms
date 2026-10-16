@@ -107,12 +107,17 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       USE set_pio_mod,         ONLY : set_iodecomp
 #endif
+#if defined OBSERVATIONS && defined IODA_OBS
+      USE roms_hofx_mod,       ONLY : hofx_initialize
+      USE roms_vchange_mod,    ONLY : vchange_initialize
+#endif
 !
       implicit none
 !
       PUBLIC :: ROMS_allocate_arrays
       PUBLIC :: ROMS_deallocate_arrays
       PUBLIC :: ROMS_initialize_arrays
+      PUBLIC
 !
 #if defined AD_SENSITIVITY   || defined I4DVAR_ANA_SENSITIVITY || \
     defined OPT_OBSERVATIONS || defined SENSITIVITY_4DVAR      || \
@@ -475,6 +480,14 @@
 !  the call to "allocate_fourdvar" in "read_phypar".
 !
       CALL initialize_fourdvar
+
+# ifdef IODA_OBS
+!
+!  Allocate and initialize H(x) and variable change objects.
+!
+      CALL hofx_initialize
+      CALL vchange_initialize
+# endif
 #endif
 
 #ifdef PROFILE

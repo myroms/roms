@@ -55,7 +55,7 @@
 !                NRM(3,ng)  lateral open boundary conditions           !
 !                NRM(4,ng)  surface forcing                            !
 !    NUD       Input climatology nudging coefficients                  !
-!    OBS       Input/output 4D-Var observations                        !
+!    OBS       Input 4D-Var observations file(s)                       !
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
 !    OIFA      Input Observations Impact Forcing at datum locations if !
 !                initialized from the 4D-Var Analysis (red curve)      !
@@ -141,6 +141,7 @@
 !
       PUBLIC :: allocate_iounits
       PUBLIC :: deallocate_iounits
+      PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Define derived type structure, T_IO, used to store information about
@@ -237,7 +238,6 @@
       TYPE(T_IO), allocatable :: LZE(:)     ! evolved Lanczos vectors
       TYPE(T_IO), allocatable :: NRM(:,:)   ! normalization
       TYPE(T_IO), allocatable :: NUD(:)     ! nudging coefficients
-      TYPE(T_IO), allocatable :: OBS(:)     ! observations
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       TYPE(T_IO), allocatable :: OIFA(:)    ! observation impacts, A
       TYPE(T_IO), allocatable :: OIFB(:)    ! observation impacts, B
@@ -252,7 +252,7 @@
 #endif
       TYPE(T_IO), allocatable :: SSF(:)     ! Sources/Sinks forcing
       TYPE(T_IO), allocatable :: STA(:)     ! stations data
-      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation 
+      TYPE(T_IO), allocatable :: STD(:,:)   ! standard deviation
 #if defined MULTI_SCALE_B && defined NONUNIFORM_SCALES
       TYPE(T_IO), allocatable :: SVC(:)     ! correlation length scales
 #endif
@@ -291,6 +291,12 @@
 #endif
       TYPE(T_IO), allocatable :: FRC(:,:)
 !
+!  Input observations data.
+!
+      integer, allocatable :: nOBSfiles(:)
+!
+      TYPE(T_IO), allocatable :: OBS(:,:)
+!
 !  Error messages.
 !
       character (len=50), dimension(9) :: Rerror =                      &
@@ -316,7 +322,7 @@
       character (len=256) :: fposnam        ! floats positions
       character (len=256) :: iparnam        ! ice model parameters
       character (len=256) :: sparnam        ! sediment model parameters
-      character (len=256) :: vegname         ! vegetation model parameters
+      character (len=256) :: vegname        ! vegetation parameters
       character (len=256) :: sposnam        ! station positions
       character (len=256) :: varname        ! I/O metadata
 !
@@ -445,9 +451,11 @@
       IF (.not.allocated(NUD)) THEN
         allocate ( NUD(Ngrids) )
       END IF
+#ifndef IODA_OBS
       IF (.not.allocated(OBS)) THEN
-        allocate ( OBS(Ngrids) )
+        allocate ( OBS(1,Ngrids) )
       END IF
+#endif
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
       IF (.not.allocated(OIFA)) THEN
         allocate ( OIFA(Ngrids) )
@@ -520,6 +528,9 @@
       IF (.not.allocated(nFfiles)) THEN
         allocate ( nFfiles(Ngrids) )
       END IF
+      IF (.not.allocated(nOBSfiles)) THEN
+        allocate ( nOBSfiles(Ngrids) )
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Initialize I/O NetCDF files ID to close state.
@@ -559,7 +570,6 @@
         LCZ(ng)%ncid=-1
         LZE(ng)%ncid=-1
         NUD(ng)%ncid=-1
-        OBS(ng)%ncid=-1
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
         OIFA(ng)%ncid=-1
         OIFB(ng)%ncid=-1
@@ -580,6 +590,11 @@
         nBCfiles(ng)=-1
         nCLMfiles(ng)=-1
         nFfiles(ng)=-1
+#ifdef IODA_OBS
+        nOBSfiles(ng)=-1
+#else
+        nOBSfiles(ng)=1          ! single legacy observation file
+#endif
       END DO
 !
 !-----------------------------------------------------------------------
@@ -708,10 +723,6 @@
           NUD(ng)%head(i:i)=blank
           NUD(ng)%base(i:i)=blank
           NUD(ng)%name(i:i)=blank
-
-          OBS(ng)%head(i:i)=blank
-          OBS(ng)%base(i:i)=blank
-          OBS(ng)%name(i:i)=blank
 
 #if defined RBL4DVAR_FCT_SENSITIVITY && defined OBS_SPACE
           OIFA(ng)%head(i:i)=blank

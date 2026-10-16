@@ -24,7 +24,7 @@
 #ifdef DISTRIBUTE
       USE distribute_mod,       ONLY : mp_reduce
 #endif
-      USE roms_interpolate_mod, ONLY : hindices
+      USE hindices_mod,         ONLY : hindices2d
       USE stats_mod,            ONLY : stats_2dfld,                     &
      &                                 stats_3dfld
       USE strings_mod,          ONLY : assign_string,                   &
@@ -76,7 +76,7 @@
         real(r8), allocatable :: Ysrc(:,:)         ! Y-locations
 !
 !     Destination tiled grid geometry parameters and arrays.
-
+!
         integer :: LBI_d,  UBI_d,  LBJ_d,  UBJ_d   ! declaration bounds
         integer :: Imin_d, Imax_d, Jmin_d, Jmax_d  ! data bounds
 !
@@ -217,17 +217,20 @@
       LBj = BOUNDS(ng)%LBj(tile)
       UBj = BOUNDS(ng)%UBj(tile)
 !
-      IF (.not.allocated(self%Adst))                                    &
+      IF (.not.allocated(self%Adst)) THEN
         allocate ( self%Adst(LBi:UBi,LBj:UBj) )
-      self%Adst = 0.0_r8
+        self%Adst = 0.0_r8
+      END IF
 
-      IF (.not.allocated(self%Idst))                                    &
+      IF (.not.allocated(self%Idst)) THEN
         allocate ( self%Idst(LBi:UBi,LBj:UBj) )
-      self%Idst = 0.0_r8
+        self%Idst = 0.0_r8
+      END IF
 
-      IF (.not.allocated(self%Jdst))                                    &
+      IF (.not.allocated(self%Jdst)) THEN
         allocate ( self%Jdst(LBi:UBi,LBj:UBj) )
-      self%Jdst = 0.0_r8
+        self%Jdst = 0.0_r8
+      END IF
 !
       self%LBI_d = LBi
       self%UBI_d = UBi
@@ -375,7 +378,7 @@
             self%Idst(i,j) = xFrac
             self%Jdst(i,j) = yFrac
           END DO
-        END DO                
+        END DO
       END IF
 #else
 !
@@ -383,14 +386,19 @@
 !  points using geogrpahical coordinates. It uses a half binary search
 !  and the inside/outside polygon algorithm, which affected by roundoff.
 !
-      CALL hindices (ng,                                                &
-     &               self%LBI_s,  self%UBI_s,  self%LBJ_s,  self%UBJ_s, &
-     &               self%Imin_s, self%Imax_s, self%Jmin_s, self%Jmax_s,&
-     &               self%Asrc,   self%Xsrc,   self%Ysrc,               &
-     &               self%LBI_d,  self%UBI_d,  self%LBJ_d,  self%UBJ_d, &
-     &               self%Imin_d, self%Imax_d, self%Jmin_d, self%Jmax_d,&
-     &               self%Xdst,   self%Ydst,   self%Idst,   self%Jdst,   &
-     &               self%IJspv,  self%rectangular)
+      CALL hindices2d (ng,                                              &
+     &                 self%LBI_s,  self%UBI_s,                         &
+     &                 self%LBJ_s,  self%UBJ_s,                         &
+     &                 self%Imin_s, self%Imax_s,                        &
+     &                 self%Jmin_s, self%Jmax_s,                        &
+     &                 self%Asrc,   self%Xsrc,   self%Ysrc,             &
+     &                 self%LBI_d,  self%UBI_d,                         &
+     &                 self%LBJ_d,  self%UBJ_d,                         &
+     &                 self%Imin_d, self%Imax_d,                        &
+     &                 self%Jmin_d, self%Jmax_d,                        &
+     &                 self%Xdst,   self%Ydst,                          &
+     &                 self%Idst,   self%Jdst,                          &
+     &                 self%IJspv,  self%rectangular)
 #endif
 !
       RETURN
@@ -513,7 +521,7 @@
               RETURN
             END IF
           END IF
-        END IF 
+        END IF
 !
         CALL netcdf_inq_var (ng, kernel, self%ncname,                   &
      &                       ncid = self%ncid)
@@ -763,7 +771,7 @@
         RETURN
 
       END IF QUERY
-!  
+!
   10  FORMAT (/,' ROMS_INTERP::read_nf90 - unable to open file: ',      &
               /,26x,a)
   20  FORMAT (/,' ROMS_INTERP::read_nf90 - equal source and ',          &
@@ -851,7 +859,7 @@
               RETURN
             END IF
           END IF
-        END IF 
+        END IF
 !
         CALL pio_netcdf_inq_var (ng, kernel, self%ncname,               &
      &                           pioFile = self%pioFile)
@@ -1525,7 +1533,7 @@
 !
       DO i=1,nvars
         IF (i.gt.1) THEN           ! avoid inquiring about source file
-          SELECT CASE (inp_lib)    
+          SELECT CASE (inp_lib)
             CASE (io_nf90)
               self%Cvars(i)%ncid = self%Cvars(1)%ncid
 #if defined PIO_LIB && defined DISTRIBUTE

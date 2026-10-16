@@ -62,6 +62,7 @@
 #if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_rst_pio
 #endif
+      PRIVATE
 !
       CONTAINS
 !

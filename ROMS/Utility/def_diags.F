@@ -43,6 +43,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_diags_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

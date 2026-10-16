@@ -43,10 +43,10 @@
 !=======================================================================
 !
       implicit none
-
-      PRIVATE
+!
       PUBLIC  :: hmixing
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -74,7 +74,6 @@
      &  __FILE__
 
 # include "tile.h"
-!
 !
 # if defined VEGETATION && defined VEG_HMIXING
 !

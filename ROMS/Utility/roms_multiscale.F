@@ -119,7 +119,7 @@
 #  endif
       USE distribute_mod,      ONLY : mp_reduce
 # endif
-      USE nf_fread3d_mod,      ONLY : nf90_fread3d
+      USE nf_fread3d_mod,      ONLY : nf_fread3d
       USE strings_mod,         ONLY : FoundError,                       &
      &                                find_string
       USE tracer_metadata_mod, ONLY : tracer_index
@@ -1028,7 +1028,8 @@
 #  ifdef MASKING
       real (r8), pointer                :: mask(:,:)
 #  endif
-      real (r8)                         :: Fmin, Fmax, Fscl
+      real (r8)                         :: Fmin, Fmax
+      real (dp)                         :: Fscl
       real (r8), dimension(4)           :: Fvalue
 !
 #  ifdef DISTRIBUTE
@@ -1175,15 +1176,15 @@
               END SELECT
 !
               gtype=Iinfo(1,IDmeta,ng)
-              status=nf90_fread3d(ng, model, ncname, SVC(ng)%ncid,      &
-     &                            Cname, varid,                         &
-     &                            1, gtype, Vsize,                      &
-     &                            LBi, UBi, LBj, UBj, 1, 2,             &
-     &                            Fscl, Fmin, Fmax,                     &
+              status=nf_fread3d(ng, model, ncname, SVC(ng)%ncid,        &
+     &                          Cname, varid,                           &
+     &                          1, gtype, Vsize,                        &
+     &                          LBi, UBi, LBj, UBj, 1, 2,               &
+     &                          Fscl, Fmin, Fmax,                       &
 #  ifdef MASKING
-     &                            mask,                                 &
+     &                          mask,                                   &
 #  endif
-     &                            Bscale)
+     &                          Bscale)
               IF (FoundError(status, nf90_noerr, __LINE__, MyFile)) THEN
                 IF (Master) THEN
                   WRITE (stdout,30) TRIM(Vname(1,IDmeta)), TRIM(ncname)

@@ -76,7 +76,7 @@
       USE mp_exchange_mod,     ONLY : mp_exchange4d
 #  endif
 # endif
-      USE set_depth_mod,       ONLY : set_depth_tile       
+      USE set_depth_mod,       ONLY : set_depth_tile
       USE strings_mod,         ONLY : FoundError
       USE white_noise_mod,     ONLY : white_noise2d
 # ifdef ADJUST_BOUNDARY
@@ -321,7 +321,7 @@
 !  Initialize the right-hand-size of the control vector for the
 !  Conjugate Gradient (CG) solver with random values.
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  
+!
       IF (Master) WRITE (stdout,10)
 !
 !  Tangent linear free-surface.
@@ -942,7 +942,7 @@
       END DO MS_LOOP
 !
   10  FORMAT (/,' Ritz Extrema Eigenvalues Required by Implicit ',      &
-     &        'Chebyshev Iterations (CI) Solver:',/) 
+     &        'Chebyshev Iterations (CI) Solver:',/)
   20  FORMAT (4x,'B-scale = ',i2.2,', computing eigenspectrum for: ',a)
 # ifdef ADJUST_BOUNDARY
   30  FORMAT (4x,'B-scale = ',i2.2,', computing eigenspectrum for: ',a, &
@@ -1029,7 +1029,7 @@
      &                              total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_eigen,                            &
      &                      MASK = self%zeta_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_eigen)
@@ -1044,7 +1044,7 @@
      &                              total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_eigen,                            &
      &                      MASK = self%ubar_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_eigen)
@@ -1059,7 +1059,7 @@
      &                              total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_eigen,                            &
      &                      MASK = self%vbar_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_eigen)
@@ -1076,7 +1076,7 @@
      &                              total = (/nl,N(ng),ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_eigen,                               &
      &                      MASK = self%u_eigen > 0.0)
                 Fmax=MAXVAL(self%u_eigen)
@@ -1091,7 +1091,7 @@
      &                              total = (/nl,N(ng),ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_eigen,                               &
      &                      MASK = self%v_eigen > 0.0)
                 Fmax=MAXVAL(self%v_eigen)
@@ -1105,10 +1105,10 @@
      &                                self%t_eigen(:,:,:,:,itrc),       &
      &                                ncid = NRM(i,ng)%ncid,            &
      &                                start = (/1,1,1,1/),              &
-     &                                total = (/nl,N(ng),ns,2/))    
+     &                                total = (/nl,N(ng),ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
      &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
@@ -1127,7 +1127,7 @@
      &                                  total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_eigen,                            &
      &                      MASK = self%zeta_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_eigen)
@@ -1142,7 +1142,7 @@
      &                                  total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_eigen,                            &
      &                      MASK = self%ubar_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_eigen)
@@ -1157,7 +1157,7 @@
      &                                  total = (/nl,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_eigen,                            &
      &                      MASK = self%vbar_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_eigen)
@@ -1174,7 +1174,7 @@
      &                                  total = (/nl,N(ng),ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_eigen,                               &
      &                      MASK = self%u_eigen > 0.0)
                 Fmax=MAXVAL(self%u_eigen)
@@ -1189,7 +1189,7 @@
      &                                  total = (/nl,N(ng),ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_eigen,                               &
      &                      MASK = self%v_eigen > 0.0)
                 Fmax=MAXVAL(self%v_eigen)
@@ -1206,7 +1206,7 @@
      &                                    total = (/nl,N(ng),ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
      &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
@@ -1269,7 +1269,7 @@
      &                              total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_obc_eigen,                        &
      &                      MASK = self%zeta_obc_eigen > 0.0)
                 Fmax=MAxVAL(self%zeta_obc_eigen)
@@ -1286,7 +1286,7 @@
      &                              total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_obc_eigen,                        &
      &                      MASK = self%ubar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_obc_eigen)
@@ -1303,7 +1303,7 @@
      &                              total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_obc_eigen,                        &
      &                      MASK = self%vbar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_obc_eigen)
@@ -1322,7 +1322,7 @@
      &                              total = (/nl,N(ng),4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_obc_eigen,                           &
      &                      MASK = self%u_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%u_obc_eigen)
@@ -1339,7 +1339,7 @@
      &                              total = (/nl,N(ng),4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_obc_eigen,                           &
      &                      MASK = self%v_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%v_obc_eigen)
@@ -1358,7 +1358,7 @@
      &                                total = (/nl,N(ng),4,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
      &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
@@ -1381,7 +1381,7 @@
      &                                  total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_obc_eigen,                        &
      &                      MASK = self%zeta_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_obc_eigen)
@@ -1398,7 +1398,7 @@
      &                                  total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_obc_eigen,                        &
      &                      MASK = self%ubar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_obc_eigen)
@@ -1415,7 +1415,7 @@
      &                                  total = (/nl,4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_obc_eigen,                        &
      &                      MASK = self%vbar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_obc_eigen)
@@ -1434,7 +1434,7 @@
      &                                  total = (/nl,N(ng),4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_obc_eigen,                           &
      &                      MASK = self%u_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%u_obc_eigen)
@@ -1451,7 +1451,7 @@
      &                                  total = (/nl,N(ng),4,ns,2/))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_obc_eigen,                           &
      &                      MASK = self%v_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%v_obc_eigen)
@@ -1471,7 +1471,7 @@
      &                                    total = (/nl,N(ng),4,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
      &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
@@ -1535,7 +1535,7 @@
      &                            start = (/1,1,1/),                    &
      &                            total = (/nl,ns,2/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%sustr_eigen,                             &
      &                    MASK = self%sustr_eigen > 0.0)
               Fmax=MAXVAL(self%sustr_eigen)
@@ -1549,7 +1549,7 @@
      &                            start = (/1,1,1/),                    &
      &                            total = (/nl,ns,2/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%svstr_eigen,                             &
      &                    MASK = self%svstr_eigen > 0.0)
               Fmax=MAXVAL(self%svstr_eigen)
@@ -1569,7 +1569,7 @@
      &                                total = (/nl,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
      &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
@@ -1591,7 +1591,7 @@
      &                                start = (/1,1,1/),                &
      &                                total = (/nl,ns,2/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%sustr_eigen,                             &
      &                    MASK = self%sustr_eigen > 0.0)
               Fmax=MAXVAL(self%sustr_eigen)
@@ -1605,7 +1605,7 @@
      &                                start = (/1,1,1/),                &
      &                                total = (/nl,ns,2/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%svstr_eigen,                             &
      &                    MASK = self%svstr_eigen > 0.0)
               Fmax=MAXVAL(self%svstr_eigen)
@@ -1625,7 +1625,7 @@
      &                                    total = (/nl,ns,2/))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
      &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
@@ -1642,7 +1642,7 @@
 !
   10  FORMAT (/,1x,'Reading extrema Ritz eigenvalues from ',a,2x,a/,3x, &
      &        '(Required by Implicit Chebyshev Iterations, CI, '        &
-     &        'Solver)',/) 
+     &        'Solver)',/)
   20  FORMAT (4x,'- ',a,':',t35,'Min = ',1p,e15.8,',  Max = ',1p,e15.8)
 !
       RETURN
@@ -1703,7 +1703,7 @@
      &                              varid = NRM(i,ng)%Vid(ieFsur))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_eigen,                            &
      &                      MASK = self%zeta_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_eigen)
@@ -1719,7 +1719,7 @@
      &                              varid = NRM(i,ng)%Vid(ieUbar))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_eigen,                            &
      &                      MASK = self%ubar_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_eigen)
@@ -1735,7 +1735,7 @@
      &                              varid = NRM(i,ng)%Vid(ieVbar))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_eigen,                            &
      &                      MASK = self%vbar_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_eigen)
@@ -1753,7 +1753,7 @@
      &                              varid = NRM(i,ng)%Vid(ieUvel))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_eigen,                               &
      &                      MASK = self%u_eigen > 0.0)
                 Fmax=MAXVAL(self%u_eigen)
@@ -1769,7 +1769,7 @@
      &                              varid = NRM(i,ng)%Vid(ieVvel))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_eigen,                               &
      &                      MASK = self%v_eigen > 0.0)
                 Fmax=MAXVAL(self%v_eigen)
@@ -1787,7 +1787,7 @@
      &                                varid = NRM(i,ng)%Vid(ifld))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
      &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
@@ -1807,7 +1807,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ieFsur)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_eigen,                            &
      &                      MASK = self%zeta_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_eigen)
@@ -1823,7 +1823,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ieUbar)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_eigen,                            &
      &                      MASK = self%ubar_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_eigen)
@@ -1839,7 +1839,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ieVbar)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_eigen,                            &
      &                      MASK = self%vbar_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_eigen)
@@ -1857,7 +1857,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ieUvel)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_eigen,                               &
      &                      MASK = self%u_eigen > 0.0)
                 Fmax=MAXVAL(self%u_eigen)
@@ -1873,7 +1873,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ieVvel)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_eigen,                               &
      &                      MASK = self%v_eigen > 0.0)
                 Fmax=MAXVAL(self%v_eigen)
@@ -1891,7 +1891,7 @@
      &                             pioVar = NRM(i,ng)%pioVar(ifld)%vd)
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_eigen(:,:,:,:,itrc),               &
      &                        MASK = self%t_eigen(:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_eigen(:,:,:,:,itrc))
@@ -1933,7 +1933,7 @@
      &                              varid = NRM(3,ng)%Vid(ieZbry))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_obc_eigen,                        &
      &                      MASK = self%zeta_obc_eigen > 0.0)
                 Fmax=MAxVAL(self%zeta_obc_eigen)
@@ -1951,7 +1951,7 @@
      &                              varid = NRM(3,ng)%Vid(ieU2bc))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_obc_eigen,                        &
      &                      MASK = self%ubar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_obc_eigen)
@@ -1969,7 +1969,7 @@
      &                              varid = NRM(3,ng)%Vid(ieV2bc))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_obc_eigen,                        &
      &                      MASK = self%vbar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_obc_eigen)
@@ -1989,7 +1989,7 @@
      &                              varid = NRM(3,ng)%Vid(ieU3bc))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_obc_eigen,                           &
      &                      MASK = self%u_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%u_obc_eigen)
@@ -2007,7 +2007,7 @@
      &                              varid = NRM(3,ng)%Vid(ieV3bc))
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_obc_eigen,                           &
      &                      MASK = self%v_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%v_obc_eigen)
@@ -2027,7 +2027,7 @@
      &                                varid = NRM(3,ng)%Vid(ifld))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
      &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
@@ -2051,7 +2051,7 @@
      &                             pioVar = NRM(3,ng)%pioVar(ieZbry)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%zeta_obc_eigen,                        &
      &                      MASK = self%zeta_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%zeta_obc_eigen)
@@ -2069,7 +2069,7 @@
      &                             pioVar = NRM(3,ng)%pioVar(ieU2bc)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%ubar_obc_eigen,                        &
      &                      MASK = self%ubar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%ubar_obc_eigen)
@@ -2087,7 +2087,7 @@
      &                             pioVar = NRM(3,ng)%pioVar(ieV2bc)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%vbar_obc_eigen,                        &
      &                      MASK = self%vbar_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%vbar_obc_eigen)
@@ -2107,7 +2107,7 @@
      &                             pioVar = NRM(3,ng)%pioVar(ieU3bc)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%u_obc_eigen,                           &
      &                      MASK = self%u_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%u_obc_eigen)
@@ -2125,7 +2125,7 @@
      &                             pioVar = NRM(3,ng)%pioVar(ieV3bc)%vd)
               IF (FoundError(exit_flag, NoError,                        &
      &                       __LINE__, MyFile)) RETURN
-              IF (Master) THEN 
+              IF (Master) THEN
                 Fmin=MINVAL(self%v_obc_eigen,                           &
      &                      MASK = self%v_obc_eigen > 0.0)
                 Fmax=MAXVAL(self%v_obc_eigen)
@@ -2146,7 +2146,7 @@
      &                               pioVar = NRM(3,ng)%pioVar(ifld)%vd)
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%t_obc_eigen(:,:,:,:,:,itrc),         &
      &                    MASK = self%t_obc_eigen(:,:,:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%t_obc_eigen(:,:,:,:,:,itrc))
@@ -2189,7 +2189,7 @@
      &                            ncid = NRM(4,ng)%ncid,                &
      &                            varid = NRM(4,ng)%Vid(ieUsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%sustr_eigen,                             &
      &                    MASK = self%sustr_eigen > 0.0)
               Fmax=MAXVAL(self%sustr_eigen)
@@ -2204,7 +2204,7 @@
      &                            ncid = NRM(4,ng)%ncid,                &
      &                            varid = NRM(4,ng)%Vid(ieVsms))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%svstr_eigen,                             &
      &                    MASK = self%svstr_eigen > 0.0)
               Fmax=MAXVAL(self%svstr_eigen)
@@ -2225,7 +2225,7 @@
      &                                varid = NRM(4,ng)%Vid(ifld))
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
      &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
@@ -2248,7 +2248,7 @@
      &                                pioFile = NRM(4,ng)%pioFile,      &
      &                           pioVar = NRM(4,ng)%pioVar(ieUsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%sustr_eigen,                             &
      &                    MASK = self%sustr_eigen > 0.0)
               Fmax=MAXVAL(self%sustr_eigen)
@@ -2263,7 +2263,7 @@
      &                                pioFile = NRM(4,ng)%pioFile,      &
      &                           pioVar = NRM(4,ng)%pioVar(ieVsms)%vd)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-            IF (Master) THEN 
+            IF (Master) THEN
               Fmin=MINVAL(self%svstr_eigen,                             &
      &                    MASK = self%svstr_eigen > 0.0)
               Fmax=MAXVAL(self%svstr_eigen)
@@ -2284,7 +2284,7 @@
      &                               pioVar = NRM(4,ng)%pioVar(ifld)%vd)
                 IF (FoundError(exit_flag, NoError,                      &
      &                         __LINE__, MyFile)) RETURN
-                IF (Master) THEN 
+                IF (Master) THEN
                   Fmin=MINVAL(self%stflux_eigen(:,:,:,itrc),            &
      &                    MASK = self%stflux_eigen(:,:,:,itrc) > 0.0)
                   Fmax=MAXVAL(self%stflux_eigen(:,:,:,itrc))
@@ -2301,7 +2301,7 @@
 !
   10  FORMAT (/,1x,'Writing extrema Ritz eigenvalues into ',a,2x,a/,3x, &
      &        '(Required by Implicit Chebyshev Iterations, CI, '        &
-     &        'Solver)',/) 
+     &        'Solver)',/)
   20  FORMAT (4x,'- ',a,':',t35,'Min = ',1p,e15.8,',  Max = ',1p,e15.8)
 !
       RETURN

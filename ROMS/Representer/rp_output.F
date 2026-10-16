@@ -32,9 +32,14 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasts
 # endif
-# ifdef OBSERVATIONS
+# if defined OBSERVATIONS && !defined IODA_OBS
       USE obs_read_mod,   ONLY : obs_read
       USE obs_write_mod,  ONLY : obs_write
+# endif
+# if defined OBSERVATIONS && defined IODA_OBS
+      USE roms_hofx_mod,  ONLY : hofx_finalize,                         &
+     &                           hofx_run,                              &
+     &                           tlm_hofx
 # endif
       USE strings_mod,    ONLY : FoundError
       USE tl_def_his_mod, ONLY : tl_def_his
@@ -76,6 +81,14 @@
 !-----------------------------------------------------------------------
 !  If appropriate, process tangent linear history NetCDF file.
 !-----------------------------------------------------------------------
+!
+!  Set tile for local array manipulations in output routines.
+!
+# ifdef DISTRIBUTE
+      tile=MyRank
+# else
+      tile=-1
+# endif
 !
 !  Turn off checking for analytical header files.
 !
@@ -174,21 +187,13 @@
         IF (LwrtPER(ng)) THEN
           IF ((iic(ng).gt.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nTLM(ng)).eq.0)) THEN
-# ifdef DISTRIBUTE
-            CALL tl_wrt_his (ng, MyRank)
-# else
-            CALL tl_wrt_his (ng, -1)
-# endif
+            CALL tl_wrt_his (ng, tile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         ELSE
           IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                       &
      &        ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
-# ifdef DISTRIBUTE
-            CALL tl_wrt_his (ng, MyRank)
-# else
-            CALL tl_wrt_his (ng, -1)
-# endif
+            CALL tl_wrt_his (ng, tile)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
           END IF
         END IF
@@ -282,19 +287,13 @@
       IF (LwrtAVG(ng)) THEN
         IF ((iic(ng).gt.ntstart(ng)).and.                               &
      &      (MOD(iic(ng)-1,nAVG(ng)).eq.0)) THEN
-#  ifdef DISTRIBUTE
-          CALL wrt_avg (ng, MyRank)
-#  else
-          CALL wrt_avg (ng, -1)
-#  endif
-
+          CALL wrt_avg (ng, tile)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
         END IF
       END IF
 # endif
 
-# ifdef FOUR_DVAR
-#  ifndef WEAK_CONSTRAINT
+# if defined FOUR_DVAR && defined WEAK_CONSTRAINT
 !
 !-----------------------------------------------------------------------
 !  Create tangent linear model initial conditions file, if necessary.
@@ -308,8 +307,31 @@
         CALL tl_def_ini (ng)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
       END IF
-#  endif
-#  ifdef OBSERVATIONS
+# endif
+
+# if defined FOUR_DVAR && defined OBSERVATIONS
+#  ifdef IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  If needed, interpolate the representer model solution to the
+!  observation locations, using the linearized H(x). Apply enhanced
+!  operators and filter CLASS objects associated with multiple input
+!  IODA-type observation files.
+!-----------------------------------------------------------------------
+!
+      CALL hofx_run (ng, tile, iRPM)
+      IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  At the final time step, complete the tangent linear H(x) operator
+!  computation. If needed, perform a parallel exchange. Next, link
+!  the aggregated control vector to the "TLmodVal" pointer for data
+!  assimilation.
+!
+      IF ((iic(ng).eq.(ntend(ng)+1)).and.(ng.eq.Ngrids)) THEN
+        CALL hofx_finalize (ng, iRPM)
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+      END IF
+#  else
 !
 !-----------------------------------------------------------------------
 !  If appropriate, process and write model state at observation
@@ -319,11 +341,6 @@
       IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
      &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
         ProcessObs(ng)=.TRUE.
-#   ifdef DISTRIBUTE
-        tile=MyRank
-#   else
-        tile=-1
-#   endif
         CALL obs_read (ng, iRPM, .FALSE.)
         CALL obs_write (ng, tile, iRPM)
 #   if defined R4DVAR    || defined R4DVAR_ANA_SENSITIVITY || \
@@ -335,6 +352,7 @@
       END IF
 #  endif
 # endif
+
 # ifdef PROFILE
 !
 !-----------------------------------------------------------------------

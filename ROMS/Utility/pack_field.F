@@ -38,12 +38,13 @@
       implicit none
 !
 #ifdef ADJUST_BOUNDARY
-      PUBLIC :: pack_boundary2d
-      PUBLIC :: pack_boundary3d
+      PUBLIC  :: pack_boundary2d
+      PUBLIC  :: pack_boundary3d
 #endif
-      PUBLIC :: pack_field2d
-      PUBLIC :: pack_field3d
-      PUBLIC :: pack_field4d
+      PUBLIC  :: pack_field2d
+      PUBLIC  :: pack_field3d
+      PUBLIC  :: pack_field4d
+      PRIVATE
 !
       CONTAINS
 

@@ -37,6 +37,8 @@
 #endif
       USE mod_scalars
 !
+      implicit none
+!
 !  Imported variable declarations.
 !
       integer, intent(in)    :: model
@@ -245,7 +247,7 @@
           Rsteps=MIN(Rsteps, WindowSteps(ig)+extra)
         END DO
       END IF
-
+!
       RETURN
       END SUBROUTINE ntimesteps
 
@@ -289,6 +291,8 @@
       USE mod_iounits
       USE mod_nesting
       USE mod_scalars
+!
+      implicit none
 !
 !  Imported variable declarations.
 !
