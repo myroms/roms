@@ -273,7 +273,9 @@
 !
 !  Turn on time clocks.
 !
-      CALL wclock_on (ng, iNLM, 46, __LINE__, MyFile)
+      DO ng=1,Ngrids
+        CALL wclock_on (ng, iNLM, 46, __LINE__, MyFile)
+      END DO
 # endif
 !
 !  Get total observations count and area-averaged switch.
@@ -381,7 +383,9 @@
 !
 !  Turn off time clocks.
 !
-      CALL wclock_off (ng, iNLM, 46, __LINE__, MyFile)
+      DO ng=1,Ngrids
+        CALL wclock_off (ng, iNLM, 46, __LINE__, MyFile)
+      END DO
 # endif
 !
   10  FORMAT (a,'(',i0,')')
