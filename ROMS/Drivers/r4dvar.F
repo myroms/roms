@@ -631,23 +631,23 @@
 !  algorithm.
 !
       ng=1
-      SELECT CASE (OBS(ng)%IOtype)
+      SELECT CASE (OBS(1,ng)%IOtype)
         CASE (io_nf90)
-          CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                 &
+          CALL netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOval), ObsVal)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-          CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,                 &
+          CALL netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,               &
      &                          Vname(1,idOerr), ObsErr)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
 #  if defined PIO_LIB && defined DISTRIBUTE
         CASE (io_pio)
-          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(ng)%name,             &
+          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,           &
      &                              Vname(1,idOval), ObsVal)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(ng)%name,             &
+          CALL pio_netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,           &
      &                              Vname(1,idOerr), ObsErr)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 #  endif

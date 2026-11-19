@@ -34,6 +34,7 @@
         PUBLIC :: allocate_coupling
         PUBLIC :: deallocate_coupling
         PUBLIC :: initialize_coupling
+        PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Define T_COUPLING structure.

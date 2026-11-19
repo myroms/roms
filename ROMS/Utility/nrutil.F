@@ -18,28 +18,26 @@
 !=======================================================================
 !
       USE mod_kinds
-
+!
       implicit none
-
-      PUBLIC
-
+!
       integer(i8b), parameter :: NPAR_ARTH = 16
       integer(i8b), parameter :: NPAR2_ARTH = 8
-
+!
       INTERFACE array_copy
         MODULE PROCEDURE array_copy_r, array_copy_d, array_copy_i
       END INTERFACE
-
+!
       INTERFACE arth
         MODULE PROCEDURE arth_r, arth_d, arth_i
       END INTERFACE
-
+!
       INTERFACE reallocate
         MODULE PROCEDURE reallocate_rv, reallocate_rm,                  &
      &                   reallocate_iv, reallocate_im,                  &
      &                   reallocate_hv
       END INTERFACE
-
+!
       INTERFACE gasdev
         SUBROUTINE gasdev_s (harvest)
         USE mod_kinds
@@ -51,7 +49,7 @@
         real(r8), dimension(:), intent(out) :: harvest
         END SUBROUTINE gasdev_v
       END INTERFACE
-
+!
       INTERFACE ran1
         SUBROUTINE ran1_s (harvest)
         USE mod_kinds
@@ -63,9 +61,17 @@
         real(r8), dimension(:), intent(out) :: harvest
         END SUBROUTINE ran1_v
       END INTERFACE
-
+!
+      PUBLIC  :: array_copy
+      PUBLIC  :: arth
+      PUBLIC  :: gasdev
+      PUBLIC  :: nrerror
+      PUBLIC  :: ran1
+      PUBLIC  :: reallocate
+      PRIVATE
+!
       CONTAINS
-
+!
       SUBROUTINE array_copy_r (src, dest, n_copied, n_not_copied)
 !
 !=======================================================================
@@ -89,10 +95,10 @@
       n_copied=MIN(SIZE(src), SIZE(dest))
       n_not_copied=SIZE(src)-n_copied
       dest(1:n_copied)=src(1:n_copied)
-
+!
       RETURN
       END SUBROUTINE array_copy_r
-
+!
       SUBROUTINE array_copy_d (src, dest, n_copied, n_not_copied)
 !
 !=======================================================================
@@ -114,12 +120,12 @@
 !-----------------------------------------------------------------------
 !
       n_copied=MIN(SIZE(src), SIZE(dest))
-      n_not_copied=size(src)-n_copied
+      n_not_copied=SIZE(src)-n_copied
       dest(1:n_copied)=src(1:n_copied)
-
+!
       RETURN
       END SUBROUTINE array_copy_d
-
+!
       SUBROUTINE array_copy_i (src, dest, n_copied, n_not_copied)
 !
 !=======================================================================
@@ -139,13 +145,13 @@
 !  Copy integer array.
 !-----------------------------------------------------------------------
 !
-      n_copied=min(size(src),size(dest))
-      n_not_copied=size(src)-n_copied
+      n_copied=MIN(SIZE(src),SIZE(dest))
+      n_not_copied=SIZE(src)-n_copied
       dest(1:n_copied)=src(1:n_copied)
-
+!
       RETURN
       END SUBROUTINE array_copy_i
-
+!
       FUNCTION arth_r (first, increment, n)
 !
 !=======================================================================
@@ -191,10 +197,10 @@
           k=k2
         END DO
       END IF
-
+!
       RETURN
       END FUNCTION arth_r
-
+!
       FUNCTION arth_d (first, increment, n)
 !
 !=======================================================================
@@ -240,10 +246,10 @@
           k=k2
         END DO
       END IF
-
+!
       RETURN
       END FUNCTION arth_d
-
+!
       FUNCTION arth_i (first, increment, n)
 !
 !=======================================================================
@@ -284,10 +290,10 @@
           k=k2
         END DO
       END IF
-
+!
       RETURN
       END FUNCTION arth_i
-
+!
       SUBROUTINE nrerror (string)
 !
 !=======================================================================
@@ -309,7 +315,7 @@
       WRITE (stdout,10) string, 'program terminated by NRERROR'
  10   FORMAT (/,1x,a,/20x,a)
       STOP
-
+!
       END SUBROUTINE nrerror
 
       FUNCTION reallocate_rv (p, n)
@@ -337,16 +343,17 @@
 !-----------------------------------------------------------------------
 !
       ALLOCATE (reallocate_rv(n), STAT=ierr)
-      IF (ierr.ne.0)                                                    &
-     &  CALL nrerror ('REALLOCATE_RV: error while allocating memory')
+      IF (ierr.ne.0) THEN
+        CALL nrerror ('REALLOCATE_RV: error while allocating memory')
+      END IF
       IF (.not.ASSOCIATED(p)) RETURN
       nold=SIZE(p)
       reallocate_rv(1:MIN(nold,n))=p(1:MIN(nold,n))
       DEALLOCATE (p)
-
+!
       RETURN
       END FUNCTION reallocate_rv
-
+!
       FUNCTION reallocate_iv (p,n)
 !
 !=======================================================================
@@ -372,16 +379,17 @@
 !-----------------------------------------------------------------------
 !
       ALLOCATE (reallocate_iv(n), STAT=ierr)
-      IF (ierr.ne.0)                                                    &
-     &  CALL nrerror ('REALLOCATE_IV: error while allocating memory')
+      IF (ierr.ne.0) THEN
+        CALL nrerror ('REALLOCATE_IV: error while allocating memory')
+      END IF
       IF (.not.ASSOCIATED(p)) RETURN
       nold=SIZE(p)
       reallocate_iv(1:MIN(nold,n))=p(1:MIN(nold,n))
       DEALLOCATE (p)
-
+!
       RETURN
       END FUNCTION reallocate_iv
-
+!
       FUNCTION reallocate_hv (p, n)
 !
 !=======================================================================
@@ -407,16 +415,17 @@
 !-----------------------------------------------------------------------
 !
       ALLOCATE (reallocate_hv(n),stat=ierr)
-      IF (ierr.ne.0)                                                    &
-     &  CALL nrerror ('REALLOCATE_HV: error while allocating memory')
+      IF (ierr.ne.0) THEN
+        CALL nrerror ('REALLOCATE_HV: error while allocating memory')
+      END IF
       IF (.not.ASSOCIATED(p)) RETURN
       nold=SIZE(p)
       reallocate_hv(1:MIN(nold,n))=p(1:MIN(nold,n))
       DEALLOCATE (p)
-
+!
       RETURN
       END FUNCTION reallocate_hv
-
+!
       FUNCTION reallocate_rm (p, n, m)
 !
 !=======================================================================
@@ -442,18 +451,19 @@
 !-----------------------------------------------------------------------
 !
       ALLOCATE (reallocate_rm(n,m), STAT=ierr)
-      IF (ierr.ne.0)                                                    &
-     &  CALL nrerror ('REALLOCATE_RM: error while allocating memory')
+      IF (ierr.ne.0) THEN
+        CALL nrerror ('REALLOCATE_RM: error while allocating memory')
+      END IF
       IF (.not.ASSOCIATED(p)) RETURN
       nold=SIZE(p,1)
       mold=SIZE(p,2)
       reallocate_rm(1:MIN(nold,n),1:MIN(mold,m))=                       &
      &                                   p(1:MIN(nold,n),1:MIN(mold,m))
       DEALLOCATE (p)
-
+!
       RETURN
       END FUNCTION reallocate_rm
-
+!
       FUNCTION reallocate_im (p, n, m)
 !
 !=======================================================================
@@ -479,17 +489,17 @@
 !-----------------------------------------------------------------------
 !
       ALLOCATE (reallocate_im(n,m), STAT=ierr)
-      IF (ierr.ne.0)                                                    &
-     &  CALL nrerror ('REALLOCATE_IM: error while allocating memory')
+      IF (ierr.ne.0) THEN
+        CALL nrerror ('REALLOCATE_IM: error while allocating memory')
+      END IF
       IF (.not.ASSOCIATED(p)) RETURN
       nold=SIZE(p,1)
       mold=SIZE(p,2)
       reallocate_im(1:MIN(nold,n),1:MIN(mold,m))=                       &
      &                                   p(1:MIN(nold,n),1:MIN(mold,m))
       DEALLOCATE (p)
-
+!
       RETURN
       END FUNCTION reallocate_im
-
+!
       END MODULE nrutil
-

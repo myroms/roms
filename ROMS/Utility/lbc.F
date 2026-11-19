@@ -39,6 +39,19 @@
 #endif
       END INTERFACE lbc_putatt
 !
+      PUBLIC  :: lbc_getatt
+      PUBLIC  :: lbc_putatt
+      PUBLIC  :: lbc_report
+      PRIVATE :: lbc_getatt_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: lbc_getatt_pio
+#endif
+      PRIVATE :: lbc_putatt_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: lbc_putatt_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
