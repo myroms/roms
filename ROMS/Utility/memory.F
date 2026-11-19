@@ -310,12 +310,13 @@
 !
       USE distribute_mod, ONLY : mp_reduce
 #endif
+      USE strings_mod,    ONLY : thousands_marker
 !
       implicit none
 !
 !  Local variable declarations.
 !
-      logical :: Lreport1, Lreport2
+      logical :: Lreport1, Lreport2, Lworked
 !
       integer, parameter :: ng = 1
       integer, parameter :: model = 1
@@ -325,6 +326,7 @@
 !
       real(r8) :: MemTotal, MemFree, MemAvail
       real(r8) :: VmPeak, VmSize, VmHWM, VmRSS
+      real(r8), dimension(7) :: Rvalue
 
 #if defined DISTRIBUTE
       real(r8), dimension(7) :: rbuffer
@@ -335,6 +337,8 @@
       character (len=40)  :: string
       character (len=200) :: line
 !
+      character (len=:), allocatable :: Rstring(:)
+!
 !-----------------------------------------------------------------------
 !  If /proc/self/status Linux file exist, report memory consumption.
 !-----------------------------------------------------------------------
@@ -344,19 +348,20 @@
 #else
       NSUB=numthreads
 #endif
+      Rvalue=0.0_r8
 !
 !$OMP CRITICAL (VMEMORY)
-     IF (tile_count.eq.0) THEN
-       Lreport1=.FALSE.
-       Lreport2=.FALSE.
-       MemTotal=0.0_r8
-       MemFree =0.0_r8
-       MemAvail=0.0_r8
-       VmPeak  =0.0_r8
-       VmSize  =0.0_r8
-       VmHWM   =0.0_r8
-       VmRSS   =0.0_r8
-     END IF
+      IF (tile_count.eq.0) THEN
+        Lreport1=.FALSE.
+        Lreport2=.FALSE.
+        MemTotal=0.0_r8
+        MemFree =0.0_r8
+        MemAvail=0.0_r8
+        VmPeak  =0.0_r8
+        VmSize  =0.0_r8
+        VmHWM   =0.0_r8
+        VmRSS   =0.0_r8
+      END IF
 !
 !  Extract memory available, meassured in kiloBites (kB).
 !
@@ -457,41 +462,45 @@
         VmHWM   =rbuffer(6)
         VmRSS   =rbuffer(7)
 #endif
-        MemTotal=MemTotal/1024.0_r8  ! convert to megaBites
-        MemFree =MemFree/1024.0_r8
-        MemAvail=MemAvail/1024.0_r8
-        VmPeak  =VmPeak/1024.0_r8
-        VmSize  =VmSize/1024.0_r8
-        VmHWM   =VmHWM/1024.0_r8
-        VmRSS   =VmRSS/1024.0_r8
+        Rvalue(1)=MemTotal/1024.0_r8  ! convert to megaBites
+        Rvalue(2)=MemFree/1024.0_r8
+        Rvalue(3)=MemAvail/1024.0_r8
+        Rvalue(4)=VmPeak/1024.0_r8
+        Rvalue(5)=VmSize/1024.0_r8
+        Rvalue(6)=VmHWM/1024.0_r8
+        Rvalue(7)=VmRSS/1024.0_r8
       END IF
 !$OMP END CRITICAL (PSOURCE)
 !
-! Report.
+!  Report, Fw.d=(20, 4).
 !
       IF (Master) THEN
         IF (Lreport1.or.Lreport2) THEN
+          Lworked=thousands_marker(20, 4, Rvalue, Rstring)
           WRITE (stdout,10)
           IF (Lreport1) THEN
-            WRITE (stdout,20) MemTotal, MemFree, MemAvail
+            WRITE (stdout,20) TRIM(Rstring(1)), TRIM(Rstring(2)),       &
+     &                        TRIM(Rstring(3))
           END IF
           IF (Lreport2) THEN
-            WRITE (stdout,30) VmPeak, VmSize, VmHWM, VmRSS
+            WRITE (stdout,30) TRIM(Rstring(4)), TRIM(Rstring(5)),       &
+     &                        TRIM(Rstring(6)), TRIM(Rstring(7))
           END IF
           WRITE (stdout,"(/,80('<'))")
         END IF
+        IF (allocated(Rstring)) deallocate (Rstring)
       END IF
 !
   10  FORMAT (/,' Computer Memory Availability and Usage Summary (MB):',&
      &        /)
-  20  FORMAT (5x,'MemTotal = ',f15.4,',  Total usable physical RAM',/,  &
-     &        5x,'MemFree  = ',f15.4,',  Current unused physical RAM',/,&
-     &        5x,'MemAvail = ',f15.4,',  Available memory',/)
-  30  FORMAT (5x,'VmPeak   = ',f15.4,',  Peak Virtual Memory Size',/,   &
-     &        5x,'VmSize   = ',f15.4,',  Virtual Memory Size',/,        &
-     &        5x,'VmHWM    = ',f15.4,',  Peak Resident Set Size ',      &
+  20  FORMAT (5x,'MemTotal = ',a,'   Total usable physical RAM',/,      &
+     &        5x,'MemFree  = ',a,'   Current unused physical RAM',/,    &
+     &        5x,'MemAvail = ',a,'   Available memory',/)
+  30  FORMAT (5x,'VmPeak   = ',a,'   Peak Virtual Memory Size',/,       &
+     &        5x,'VmSize   = ',a,'   Virtual Memory Size',/,            &
+     &        5x,'VmHWM    = ',a,'   Peak Resident Set Size ',          &
      &                                '(High Water Mark)',/,            &
-     &        5x,'VmRSS    = ',f15.4,',  Resident Set Size')
+     &        5x,'VmRSS    = ',a,'   Resident Set Size')
 !
       RETURN
       END SUBROUTINE report_memory_usage

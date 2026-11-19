@@ -605,7 +605,7 @@
             ad_ubar_xs=ad_ubar_xs+adfac3
           ELSE
             ad_ubar_xs=adfac3
-          ENDIF
+          END IF
         END IF
 !$OMP END CRITICAL (AD_OBC_VOLUME)
       END IF

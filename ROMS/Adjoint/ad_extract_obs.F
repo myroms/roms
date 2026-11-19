@@ -113,14 +113,15 @@
 !=======================================================================
 !
       USE mod_kinds
-
+!
       implicit none
-
-      PUBLIC :: ad_extract_obs2d
+!
+      PUBLIC  :: ad_extract_obs2d
 # ifdef SOLVE3D
-      PUBLIC :: ad_extract_obs3d
+      PUBLIC  :: ad_extract_obs3d
 # endif
-
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -258,7 +259,7 @@
 # endif
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE ad_extract_obs2d
 
@@ -460,7 +461,7 @@
           END IF
         END IF
       END DO
-
+!
       RETURN
       END SUBROUTINE ad_extract_obs3d
 # endif

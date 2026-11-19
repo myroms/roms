@@ -75,7 +75,7 @@ ifdef USE_ROMS
            FFLAGS += -finit-real=nan -ffpe-trap=invalid,zero,overflow
  else
            FFLAGS += -O3
-           FFLAGS += -ffast-math
+#          FFLAGS += -ffast-math
  endif
  ifdef SHARED
           LDFLAGS += -Wl,-rpath,$(BUILD_DIR)
