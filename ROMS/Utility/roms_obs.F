@@ -2584,6 +2584,7 @@
 !
       logical                         :: isNative
       integer                         :: mobs, msurvey, mvar
+      integer, save                   :: ntotal
       integer                         :: IOtype, i, nf
       character (len=256)             :: ncname
 
@@ -2598,6 +2599,7 @@
       mobs=0
       msurvey=0
       mvar=0
+      ntotal=0
 !
 !  Inquire input observation NetCDF file(s).
 !
@@ -2639,16 +2641,26 @@
         IF (isNative) THEN
           CALL self%load_native (ng, model, mobs, msurvey,              &
      &                           IOtype, TRIM(ncname))
+          ntotal=ntotal+mobs
         ELSE
           CALL self%load_ioda (ng, model, mobs, msurvey, mvar,          &
      &                         IOtype, TRIM(ncname))
+          ntotal=ntotal+mobs*mvar
         END IF
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
       END DO FILES_LOOP
 !
+!  Report total number of observations.
+!
+      IF (Master) THEN
+        WRITE (stdout,20) ntotal
+      END IF
+!
   10  FORMAT (' OBS_POOL_READ - Illegal output file type, io_type = ',  &
      &        i0,/,17x,'Check KeyWord ''OUT_LIB'' in ''roms.in''.')
+  20  FORMAT (/,2x,'ROMS_OBS         - Total Number of observations '   &
+     &        'processed, Ndatum = ', i0)
 !
       RETURN
       END SUBROUTINE obs_pool_nc_read
