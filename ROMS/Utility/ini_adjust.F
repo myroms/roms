@@ -112,7 +112,7 @@
       CALL state_assign (ng, tile, Istate, Linp)
 !
 !  Compute new nonlinear model initial conditions.
-!      
+!
       CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      IminS, ImaxS, JminS, JmaxS,                 &

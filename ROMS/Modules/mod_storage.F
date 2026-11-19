@@ -63,6 +63,7 @@
 !
       PUBLIC :: allocate_storage
       PUBLIC :: deallocate_storage
+      PUBLIC
 !
 !-----------------------------------------------------------------------
 !  Define T_STORAGE structure and other module variables.
@@ -70,7 +71,7 @@
 !
 !  State work arrays structure for nested grids.
 !
-      TYPE T_STORAGE
+      TYPE, PUBLIC :: T_STORAGE
 
         real(r8), pointer :: Bvec(:,:)              ! [Nstr:Nend,NCV]
         real(r8), pointer :: Rvector(:,:)           ! [Nstr:Nend,NEV+1]

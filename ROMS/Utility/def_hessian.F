@@ -49,6 +49,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: def_hessian_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

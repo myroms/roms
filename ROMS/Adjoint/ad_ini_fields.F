@@ -1468,8 +1468,8 @@
 !
       DO j=JstrT,JendT
         DO i=IstrT,IendT
-!>        tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
-!>
+!^        tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
+!^
           ad_zeta(i,j,kstp)=ad_zeta(i,j,kstp)+ad_Zt_avg1(i,j)
           ad_Zt_avg1(i,j)=0.0_r8
         END DO

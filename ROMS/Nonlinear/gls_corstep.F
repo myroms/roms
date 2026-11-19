@@ -60,7 +60,7 @@
 # include "tile.h"
 !
 # if defined VEGETATION && defined VEG_TURB
-! 
+!
 !-----------------------------------------------------------------------
 !  Add the effect of vegetation on the turbulence model.
 !-----------------------------------------------------------------------
@@ -95,7 +95,7 @@
 # ifdef WEC_VF
      &                       OCEAN(ng) % W_stokes,                      &
 # endif
-# if defined VEGETATION && defined VEG_TURB 
+# if defined VEGETATION && defined VEG_TURB
      &                       VEG(ng) % tke_veg,                         &
      &                       VEG(ng) % gls_veg,                         &
 # endif
@@ -815,11 +815,11 @@
 
 # if defined VEGETATION && defined VEG_TURB
 !
-!  Add the effect of vegetation on tke and gls 
-!          
+!  Add the effect of vegetation on tke and gls
+!
             tke(i,j,k,nnew)=tke(i,j,k,nnew)+dt(ng)*tke_veg(i,j,k)
             gls(i,j,k,nnew)=gls(i,j,k,nnew)+dt(ng)*gls_veg(i,j,k)
-# endif 
+# endif
 !
 !  Compute dissipation of turbulent energy (m3/s3).
 !
@@ -1074,8 +1074,8 @@
             Gh=MIN(gls_Gh0,-buoy2(i,j,k)*Ls_lmt*Ls_lmt/                 &
      &                    (2.0_r8*tke(i,j,k,nnew)))
 
-!  Update to remove sharp discontinuity per Harcourt post 
-!  "Equation error in GLS model coded into gls_corstep.F" to myroms.org 
+!  Update to remove sharp discontinuity per Harcourt post
+!  "Equation error in GLS model coded into gls_corstep.F" to myroms.org
 !  board 13 Dec 2018. (RRH, Jan 2025)
 !
             Gh=MIN(Gh,Gh-MAX(0.0_r8,Gh-gls_Ghcri)**2/                   &

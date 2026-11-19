@@ -278,7 +278,7 @@
 !  Define derived-type structure ice model state and internal arrays.
 !-----------------------------------------------------------------------
 !
-      TYPE T_ICE
+      TYPE :: T_ICE
 
         real(r8), pointer :: Fi(:,:,:)               ! [i,j,1:nIceF]
         real(r8), pointer :: Si(:,:,:,:)             ! [i,j,1:2,1:nIceS]
@@ -291,7 +291,7 @@
 !  Define derived-type structure ice model lateral boundary variables.
 !-----------------------------------------------------------------------
 !
-      TYPE T_ICE_LOBC
+      TYPE :: T_ICE_LOBC
 
         real(r8), pointer :: ice_west (:)
         real(r8), pointer :: ice_east (:)
@@ -315,7 +315,7 @@
 !  allocated and processed.
 !-----------------------------------------------------------------------
 !
-      TYPE T_ICE_AVG
+      TYPE :: T_ICE_AVG
 
         real(r8), pointer :: var(:,:)                ! [i,j]
 

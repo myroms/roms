@@ -613,7 +613,7 @@
           DO j=Jmin,Jmax
             jcE=1+(j-Jmin)+mc
             A(i,j)=recvE(jcE)
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(B)) THEN
           joff=jcE
@@ -623,7 +623,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               B(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(C)) THEN
@@ -634,7 +634,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               C(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(D)) THEN
@@ -645,7 +645,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               D(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
       END IF
@@ -1230,7 +1230,7 @@
           DO j=Jmin,Jmax
             jcE=1+(j-Jmin)+mc
             A(i,j)=recvE(jcE)
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(B)) THEN
           joff=jcE
@@ -1240,7 +1240,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               B(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(C)) THEN
@@ -1251,7 +1251,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               C(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(D)) THEN
@@ -1262,7 +1262,7 @@
             DO j=Jmin,Jmax
               jcE=joff+1+(j-Jmin)+mc
               D(i,j)=recvE(jcE)
-            ENDDO
+            END DO
           END DO
         END IF
       END IF
@@ -2401,7 +2401,7 @@
               jkE=1+(j-Jmin)+kc
               A(i,j,k)=recvE(jkE)
             END DO
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(B)) THEN
           joff=jkE
@@ -2414,7 +2414,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 B(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(C)) THEN
@@ -2428,7 +2428,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 C(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(D)) THEN
@@ -2442,7 +2442,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 D(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
       END IF
@@ -3121,7 +3121,7 @@
               jkE=1+(j-Jmin)+kc
               A(i,j,k)=recvE(jkE)
             END DO
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(B)) THEN
           joff=jkE
@@ -3134,7 +3134,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 B(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(C)) THEN
@@ -3148,7 +3148,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 C(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(D)) THEN
@@ -3162,7 +3162,7 @@
                 jkE=joff+1+(j-Jmin)+kc
                 D(i,j,k)=recvE(jkE)
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
       END IF
@@ -4452,7 +4452,7 @@
                 A(i,j,k,l)=recvE(jkE)
               END DO
             END DO
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(B)) THEN
           joff=jkE
@@ -4468,7 +4468,7 @@
                   B(i,j,k,l)=recvE(jkE)
                 END DO
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
         IF (PRESENT(C)) THEN
@@ -4485,7 +4485,7 @@
                   C(i,j,k,l)=recvE(jkE)
                 END DO
               END DO
-            ENDDO
+            END DO
           END DO
         END IF
       END IF
@@ -5221,7 +5221,7 @@
 !^
             recvE(jcE)=ad_A(i,j)
             ad_A(i,j)=0.0_r8
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(ad_B)) THEN
           joff=jcE
@@ -6672,7 +6672,7 @@
               recvE(jkE)=ad_A(i,j,k)
               ad_A(i,j,k)=0.0_r8
             END DO
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(ad_B)) THEN
           joff=jkE
@@ -7471,7 +7471,7 @@
 !^
             recvE(jkE)=ad_A(i,k)
             ad_A(i,k)=0.0_r8
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(ad_B)) THEN
           joff=jkE
@@ -8252,7 +8252,7 @@
                 ad_A(i,j,k,l)=0.0_r8
               END DO
             END DO
-          ENDDO
+          END DO
         END DO
         IF (PRESENT(ad_B)) THEN
           joff=jkE

@@ -142,6 +142,7 @@
         PUBLIC :: allocate_fourdvar
         PUBLIC :: deallocate_fourdvar
         PUBLIC :: initialize_fourdvar
+        PUBLIC
 !
 # ifdef OBSERVATIONS
 !-----------------------------------------------------------------------
@@ -214,130 +215,131 @@
 !  Define other module variables.
 !-----------------------------------------------------------------------
 !
-        integer,  allocatable :: ObsType(:)
-        integer,  allocatable :: ObsState2Type(:)
-        integer,  allocatable :: ObsType2State(:)
-        integer,  allocatable :: ObsProv(:)
-
+        integer,  pointer :: ObsType(:)            => NULL()
+        integer,  pointer :: ObsState2Type(:)      => NULL()
+        integer,  pointer :: ObsType2State(:)      => NULL()
+        integer,  pointer :: ObsProv(:)            => NULL()
+!
 #  ifdef CURVGRID
-        real(r8), allocatable :: ObsAngler(:)
+        real(r8), pointer :: ObsAngler(:)          => NULL()
 #  endif
-        real(r8), allocatable :: ObsErr(:)
-        real(r8), allocatable :: ObsMeta(:)
-        real(r8), allocatable :: ObsScale(:)
+        real(r8), pointer :: ObsErr(:)             => NULL()
+        real(r8), pointer :: ObsMeta(:)            => NULL()
+        real(r8), pointer :: ObsScale(:)           => NULL()
 #  ifndef WEAK_CONSTRAINT
-        real(r8), allocatable :: ObsScaleGlobal(:)
+        real(r8), pointer :: ObsScaleGlobal(:)     => NULL()
 #  endif
-        real(r8), allocatable :: ObsVetting(:)
-        real(r8), allocatable :: ObsVal(:)
-        real(dp), allocatable :: Tobs(:)
-        real(r8), allocatable :: Xobs(:)
-        real(r8), allocatable :: Yobs(:)
+        real(r8), pointer :: ObsVetting(:)         => NULL()
+        real(r8), pointer :: ObsVal(:)             => NULL()
+        real(dp), pointer :: Tobs(:)               => NULL()
+        real(r8), pointer :: Xobs(:)               => NULL()
+        real(r8), pointer :: Yobs(:)               => NULL()
 #  ifdef SOLVE3D
-        real(r8), allocatable :: Zobs(:)
+        real(r8), pointer :: Zobs(:)               => NULL()
 #  endif
-        real(r8), allocatable :: ADmodVal(:)
-        real(r8), allocatable :: NLmodVal(:)
+        real(r8), pointer :: ADmodVal(:)           => NULL()
+        real(r8), pointer :: NLmodVal(:)           => NULL()
 
-        real(r8), allocatable :: misfit(:)
-        real(r8), allocatable :: unvetted(:)
-        real(r8), allocatable :: uradial(:)
-        real(r8), allocatable :: vradial(:)
-        real(r8), allocatable :: BgErr(:)
-        real(r8), allocatable :: uBgErr(:)
-        real(r8), allocatable :: vBgErr(:)
+        real(r8), pointer :: misfit(:)             => NULL()
+        real(r8), pointer :: unvetted(:)           => NULL()
+        real(r8), pointer :: uradial(:)            => NULL()
+        real(r8), pointer :: vradial(:)            => NULL()
+        real(r8), pointer :: BgErr(:)              => NULL()
+        real(r8), pointer :: uBgErr(:)             => NULL()
+        real(r8), pointer :: vBgErr(:)             => NULL()
 
 #  ifdef SP4DVAR
-        real(r8), allocatable :: ADmodVal_S(:,:)
-        real(r8), allocatable :: harnoldi(:,:,:)
-        real(r8), allocatable :: gmze(:,:)
-        real(r8), allocatable :: cg_beta0(:)
-        real(r8), allocatable :: Jobs(:,:)
+        real(r8), pointer :: ADmodVal_S(:,:)       => NULL()
+        real(r8), pointer :: harnoldi(:,:,:)       => NULL()
+        real(r8), pointer :: gmze(:,:)             => NULL()
+        real(r8), pointer :: cg_beta0(:)           => NULL()
+        real(r8), pointer :: Jobs(:,:)             => NULL()
 #  endif
 #  ifdef TLM_OBS
-        real(r8), allocatable :: TLmodVal(:)
+        real(r8), pointer :: TLmodVal(:)
 #   if defined ARRAY_MODES       || defined CLIPPING  || \
        defined RBL4DVAR          || defined R4DVAR    || \
        defined SENSITIVITY_4DVAR || defined SP4DVAR   || \
        defined TL_RBL4DVAR       || defined TL_R4DVAR
-        real(r8), allocatable :: TLmodVal_S(:,:,:)
+        real(r8), pointer :: TLmodVal_S(:,:,:)     => NULL()
 #    if defined RPCG              && \
        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
         defined TL_R4DVAR)
-        real(r8), allocatable :: tl_TLmodVal_S(:,:,:)
-        real(r8), allocatable :: ad_TLmodVal_S(:,:,:)
+        real(r8), pointer :: tl_TLmodVal_S(:,:,:)  => NULL()
+        real(r8), pointer :: ad_TLmodVal_S(:,:,:)  => NULL()
 #    endif
 #   endif
 #   if defined ARRAY_MODES       || defined RBL4DVAR    || \
        defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR
-        real(r8), allocatable :: BCKmodVal(:)
+        real(r8), pointer :: BCKmodVal(:)          => NULL()
 
 #    ifdef RPCG
-        real(r8), allocatable :: Hbk(:,:)
+        real(r8), pointer :: Hbk(:,:)              => NULL()
 #     if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR
-        real(r8), allocatable :: tl_BCKmodVal(:)
-        real(r8), allocatable :: tl_Hbk(:)
-        real(r8), allocatable :: ad_BCKmodVal(:)
-        real(r8), allocatable :: ad_Hbk(:)
+        real(r8), pointer :: tl_BCKmodVal(:)       => NULL()
+        real(r8), pointer :: tl_Hbk(:)             => NULL()
+        real(r8), pointer :: ad_BCKmodVal(:)       => NULL()
+        real(r8), pointer :: ad_Hbk(:)             => NULL()
 #     endif
 #    endif
 #   endif
 #  endif
 #  ifdef WEAK_CONSTRAINT
-        real(r8), allocatable :: zcglwk(:,:,:)
+        real(r8), pointer :: zcglwk(:,:,:)         => NULL()
 #   ifdef RPCG
-        real(r8), allocatable :: vcglwk(:,:,:)
-        real(r8), allocatable :: Jb0(:)
+        real(r8), pointer :: vcglwk(:,:,:)         => NULL()
+        real(r8), pointer :: Jb0(:)                => NULL()
 #   endif
-        real(r8), allocatable :: vcglev(:,:,:)
-        real(r8), allocatable :: zgrad0(:,:)
-        real(r8), allocatable :: vgrad0(:)
-        real(r8), allocatable :: vgrad0s(:)
-        real(r8), allocatable :: gdgw(:)
-        real(r8), allocatable :: vgnorm(:)
-        real(r8), allocatable :: cg_innov(:)
-        real(r8), allocatable :: cg_dla(:,:)
+        real(r8), pointer :: vcglev(:,:,:)         => NULL()
+        real(r8), pointer :: zgrad0(:,:)           => NULL()
+        real(r8), pointer :: vgrad0(:)             => NULL()
+        real(r8), pointer :: vgrad0s(:)            => NULL()
+        real(r8), pointer :: gdgw(:)               => NULL()
+        real(r8), pointer :: vgnorm(:)             => NULL()
+        real(r8), pointer :: cg_innov(:)           => NULL()
+        real(r8), pointer :: cg_dla(:,:)           => NULL()
 #   ifndef RPCG
-        real(r8), allocatable :: cg_pxsave(:)
+        real(r8), pointer :: cg_pxsave(:)          => NULL()
 #   endif
+
 #   if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
        defined TL_R4DVAR
-        real(r8), allocatable :: ad_zcglwk(:,:)
-        real(r8), allocatable :: ad_zgrad0(:)
+        real(r8), pointer :: ad_zcglwk(:,:)        => NULL()
+        real(r8), pointer :: ad_zgrad0(:)          => NULL()
 #    if defined RPCG              && \
        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
         defined TL_R4DVAR)
-        real(r8), allocatable :: ad_vcglwk(:,:)
-        real(r8), allocatable :: ad_vgrad0(:)
-        real(r8), allocatable :: ad_vgrad0s(:)
-        real(r8), allocatable :: ad_Jb0(:)
-        real(r8), allocatable :: ad_ObsErr(:)
-        real(r8), allocatable :: ad_ObsScale(:)
+        real(r8), pointer :: ad_vcglwk(:,:)        => NULL()
+        real(r8), pointer :: ad_vgrad0(:)          => NULL()
+        real(r8), pointer :: ad_vgrad0s(:)         => NULL()
+        real(r8), pointer :: ad_Jb0(:)             => NULL()
+        real(r8), pointer :: ad_ObsErr(:)          => NULL()
+        real(r8), pointer :: ad_ObsScale(:)        => NULL()
 #    endif
-        real(r8), allocatable :: ad_cg_innov(:)
-        real(r8), allocatable :: ad_cg_pxsave(:)
-        real(r8), allocatable :: ad_cg_pxout(:)
+        real(r8), pointer :: ad_cg_innov(:)        => NULL()
+        real(r8), pointer :: ad_cg_pxsave(:)       => NULL()
+        real(r8), pointer :: ad_cg_pxout(:)        => NULL()
 #    ifdef IMPACT_INNER
-        real(r8), allocatable :: ad_ObsVal(:,:)
+        real(r8), pointer :: ad_ObsVal(:,:)        => NULL()
 #    else
-        real(r8), allocatable :: ad_ObsVal(:)
+        real(r8), pointer :: ad_ObsVal(:)          => NULL()
 #    endif
 
-        real(r8), allocatable :: tl_zcglwk(:,:)
-        real(r8), allocatable :: tl_zgrad0(:)
+        real(r8), pointer :: tl_zcglwk(:,:)        => NULL()
+        real(r8), pointer :: tl_zgrad0(:)          => NULL()
 #    ifdef RPCG
-        real(r8), allocatable :: tl_vcglwk(:,:)
-        real(r8), allocatable :: tl_vgrad0(:)
-        real(r8), allocatable :: tl_vgrad0s(:)
-        real(r8), allocatable :: tl_Jb0(:)
-        real(r8), allocatable :: tl_ObsErr(:)
-        real(r8), allocatable :: tl_ObsScale(:)
+        real(r8), pointer :: tl_vcglwk(:,:)        => NULL()
+        real(r8), pointer :: tl_vgrad0(:)          => NULL()
+        real(r8), pointer :: tl_vgrad0s(:)         => NULL()
+        real(r8), pointer :: tl_Jb0(:)             => NULL()
+        real(r8), pointer :: tl_ObsErr(:)          => NULL()
+        real(r8), pointer :: tl_ObsScale(:)        => NULL()
 #    endif
-        real(r8), allocatable :: tl_cg_innov(:)
-        real(r8), allocatable :: tl_cg_pxsave(:)
-        real(r8), allocatable :: tl_cg_pxout(:)
-        real(r8), allocatable :: tl_ObsVal(:)
+        real(r8), pointer :: tl_cg_innov(:)        => NULL()
+        real(r8), pointer :: tl_cg_pxsave(:)       => NULL()
+        real(r8), pointer :: tl_cg_pxout(:)        => NULL()
+        real(r8), pointer :: tl_ObsVal(:)          => NULL()
 #   endif
 #  endif
 # endif
@@ -361,17 +363,22 @@
 !
         integer, allocatable :: NstateVar(:)
 !
-!  Number of observation types and names to process. If the observation
-!  operators for a specific application have a 1-to-1 association with
-!  the model state variables,  NobsVar = NstateVar.  However, if more
-!  that one state variable is needed to evaluate a particular type of
-!  observation (HF radials, travel time, pressure, etc.), a new class
-!  name is added to the state variable list to assess and differentiate
-!  its impact.  Then, NobsVar = NstateVar + NextraObs.
+!  Number of observation types and names to process.
+# ifndef IODA_OBS
+!
+!  If the observation operators for a specific application correspond
+!  directly to the model state variables, then NobsVar = NstateVar.
+!  If evaluating an observation type requires multiple state variables
+!  (such as HF radials, travel time, or pressure), a new class name is
+!  added to the state variable list to assess and distinguish the impact
+!  of each. In this case, NobsVar = NstateVar + NextraObs.
+# endif
 !
         integer, allocatable :: NobsVar(:)
 
         character(len=40), allocatable :: ObsName(:)
+
+# ifndef IODA_OBS
 !
 ! Number of extra-observation classes, extra-observation type indices,
 ! and extra-observation type names. It is used in observation operators
@@ -383,6 +390,7 @@
         integer, allocatable :: ExtraIndex(:)
 
         character(len=40), allocatable :: ExtraName(:)
+# endif
 !
 !  Number of interpolation weights and (I,J,K) indices offsets.
 !
@@ -568,15 +576,15 @@
 !
 !  4D-Var NLM increment vector, analysis minus background {Mobs].
 !
-        real(r8), allocatable :: NLincrement(:)
+        real(r8), pointer :: NLincrement(:) => NULL()
 !
 !  4D-Var innovation vector, observations minus background [Mobs].
 !
-        real(r8), allocatable :: innovation(:)
+        real(r8), pointer :: innovation(:)  => NULL()
 !
 !  4D-Var residual vector, observation minus analysis [Mobs].
 !
-        real(r8), allocatable :: residual(:)
+        real(r8), pointer :: residual(:)    => NULL()
 # endif
 
 # ifdef BGQC
@@ -594,8 +602,6 @@
         real(r8), allocatable :: Jact_S(:)
 # endif
 !
-
-
 !-----------------------------------------------------------------------
 !  Spatial convolutions parameters
 !-----------------------------------------------------------------------
@@ -1168,109 +1174,133 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef CURVGRID
-      IF (allocated(ObsAngler)) THEN
+      IF (associated(ObsAngler)) THEN
         deallocate (ObsAngler)
       END IF
 #  endif
 
-      IF (allocated(ObsType)) THEN
+      IF (associated(ObsType)) THEN
         deallocate (ObsType)
       END IF
 
-      IF (allocated(ObsProv)) THEN
+      IF (associated(ObsProv)) THEN
         deallocate (ObsProv)
       END IF
 
-      IF (allocated(ObsErr)) THEN
+      IF (associated(ObsErr)) THEN
+#  ifdef IODA_OBS
+        nullify (ObsErr)
+#  else
         deallocate (ObsErr)
+#  endif
       END IF
 
-      IF (allocated(ObsMeta)) THEN
+      IF (associated(ObsMeta)) THEN
         deallocate (ObsMeta)
       END IF
 
-      IF (allocated(ObsScale)) THEN
+      IF (associated(ObsScale)) THEN
         deallocate (ObsScale)
       END IF
 
 #  ifndef WEAK_CONSTRAINT
-      IF (allocated(ObsScaleGlobal)) THEN
+      IF (associated(ObsScaleGlobal)) THEN
         deallocate (ObsScaleGlobal)
       END IF
 #  endif
 
-      IF (allocated(ObsVetting)) THEN
+      IF (associated(ObsVetting)) THEN
         deallocate (ObsVetting)
       END IF
 
-      IF (allocated(ObsVal)) THEN
+      IF (associated(ObsVal)) THEN
+#  ifdef IODA_OBS
+        nullify (ObsVal)
+#  else
         deallocate (ObsVal)
+#  endif
       END IF
 
-      IF (allocated(Tobs)) THEN
+      IF (associated(Tobs)) THEN
         deallocate (Tobs)
       END IF
 
-      IF (allocated(Xobs)) THEN
+      IF (associated(Xobs)) THEN
         deallocate (Xobs)
       END IF
 
-      IF (allocated(Yobs)) THEN
+      IF (associated(Yobs)) THEN
         deallocate (Yobs)
       END IF
 
 #  ifdef SOLVE3D
-      IF (allocated(Zobs)) THEN
+      IF (associated(Zobs)) THEN
         deallocate (Zobs)
       END IF
 #  endif
 
-      IF (allocated(ADmodVal)) THEN
+      IF (associated(ADmodVal)) THEN
+#  ifdef IODA_OBS
+        nullify (ADmodVal)
+#  else
         deallocate (ADmodVal)
+#  endif
       END IF
 
-      IF (allocated(NLmodVal)) THEN
+      IF (associated(NLmodVal)) THEN
+#  ifdef IODA_OBS
+        nullify (NLmodVal)
+#  else
         deallocate (NLmodVal)
+#  endif
       END IF
 
-      IF (allocated(misfit)) THEN
+      IF (associated(misfit)) THEN
         deallocate (misfit)
       END IF
 
-      IF (allocated(unvetted)) THEN
+      IF (associated(unvetted)) THEN
+#  ifdef IODA_OBS
+        nullify (unvetted)
+#  else
         deallocate (unvetted)
+#  endif
       END IF
 
-      IF (allocated(uradial)) THEN
+      IF (associated(uradial)) THEN
         deallocate (uradial)
       END IF
 
-      IF (allocated(vradial)) THEN
+      IF (associated(vradial)) THEN
         deallocate (vradial)
       END IF
 
-      IF (allocated(BgErr)) THEN
+      IF (associated(BgErr)) THEN
+#  ifdef IODA_OBS
+        nullify (BgErr)
+#  else
         deallocate (BgErr)
+#  endif
       END IF
 
-      IF (allocated(uBgErr)) THEN
+      IF (associated(uBgErr)) THEN
         deallocate (uBgErr)
       END IF
 
-      IF (allocated(vBgErr)) THEN
+      IF (associated(vBgErr)) THEN
         deallocate (vBgErr)
       END IF
 
 #  ifdef FOUR_DVAR
-      IF (allocated(NLincrement)) THEN
+      IF (associated(NLincrement)) THEN
         deallocate (NLincrement)
       END IF
 
-      IF (allocated(innovation)) THEN
+      IF (associated(innovation)) THEN
         deallocate (innovation)
       END IF
 
-      IF (allocated(residual)) THEN
+      IF (associated(residual)) THEN
         deallocate (residual)
       END IF
 #  endif
@@ -1282,15 +1312,19 @@
 #  endif
 
 #  ifdef TLM_OBS
-      IF (allocated(TLmodVal)) THEN
+      IF (associated(TLmodVal)) THEN
+#   ifdef IODA_OBS
+        nullify (TLmodVal)
+#   else
         deallocate (TLmodVal)
+#   endif
       END IF
 
 #   if defined ARRAY_MODES       || defined CLIPPING    || \
        defined RBL4DVAR          || defined R4DVAR      || \
        defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
        defined TL_R4DVAR
-      IF (allocated(TLmodVal_S)) THEN
+      IF (associated(TLmodVal_S)) THEN
         deallocate (TLmodVal_S)
       END IF
 
@@ -1298,11 +1332,11 @@
        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
         defined TL_R4DVAR)
 
-      IF (allocated(tl_TLmodVal_S)) THEN
+      IF (associated(tl_TLmodVal_S)) THEN
         deallocate (tl_TLmodVal_S)
       END IF
 
-      IF (allocated(ad_TLmodVal_S)) THEN
+      IF (associated(ad_TLmodVal_S)) THEN
         deallocate (ad_TLmodVal_S)
       END IF
 #    endif
@@ -1312,27 +1346,27 @@
 #   if defined SENSITIVITY_4DVAR || defined RBL4DVAR || \
        defined TL_RBL4DVAR
 
-      IF (allocated(BCKmodVal)) THEN
+      IF (associated(BCKmodVal)) THEN
         deallocate (BCKmodVal)
       END IF
 
 #    ifdef RPCG
-      IF (allocated(Hbk)) THEN
+      IF (associated(Hbk)) THEN
         deallocate (Hbk)
       END IF
 #     if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR
 
-      IF (allocated(tl_BCKmodVal)) THEN
+      IF (associated(tl_BCKmodVal)) THEN
         deallocate (tl_BCKmodVal)
       END IF
-      IF (allocated(ad_BCKmodVal)) THEN
+      IF (associated(ad_BCKmodVal)) THEN
         deallocate (ad_BCKmodVal)
       END IF
-      IF (allocated(tl_Hbk)) THEN
+      IF (associated(tl_Hbk)) THEN
         deallocate (tl_Hbk)
       END IF
-      IF (allocated(ad_Hbk)) THEN
+      IF (associated(ad_Hbk)) THEN
         deallocate (ad_Hbk)
       END IF
 #     endif
@@ -1346,79 +1380,79 @@
 !
 #   if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
        defined TL_R4DVAR
-      IF (allocated(ad_zcglwk)) THEN
+      IF (associated(ad_zcglwk)) THEN
         deallocate (ad_zcglwk)
       END IF
 
-      IF (allocated(ad_zgrad0)) THEN
+      IF (associated(ad_zgrad0)) THEN
         deallocate (ad_zgrad0)
       END IF
 
-      IF (allocated(ad_cg_innov)) THEN
+      IF (associated(ad_cg_innov)) THEN
         deallocate (ad_cg_innov)
       END IF
 
-      IF (allocated(ad_cg_pxsave)) THEN
+      IF (associated(ad_cg_pxsave)) THEN
         deallocate (ad_cg_pxsave)
       END IF
 
-      IF (allocated(tl_zcglwk)) THEN
+      IF (associated(tl_zcglwk)) THEN
         deallocate (tl_zcglwk)
       END IF
 
-      IF (allocated(tl_zgrad0)) THEN
+      IF (associated(tl_zgrad0)) THEN
         deallocate (tl_zgrad0)
       END IF
 
-      IF (allocated(tl_cg_innov)) THEN
+      IF (associated(tl_cg_innov)) THEN
         deallocate (tl_cg_innov)
       END IF
 
-      IF (allocated(tl_cg_pxsave)) THEN
+      IF (associated(tl_cg_pxsave)) THEN
         deallocate (tl_cg_pxsave)
       END IF
 
-      IF (allocated(tl_ObsVal)) THEN
+      IF (associated(tl_ObsVal)) THEN
         deallocate (tl_ObsVal)
       END IF
 
 #    ifdef IMPACT_INNER
-      IF (allocated(ad_ObsVal)) THEN
+      IF (associated(ad_ObsVal)) THEN
         deallocate (ad_ObsVal)
       END IF
 #    else
-      IF (allocated(ad_ObsVal)) THEN
+      IF (associated(ad_ObsVal)) THEN
         deallocate (ad_ObsVal)
       END IF
 #    endif
 #   endif
 
 #   ifdef RPCG
-      IF (allocated(zcglwk)) THEN
+      IF (associated(zcglwk)) THEN
         deallocate (zcglwk)
       END IF
 
-      IF (allocated(vcglwk)) THEN
+      IF (associated(vcglwk)) THEN
         deallocate (vcglwk)
       END IF
 
-      IF (allocated(vcglev)) THEN
+      IF (associated(vcglev)) THEN
         deallocate (vcglev)
       END IF
 
-      IF (allocated(zgrad0)) THEN
+      IF (associated(zgrad0)) THEN
         deallocate (zgrad0)
       END IF
 
-      IF (allocated(vgrad0)) THEN
+      IF (associated(vgrad0)) THEN
         deallocate (vgrad0)
       END IF
 
-      IF (allocated(vgrad0s)) THEN
+      IF (associated(vgrad0s)) THEN
         deallocate (vgrad0s)
       END IF
 
-      IF (allocated(cg_innov)) THEN
+      IF (associated(cg_innov)) THEN
         deallocate (cg_innov)
       END IF
 
@@ -1428,106 +1462,106 @@
         defined TL_RBL4DVAR              || \
         defined TL_R4DVAR
 
-      IF (allocated(ad_vcglwk)) THEN
+      IF (associated(ad_vcglwk)) THEN
         deallocate (ad_vcglwk)
       END IF
 
-      IF (allocated(ad_vgrad0)) THEN
+      IF (associated(ad_vgrad0)) THEN
         deallocate (ad_vgrad0)
       END IF
 
-      IF (allocated(ad_vgrad0s)) THEN
+      IF (associated(ad_vgrad0s)) THEN
         deallocate (ad_vgrad0s)
       END IF
 
-      IF (allocated(ad_Jb0)) THEN
+      IF (associated(ad_Jb0)) THEN
         deallocate (ad_Jb0)
       END IF
 
-      IF (allocated(ad_ObsErr)) THEN
+      IF (associated(ad_ObsErr)) THEN
         deallocate (ad_ObsErr)
       END IF
 
-      IF (allocated(ad_ObsScale)) THEN
+      IF (associated(ad_ObsScale)) THEN
         deallocate (ad_ObsScale)
       END IF
 
-      IF (allocated(ad_ObsVal)) THEN
+      IF (associated(ad_ObsVal)) THEN
         deallocate (ad_ObsVal)
       END IF
 
-      IF (allocated(tl_vcglwk)) THEN
+      IF (associated(tl_vcglwk)) THEN
         deallocate (tl_vcglwk)
       END IF
 
-      IF (allocated(tl_vgrad0)) THEN
+      IF (associated(tl_vgrad0)) THEN
         deallocate (tl_vgrad0)
       END IF
 
-      IF (allocated(tl_vgrad0s)) THEN
+      IF (associated(tl_vgrad0s)) THEN
         deallocate (tl_vgrad0s)
       END IF
 
-      IF (allocated(tl_Jb0)) THEN
+      IF (associated(tl_Jb0)) THEN
         deallocate (tl_Jb0)
       END IF
 
-      IF (allocated(tl_ObsErr)) THEN
+      IF (associated(tl_ObsErr)) THEN
         deallocate (tl_ObsErr)
       END IF
 
-      IF (allocated(tl_ObsScale)) THEN
+      IF (associated(tl_ObsScale)) THEN
         deallocate (tl_ObsScale)
       END IF
 
-      IF (allocated(tl_ObsVal)) THEN
+      IF (associated(tl_ObsVal)) THEN
         deallocate (tl_ObsVal)
       END IF
 
-      IF (allocated(tl_cg_Gnorm_v)) THEN
+      IF (associated(tl_cg_Gnorm_v)) THEN
         deallocate (tl_cg_Gnorm_v)
       END IF
 
-      IF (allocated(ad_cg_Gnorm_v)) THEN
+      IF (associated(ad_cg_Gnorm_v)) THEN
         deallocate (ad_cg_Gnorm_v)
       END IF
 #    endif
 
 #   else
 
-      IF (allocated(cg_pxsave)) THEN
+      IF (associated(cg_pxsave)) THEN
         deallocate (cg_pxsave)
       END IF
 
-      IF (allocated(zcglwk)) THEN
+      IF (associated(zcglwk)) THEN
         deallocate (zcglwk)
       END IF
 
-      IF (allocated(vcglev)) THEN
+      IF (associated(vcglev)) THEN
         deallocate (vcglev)
       END IF
 
-      IF (allocated(zgrad0)) THEN
+      IF (associated(zgrad0)) THEN
         deallocate (zgrad0)
       END IF
 
-      IF (allocated(vgrad0)) THEN
+      IF (associated(vgrad0)) THEN
         deallocate (vgrad0)
       END IF
 
-      IF (allocated(vgrad0s)) THEN
+      IF (associated(vgrad0s)) THEN
         deallocate (vgrad0s)
       END IF
 
-      IF (allocated(gdgw)) THEN
+      IF (associated(gdgw)) THEN
         deallocate (gdgw)
       END IF
 
-      IF (allocated(cg_innov)) THEN
+      IF (associated(cg_innov)) THEN
         deallocate (cg_innov)
       END IF
 
-      IF (allocated(cg_pxsave)) THEN
+      IF (associated(cg_pxsave)) THEN
         deallocate (cg_pxsave)
       END IF
 
@@ -1556,12 +1590,19 @@
       USE mod_pio_netcdf
 # endif
 !
-      USE strings_mod, ONLY : FoundError
-      USE strings_mod, ONLY : uppercase
+# if defined OBSERVATIONS && defined IODA_OBS
+      USE roms_obs_mod, ONLY : obs_initialize,                          &
+     &                         obs_store
+# endif
+      USE strings_mod,  ONLY : FoundError,                              &
+     &                         uppercase
 !
 !  Local variable declarations.
 !
       integer :: my_NobsVar, i, icount, ng
+# ifdef IODA_OBS
+      integer :: ipool, npool, nvars
+# endif
 # if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
       integer :: LBi, UBi, LBj, UBj
       integer :: tile
@@ -1576,25 +1617,91 @@
       SourceFile=MyFile
 
 # ifdef OBSERVATIONS
+#  ifdef IODA_OBS
 !
 !-----------------------------------------------------------------------
-!  Inquire observations NetCDF and determine the maximum dimension of
-!  several observations arrays.
+!  Process multiple IODA-type observation files containing first-level
+!  "Groups" such as MetaData, ObsError, ObsValue, and PreQC. These
+!  files separate control-vector variables, observation types, complex
+!  operators, and area- or time-averaged filters. Determine the total
+!  number of observations, allocate the observation CLASS object
+!  "obs_pool", read the observations, and load the data into the
+!  "obs_store" object to support processing by the "obs_hofx" operators.
+!
+!  Unlike legacy ROMS observation operators, this modern approach reads
+!  observations once and stores the values in memory. This reduces
+!  frequent I/O operations and collective distributed-memory
+!  communications, which often create bottlenecks in large, multi-
+!  processor applications.
+!-----------------------------------------------------------------------
+!
+!  The nested loop below is unnecessary, as the observations fractional
+!  grid locations for nested-grid applications can be recomputed from
+!  their input geographical locations.
+!
+      DO ng=1,Ngrids
+        CALL obs_initialize (ng, iNLM, nOBSfiles(ng))
+        IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
+!
+!  Obtain the total number of observations from the depot object.
+!  Because ROMS data assimilation algorithms use a legacy single file
+!  observation approach that aggregates data into a vector, the strategy
+!  is to maintain this design and use pointers to connect legacy and
+!  modern observation operators.
+!
+        Ndatum(ng)=obs_store%ndatum
+      END DO
+      Mobs=MAXVAL(Ndatum)
+!
+!  Determine number of observation variables and associated names.
+!
+      npool=SIZE(obs_store%pool)
+      nvars=0
+      DO ipool=1,npool
+        nvars=nvars+obs_store%pool(ipool)%nvars
+      END DO
+      NobsVar=nvars
+!
+      IF (.not.allocated(ObsName)) THEN
+        allocate ( ObsName(MAXVAL(NobsVar)) )
+      END IF
+!
+      icount=0
+      DO ipool=1,npool
+        nvars=obs_store%pool(ipool)%nvars
+        DO i=1,nvars
+          icount=icount+1
+          ObsName(icount)=TRIM(obs_store%pool(ipool)%name)
+        END DO
+      END DO
+!
+!  Allocate and combine observation data into a single vector to
+!  facilitate data assimilation. Arrange the data by observation pool
+!  and align it with the order of H(x) operators.
+!
+      CALL obs_store%aggregate_r (ng, 'value', ObsVal)
+      CALL obs_store%aggregate_r (ng, 'error', ObsErr)
+
+#  else
+!
+!-----------------------------------------------------------------------
+!  Inquire the observation NetCDF file and determine the maximum
+!  dimension of several observations arrays.
 !-----------------------------------------------------------------------
 !
 !  Inquire about the size of the "datum" unlimitted dimension and
 !  "survey" dimension.
 !
       DO ng=1,Ngrids
-        SELECT CASE (OBS(ng)%IOtype)
+        SELECT CASE (OBS(1,ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
-#  if defined PIO_LIB && defined DISTRIBUTE
+            CALL netcdf_get_dim (ng, iNLM, TRIM(OBS(1,ng)%name))
+#   if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
-            CALL pio_netcdf_get_dim (ng, iNLM, TRIM(OBS(ng)%name))
-#  endif
+            CALL pio_netcdf_get_dim (ng, iNLM, TRIM(OBS(1,ng)%name))
+#   endif
           CASE DEFAULT
-            IF (Master) WRITE (stdout,10) OBS(ng)%IOtype
+            IF (Master) WRITE (stdout,10) OBS(1,ng)%IOtype
             exit_flag=3
         END SELECT
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -1611,22 +1718,24 @@
           END IF
         END DO
         IF (Ndatum(ng).eq.0) THEN
-          WRITE (stdout,20) 'datum', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'datum', TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
         IF (Nsurvey(ng).eq.0) THEN
-          WRITE (stdout,20) 'survey', TRIM(OBS(ng)%name)
+          WRITE (stdout,20) 'survey', TRIM(OBS(1,ng)%name)
           exit_flag=2
           RETURN
         END IF
       END DO
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
-!
+
 #  if defined BALANCE_OPERATOR && defined ZETA_ELLIPTIC
+!
 #   ifdef DISTRIBUTE
       tile=MyRank
 #   else
@@ -1653,12 +1762,10 @@
         size2d=REAL((UBi-LBi+1)*(UBj-LBj+1),r8)
 #  endif
 !
-!  Number of state variables associated with data assimilation.
+!  Number of state variables in data assimilation control vector.
 !
 !    zeta, ubar, vbar, Uvel, Vvel, Tvar(1:MT)
 !    Ustr, Vstr, Tsur(1:MT)
-!
-!  The rest are ignored.
 !
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
@@ -1671,9 +1778,14 @@
 #  ifdef ADJUST_WSTRESS
         NstateVar(ng)=NstateVar(ng)+2
 #  endif
-
+!
+#  ifndef IODA_OBS
         NobsVar(ng)=NstateVar(ng)+NextraObs
-
+#  endif
+!
+!  Allocate and initialize module variables.
+!
+#  ifndef IODA_OBS
         IF (.not.allocated(FOURDVAR(ng) % NobsSurvey)) THEN
           allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
           Dmem(ng)=Dmem(ng)+REAL(Nsurvey(ng),r8)
@@ -1685,6 +1797,7 @@
           Dmem(ng)=Dmem(ng)+REAL(Nsurvey(ng),r8)
           FOURDVAR(ng) % SurveyTime = IniVal
         END IF
+#  endif
 
 #  ifdef FOUR_DVAR
         IF (.not.allocated(FOURDVAR(ng) % BackCost)) THEN
@@ -1914,6 +2027,8 @@
 #  endif
 
       END DO
+
+#  ifndef IODA_OBS
 !
 !-----------------------------------------------------------------------
 !  Read in number of observations available per survey at their times.
@@ -1924,226 +2039,233 @@
 !  Read in number of observations available per survey and the time of
 !  each observation survey.
 !
-        SELECT CASE (OBS(ng)%IOtype)
+        SELECT CASE (OBS(1,ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),         &
+            CALL netcdf_get_ivar (ng, iNLM, TRIM(OBS(1,ng)%name),       &
      &                            TRIM(Vname(1,idNobs)),                &
      &                            FOURDVAR(ng)%NobsSurvey,              &
      &                            start = (/1/),                        &
      &                            total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-            CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),         &
+            CALL netcdf_get_fvar (ng, iNLM, TRIM(OBS(1,ng)%name),       &
      &                            TRIM(Vname(1,idOday)),                &
      &                            FOURDVAR(ng)%SurveyTime,              &
      &                            start = (/1/),                        &
      &                            total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-#  if defined PIO_LIB && defined DISTRIBUTE
+#   if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
-            CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(ng)%name),     &
+            CALL pio_netcdf_get_ivar (ng, iNLM, TRIM(OBS(1,ng)%name),   &
      &                                TRIM(Vname(1,idNobs)),            &
      &                                FOURDVAR(ng)%NobsSurvey,          &
      &                                start = (/1/),                    &
      &                                total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
-            CALL pio_netcdf_get_fvar (ng, iNLM, TRIM(OBS(ng)%name),     &
+            CALL pio_netcdf_get_fvar (ng, iNLM, TRIM(OBS(1,ng)%name),   &
      &                                TRIM(Vname(1,idOday)),            &
      &                                FOURDVAR(ng)%SurveyTime,          &
      &                                start = (/1/),                    &
      &                                total = (/Nsurvey(ng)/))
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
-#  endif
+#   endif
         END SELECT
 !
 !  Determine maximum size of observation arrays.
 !
-#  ifdef WEAK_CONSTRAINT
+#   ifdef WEAK_CONSTRAINT
         Mobs=MAXVAL(Ndatum)
-#  else
+#   else
         Mobs=0
         DO i=1,Nsurvey(ng)
           Mobs=MAX(Mobs, FOURDVAR(ng)%NobsSurvey(i))
         END DO
-#  endif
+#   endif
       END DO
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Allocate and initialize model and observation variables.
 !-----------------------------------------------------------------------
 !
 #  ifdef CURVGRID
-      IF (.not.allocated(ObsAngler)) THEN
+      IF (.not.associated(ObsAngler)) THEN
         allocate ( ObsAngler(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsAngler = IniVal
 #  endif
 
-      IF (.not.allocated(ObsType)) THEN
+      IF (.not.associated(ObsType)) THEN
         allocate ( ObsType(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsType = 0
 
-      IF (.not.allocated(ObsState2Type)) THEN
+      IF (.not.associated(ObsState2Type)) THEN
         allocate ( ObsState2Type(0:MAXVAL(NobsVar)) )
         Dmem(1)=Dmem(1)+REAL(MAXVAL(NobsVar)+1,r8)
       END IF
       ObsState2Type = 0
 
-      IF (.not.allocated(ObsProv)) THEN
+      IF (.not.associated(ObsProv)) THEN
         allocate ( ObsProv(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsProv = 0
 
-      IF (.not.allocated(ObsErr)) THEN
+#  ifndef IODA_OBS
+      IF (.not.associated(ObsErr)) THEN
         allocate ( ObsErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsErr = IniVal
+#  endif
 
-      IF (.not.allocated(ObsMeta)) THEN
+      IF (.not.associated(ObsMeta)) THEN
         allocate ( ObsMeta(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsMeta = IniVal
 
-      IF (.not.allocated(ObsScale)) THEN
+      IF (.not.associated(ObsScale)) THEN
         allocate ( ObsScale(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsScale = IniVal
 
 #  ifndef WEAK_CONSTRAINT
-      IF (.not.allocated(ObsScaleGlobal)) THEN
+      IF (.not.associated(ObsScaleGlobal)) THEN
         allocate ( ObsScaleGlobal(MAXVAL(Ndatum)) )
         Dmem(1)=Dmem(1)+REAL(MAXVAL(Ndatum),r8)
       END IF
       ObsScaleGlobal = IniVal
 #  endif
 
-      IF (.not.allocated(ObsVetting)) THEN
+      IF (.not.associated(ObsVetting)) THEN
         allocate ( ObsVetting(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsVetting = IniVal
 
-      IF (.not.allocated(ObsVal)) THEN
+#  ifndef IODA_OBS
+      IF (.not.associated(ObsVal)) THEN
         allocate ( ObsVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ObsVal = IniVal
+#  endif
 
-      IF (.not.allocated(Tobs)) THEN
+      IF (.not.associated(Tobs)) THEN
         allocate ( Tobs(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       Tobs = 0.0_dp
 
-      IF (.not.allocated(Xobs)) THEN
+      IF (.not.associated(Xobs)) THEN
         allocate ( Xobs(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       Xobs = IniVal
 
-      IF (.not.allocated(Yobs)) THEN
+      IF (.not.associated(Yobs)) THEN
         allocate ( Yobs(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       Yobs = IniVal
 
 #  ifdef SOLVE3D
-      IF (.not.allocated(Zobs)) THEN
+      IF (.not.associated(Zobs)) THEN
         allocate ( Zobs(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       Zobs = IniVal
 #  endif
 
-      IF (.not.allocated(ADmodVal)) THEN
+      IF (.not.associated(ADmodVal)) THEN
         allocate ( ADmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ADmodVal = IniVal
 
-      IF (.not.allocated(NLmodVal)) THEN
+#  ifndef IODA_OBS
+      IF (.not.associated(NLmodVal)) THEN
         allocate ( NLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       NLmodVal = IniVal
+#  endif
 
-      IF (.not.allocated(misfit)) THEN
+      IF (.not.associated(misfit)) THEN
         allocate ( misfit(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       misfit = IniVal
 
-      IF (.not.allocated(unvetted)) THEN
+      IF (.not.associated(unvetted)) THEN
         allocate ( unvetted(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       unvetted = IniVal
 
-      IF (.not.allocated(uradial)) THEN
+      IF (.not.associated(uradial)) THEN
         allocate ( uradial(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       uradial = IniVal
 
-      IF (.not.allocated(vradial)) THEN
+      IF (.not.associated(vradial)) THEN
         allocate ( vradial(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       vradial = IniVal
 
-      IF (.not.allocated(BgErr)) THEN
+      IF (.not.associated(BgErr)) THEN
         allocate ( BgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       BgErr = IniVal
 
-      IF (.not.allocated(uBgErr)) THEN
+      IF (.not.associated(uBgErr)) THEN
         allocate ( uBgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       uBgErr = IniVal
 
-      IF (.not.allocated(vBgErr)) THEN
+      IF (.not.associated(vBgErr)) THEN
         allocate ( vBgErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       vBgErr = IniVal
 
 #  ifdef SP4DVAR
-      IF (.not.allocated(ADmodVal_S)) THEN
+      IF (.not.associated(ADmodVal_S)) THEN
         allocate ( ADmodVal_S(Mobs, Ninner+4) )
         Dmem(1)=Dmem(1)+REAL(Mobs*(Ninner+4),r8)
       END IF
       ADmodVal_S = IniVal
 
-      IF (.not.allocated(harnoldi)) THEN
+      IF (.not.associated(harnoldi)) THEN
         allocate ( harnoldi(Ninner+1, Ninner, Nouter) )
         Dmem(1)=Dmem(1)+REAL((Ninner+1)*Ninner*Nouter,r8)
       END IF
       harnoldi = IniVal
 
-      IF (.not.allocated(gmze)) THEN
+      IF (.not.associated(gmze)) THEN
         allocate ( gmze(Ninner, Nouter) )
         Dmem(1)=Dmem(1)+REAL(Ninner*Nouter,r8)
       END IF
       gmze = IniVal
 
-      IF (.not.allocated(cg_beta0)) THEN
+      IF (.not.associated(cg_beta0)) THEN
         allocate ( cg_beta0(Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter,r8)
       END IF
       cg_beta0 = IniVal
 
-      IF (.not.allocated(Jobs)) THEN
+      IF (.not.associated(Jobs)) THEN
         allocate ( Jobs(0:Ninner,1:Nouter) )
         Dmem(1)=Dmem(1)+REAL((Ninner+1)*Nouter,r8)
       END IF
@@ -2151,19 +2273,19 @@
 #  endif
 
 #  ifdef FOUR_DVAR
-      IF (.not.allocated(NLincrement)) THEN
+      IF (.not.associated(NLincrement)) THEN
         allocate ( NLincrement(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       NLincrement = IniVal
 
-      IF (.not.allocated(innovation)) THEN
+      IF (.not.associated(innovation)) THEN
         allocate ( innovation(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       innovation = IniVal
 
-      IF (.not.allocated(residual)) THEN
+      IF (.not.associated(residual)) THEN
         allocate ( residual(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2185,11 +2307,13 @@
 #  endif
 
 #  ifdef TLM_OBS
-      IF (.not.allocated(TLmodVal)) THEN
+#   ifndef IODA_OBS
+      IF (.not.associated(TLmodVal)) THEN
         allocate ( TLmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       TLmodVal = IniVal
+#   endif
 
 #   if defined ARRAY_MODES       || defined CLIPPING  || \
        defined RBL4DVAR          || defined R4DVAR    || \
@@ -2206,8 +2330,8 @@
 !  during the minimization in the "increment" phase.
 #    endif
 !
-#    ifndef SPLIT_EXECUTABLE 
-      IF (.not.allocated(TLmodVal_S)) THEN
+#    ifndef SPLIT_EXECUTABLE
+      IF (.not.associated(TLmodVal_S)) THEN
         allocate ( TLmodVal_S(Mobs,Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
       END IF
@@ -2217,13 +2341,13 @@
         (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR)
       IF (Master) THEN
-        IF (.not.allocated(tl_TLmodVal_S)) THEN
+        IF (.not.associated(tl_TLmodVal_S)) THEN
           allocate ( tl_TLmodVal_S(Mobs,Ninner,Nouter) )
           Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
         END IF
         tl_TLmodVal_S = IniVal
 
-        IF (.not.allocated(ad_TLmodVal_S)) THEN
+        IF (.not.associated(ad_TLmodVal_S)) THEN
           allocate ( ad_TLmodVal_S(Mobs,Ninner,Nouter) )
           Dmem(1)=Dmem(1)+REAL(Mobs*Ninner*Nouter,r8)
         END IF
@@ -2237,7 +2361,7 @@
        defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR
 
 #    ifndef SPLIT_EXECUTABLE
-      IF (.not.allocated(BCKmodVal)) THEN
+      IF (.not.associated(BCKmodVal)) THEN
         allocate ( BCKmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2247,7 +2371,7 @@
 #    ifdef RPCG
 
 #     ifndef SPLIT_EXECUTABLE
-      IF (.not.allocated(Hbk)) THEN
+      IF (.not.associated(Hbk)) THEN
         allocate ( Hbk(Mobs,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Nouter,r8)
       END IF
@@ -2257,25 +2381,25 @@
 #     if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
          defined TL_R4DVAR
 
-      IF (.not.allocated(tl_BCKmodVal)) THEN
+      IF (.not.associated(tl_BCKmodVal)) THEN
         allocate ( tl_BCKmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       tl_BCKmodVal = IniVal
 
-      IF (.not.allocated(tl_Hbk)) THEN
+      IF (.not.associated(tl_Hbk)) THEN
         allocate ( tl_Hbk(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       tl_Hbk = IniVal
 
-      IF (.not.allocated(ad_BCKmodVal)) THEN
+      IF (.not.associated(ad_BCKmodVal)) THEN
         allocate ( ad_BCKmodVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ad_BCKmodVal = IniVal
 
-      IF (.not.allocated(ad_Hbk)) THEN
+      IF (.not.associated(ad_Hbk)) THEN
         allocate ( ad_Hbk(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2285,6 +2409,8 @@
 #    endif
 #   endif
 #  endif
+
+#  ifndef IODA_OBS
 !
 !  Allocate and initialize observation types names and indices.
 !  Notice that a mapping from state-to-type (ObsState2Type) and its
@@ -2331,7 +2457,7 @@
 !
 !  Set inverse mapping type-to-state.
 !
-      IF (.not.allocated(ObsType2State)) THEN
+      IF (.not.associated(ObsType2State)) THEN
         allocate ( ObsType2State(0:MAXVAL(ObsState2Type)) )
         Dmem(1)=Dmem(1)+REAL(MAXVAL(ObsState2Type)+1,r8)
       END IF
@@ -2349,6 +2475,7 @@
           END SELECT
         END DO
       END IF
+#  endif
 
 #  ifdef WEAK_CONSTRAINT
 !
@@ -2360,69 +2487,69 @@
 #    define MyMobs Mobs
 #   endif
 
-      IF (.not.allocated(zcglwk)) THEN
+      IF (.not.associated(zcglwk)) THEN
         allocate ( zcglwk(MyMobs,Ninner+1,Nouter) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1)*Nouter,r8)
       END IF
       zcglwk = IniVal
 
 #   ifdef RPCG
-      IF (.not.allocated(vcglwk)) THEN
+      IF (.not.associated(vcglwk)) THEN
         allocate ( vcglwk(MyMobs,Ninner+1,Nouter) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1)*Nouter,r8)
       END IF
       vcglwk = IniVal
 
-      IF (.not.allocated(Jb0)) THEN
+      IF (.not.associated(Jb0)) THEN
         allocate ( Jb0(0:Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter+1,r8)
       END IF
       Jb0 = IniVal
 #   endif
 
-      IF (.not.allocated(vcglev)) THEN
+      IF (.not.associated(vcglev)) THEN
         allocate ( vcglev(MyMobs,Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*Ninner*Nouter,r8)
       END IF
       vcglev = IniVal
 
-      IF (.not.allocated(zgrad0)) THEN
+      IF (.not.associated(zgrad0)) THEN
         allocate ( zgrad0(MyMobs,Nouter) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*Nouter,r8)
       END IF
       zgrad0 = IniVal
 
-      IF (.not.allocated(vgrad0)) THEN
+      IF (.not.associated(vgrad0)) THEN
         allocate ( vgrad0(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       vgrad0 = IniVal
 
-     IF (.not.allocated(vgrad0s)) THEN
+     IF (.not.associated(vgrad0s)) THEN
         allocate ( vgrad0s(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       vgrad0s = IniVal
 
-      IF (.not.allocated(gdgw)) THEN
+      IF (.not.associated(gdgw)) THEN
         allocate ( gdgw(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       gdgw = IniVal
 
-      IF (.not.allocated(vgnorm)) THEN
+      IF (.not.associated(vgnorm)) THEN
         allocate ( vgnorm(Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter,r8)
       END IF
       vgnorm = IniVal
 
-      IF (.not.allocated(cg_innov)) THEN
+      IF (.not.associated(cg_innov)) THEN
         allocate ( cg_innov(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       cg_innov = IniVal
 
-      IF (.not.allocated(cg_dla)) THEN
+      IF (.not.associated(cg_dla)) THEN
         allocate ( cg_dla(Ninner,Nouter) )
         Dmem(1)=Dmem(1)+REAL(Ninner*Nouter,r8)
       END IF
@@ -2430,7 +2557,7 @@
 
 #   if !defined RPCG && !defined SPLIT_EXCUTABLE
 
-      IF (.not.allocated(cg_pxsave)) THEN
+      IF (.not.associated(cg_pxsave)) THEN
         allocate ( cg_pxsave(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2441,13 +2568,13 @@
 #   if defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
        defined TL_R4DVAR
 
-      IF (.not.allocated(ad_zcglwk)) THEN
+      IF (.not.associated(ad_zcglwk)) THEN
         allocate ( ad_zcglwk(MyMobs,Ninner+1) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1),r8)
       END IF
       ad_zcglwk = IniVal
 
-      IF (.not.allocated(ad_zgrad0)) THEN
+      IF (.not.associated(ad_zgrad0)) THEN
         allocate ( ad_zgrad0(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
@@ -2457,37 +2584,37 @@
        (defined SENSITIVITY_4DVAR || defined TL_RBL4DVAR || \
         defined TL_R4DVAR)
 
-      IF (.not.allocated(ad_vcglwk)) THEN
+      IF (.not.associated(ad_vcglwk)) THEN
         allocate ( ad_vcglwk(MyMobs,Ninner+1) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1),r8)
       END IF
       ad_vcglwk = IniVal
 
-      IF (.not.allocated(ad_vgrad0)) THEN
+      IF (.not.associated(ad_vgrad0)) THEN
         allocate ( ad_vgrad0(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       ad_vgrad0 = IniVal
 
-      IF (.not.allocated(ad_vgrad0s)) THEN
+      IF (.not.associated(ad_vgrad0s)) THEN
         allocate ( ad_vgrad0s(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       ad_vgrad0s = IniVal
 
-      IF (.not.allocated(ad_Jb0)) THEN
+      IF (.not.associated(ad_Jb0)) THEN
         allocate ( ad_Jb0(0:Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter+1,r8)
       END IF
       ad_Jb0 = IniVal
 
-      IF (.not.allocated(ad_ObsErr)) THEN
+      IF (.not.associated(ad_ObsErr)) THEN
         allocate ( ad_ObsErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ad_ObsErr = IniVal
 
-      IF (.not.allocated(ad_ObsScale)) THEN
+      IF (.not.associated(ad_ObsScale)) THEN
         allocate ( ad_ObsScale(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2495,19 +2622,19 @@
 
 #    endif
 
-      IF (.not.allocated(ad_cg_innov)) THEN
+      IF (.not.associated(ad_cg_innov)) THEN
         allocate ( ad_cg_innov(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ad_cg_innov = IniVal
 
-      IF (.not.allocated(ad_cg_pxsave)) THEN
+      IF (.not.associated(ad_cg_pxsave)) THEN
         allocate ( ad_cg_pxsave(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       ad_cg_pxsave = IniVal
 
-      IF (.not.allocated(ad_cg_pxout)) THEN
+      IF (.not.associated(ad_cg_pxout)) THEN
         allocate ( ad_cg_pxout(Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter,r8)
       END IF
@@ -2515,7 +2642,7 @@
 
 #    ifdef IMPACT_INNER
 
-      IF (.not.allocated(ad_ObsVal)) THEN
+      IF (.not.associated(ad_ObsVal)) THEN
         allocate ( ad_ObsVal(Mobs,Ninner) )
         Dmem(1)=Dmem(1)+REAL(Mobs*Ninner,r8)
       END IF
@@ -2523,7 +2650,7 @@
 
 #    else
 
-      IF (.not.allocated(ad_ObsVal)) THEN
+      IF (.not.associated(ad_ObsVal)) THEN
         allocate ( ad_ObsVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2531,13 +2658,13 @@
 
 #    endif
 
-      IF (.not.allocated(tl_zcglwk)) THEN
+      IF (.not.associated(tl_zcglwk)) THEN
         allocate ( tl_zcglwk(MyMobs,Ninner+1) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1),r8)
       END IF
       tl_zcglwk = IniVal
 
-      IF (.not.allocated(tl_zgrad0)) THEN
+      IF (.not.associated(tl_zgrad0)) THEN
         allocate ( tl_zgrad0(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
@@ -2545,37 +2672,37 @@
 
 #    ifdef RPCG
 
-      IF (.not.allocated(tl_vcglwk)) THEN
+      IF (.not.associated(tl_vcglwk)) THEN
         allocate ( tl_vcglwk(MyMobs,Ninner+1) )
         Dmem(1)=Dmem(1)+REAL((MyMobs)*(Ninner+1),r8)
       END IF
       tl_vcglwk = IniVal
 
-      IF (.not.allocated(tl_vgrad0)) THEN
+      IF (.not.associated(tl_vgrad0)) THEN
         allocate ( tl_vgrad0(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       tl_vgrad0 = IniVal
 
-      IF (.not.allocated(tl_vgrad0s)) THEN
+      IF (.not.associated(tl_vgrad0s)) THEN
         allocate ( tl_vgrad0s(MyMobs) )
         Dmem(1)=Dmem(1)+REAL(MyMobs,r8)
       END IF
       tl_vgrad0s = IniVal
 
-      IF (.not.allocated(tl_Jb0)) THEN
+      IF (.not.associated(tl_Jb0)) THEN
         allocate ( tl_Jb0(0:Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter+1,r8)
       END IF
       tl_Jb0 = IniVal
 
-      IF (.not.allocated(tl_ObsErr)) THEN
+      IF (.not.associated(tl_ObsErr)) THEN
         allocate ( tl_ObsErr(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       tl_ObsErr = IniVal
 
-      IF (.not.allocated(tl_ObsScale)) THEN
+      IF (.not.associated(tl_ObsScale)) THEN
         allocate ( tl_ObsScale(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
@@ -2583,25 +2710,25 @@
 
 #    endif
 
-      IF (.not.allocated(tl_cg_innov)) THEN
+      IF (.not.associated(tl_cg_innov)) THEN
         allocate ( tl_cg_innov(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       tl_cg_innov = IniVal
 
-      IF (.not.allocated(tl_cg_pxsave)) THEN
+      IF (.not.associated(tl_cg_pxsave)) THEN
         allocate ( tl_cg_pxsave(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF
       tl_cg_pxsave = IniVal
 
-      IF (.not.allocated(tl_cg_pxout)) THEN
+      IF (.not.associated(tl_cg_pxout)) THEN
         allocate ( tl_cg_pxout(Nouter) )
         Dmem(1)=Dmem(1)+REAL(Nouter,r8)
       END IF
       tl_cg_pxout = IniVal
 
-      IF (.not.allocated(tl_ObsVal)) THEN
+      IF (.not.associated(tl_ObsVal)) THEN
         allocate ( tl_ObsVal(Mobs) )
         Dmem(1)=Dmem(1)+REAL(Mobs,r8)
       END IF

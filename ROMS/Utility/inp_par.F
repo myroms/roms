@@ -29,7 +29,7 @@
       USE mod_strings
 #endif
 !
-      USE dateclock_mod,    ONLY : get_date
+      USE dateclock_mod,    ONLY : get_date, get_etime
 #ifdef DISTRIBUTE
       USE distribute_mod,   ONLY : mp_bcasti, mp_bcasts
 #endif
@@ -48,6 +48,7 @@
       implicit none
 !
       PUBLIC  :: inp_par
+      PRIVATE
 !
       CONTAINS
 !
@@ -120,7 +121,9 @@
       END IF
 #endif
 !
-!  Get current date.
+!  Start wall-clock and get current date.
+!
+      CALL get_etime (.TRUE.)
 !
 #ifdef DISTRIBUTE
       IF (Master) CALL get_date (date_str)

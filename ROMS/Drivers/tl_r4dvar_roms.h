@@ -1201,7 +1201,7 @@
 
         SELECT CASE (DAV(ng)%IOtype)
           CASE (io_nf90)
-            CALL netcdf_get_fvar (ng, iTLM, OBS(ng)%name,               &
+            CALL netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,             &
      &                            'obs_value',                          &
      &                            tl_ObsVal(Mstr:),                     &
      &                            start = (/NstrObs(ng)/),              &
@@ -1209,7 +1209,7 @@
 
 #if defined PIO_LIB && defined DISTRIBUTE
           CASE (io_pio)
-            CALL pio_netcdf_get_fvar (ng, iTLM, OBS(ng)%name,           &
+            CALL pio_netcdf_get_fvar (ng, iTLM, OBS(1,ng)%name,         &
      &                                'obs_value',                      &
      &                                tl_ObsVal(Mstr:),                 &
      &                                start = (/NstrObs(ng)/),          &

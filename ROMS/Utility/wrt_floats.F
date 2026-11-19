@@ -32,6 +32,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_floats_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

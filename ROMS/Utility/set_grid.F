@@ -40,6 +40,10 @@
 #ifdef NESTING
       USE nesting_mod,          ONLY : nesting
 #endif
+#ifdef IODA_OBS
+      USE roms_hofx_mod,        ONLY : AreaAveragedOperator,            &
+     &                                 geom_hofx
+#endif
       USE strings_mod,          ONLY : FoundError
 !
       implicit none
@@ -145,6 +149,20 @@
 !-----------------------------------------------------------------------
 !
       CALL nesting (ng, model, ndxdy)
+#endif
+
+#ifdef IODA_OBS
+!
+!-----------------------------------------------------------------------
+!  If IODA obsevations, set global geometry arrays for processing 
+!  area-averaged H(x) operators.
+!-----------------------------------------------------------------------
+!
+      IF (AreaAveragedOperator) THEN
+        DO tile=first_tile(ng),last_tile(ng),+1
+          CALL geom_hofx(ng)%create (ng, tile, model)
+        END DO
+      END IF
 #endif
 
 #if defined WTYPE_GRID && defined ANA_WTYPE     && \

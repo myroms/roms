@@ -107,6 +107,7 @@
 # if defined PIO_LIB && defined DISTRIBUTE
       PRIVATE :: wrt_extract_pio
 # endif
+      PRIVATE
 !
       CONTAINS
 !

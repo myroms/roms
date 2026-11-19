@@ -49,8 +49,7 @@
 !
       logical, save :: recordless = .FALSE.
 
-      logical, dimension(3) :: update =                                 &
-     &         (/ .FALSE., .FALSE., .FALSE. /)
+      logical, dimension(3) :: update
 !
       integer :: ILB, IUB, JLB, JUB
       integer :: LBi, UBi, LBj, UBj
@@ -63,6 +62,9 @@
 !
       character (len=*), parameter :: MyFile =                          &
      &  __FILE__
+!
+      SourceFile=MyFile
+      update=.FALSE.
 !
 !  Lower and upper bounds for nontiled (global values) boundary arrays.
 !

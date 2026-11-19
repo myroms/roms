@@ -54,8 +54,25 @@
 !                                                                      !
 !=======================================================================
 !
-      implicit none
+      USE mod_param
+      USE mod_parallel
+      USE mod_grid
+      USE mod_ncparam
+      USE mod_scalars
 
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_collect
+#endif
+!
+      implicit none
+!
+      PUBLIC  :: extract_sta2d
+#ifdef SOLVE3D
+      PUBLIC  :: extract_sta3d
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************
@@ -63,17 +80,6 @@
      &                          LBi, UBi, LBj, UBj, Ascl, A,            &
      &                          Npos, Xpos, Ypos, Apos)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_collect
-# endif
 !
 !  Imported variable declarations.
 !
@@ -154,7 +160,7 @@
               w221=w221*wsum
             ELSE
               bounded(np)=0.0_r8
-            ENDIF
+            END IF
 #endif
             Apos(np)=Ascl*(w111*A(i1,j1)+                               &
      &                     w211*A(i2,j1)+                               &
@@ -333,17 +339,6 @@
      &                          LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,  &
      &                          Npos, Xpos, Ypos, Zpos, Apos)
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_grid
-      USE mod_ncparam
-      USE mod_scalars
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_collect
-# endif
 !
 !  Imported variable declarations.
 !
