@@ -50,64 +50,63 @@
 !                                                                      !
 !=======================================================================
 !
-!       USE mod_param
-!
         implicit none
 !
-        PUBLIC :: allocate_stepping
-        PUBLIC :: deallocate_stepping
+        PUBLIC  :: allocate_stepping
+        PUBLIC  :: deallocate_stepping
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define module variables.
 !-----------------------------------------------------------------------
 !
-        integer, allocatable :: knew(:)
-        integer, allocatable :: krhs(:)
-        integer, allocatable :: kstp(:)
+        integer, public, allocatable :: knew(:)
+        integer, public, allocatable :: krhs(:)
+        integer, public, allocatable :: kstp(:)
 !$OMP THREADPRIVATE (knew, krhs, kstp)
 !
-        integer, allocatable :: nnew(:)
-        integer, allocatable :: nrhs(:)
-        integer, allocatable :: nstp(:)
+        integer, public, allocatable :: nnew(:)
+        integer, public, allocatable :: nrhs(:)
+        integer, public, allocatable :: nstp(:)
 !$OMP THREADPRIVATE (nnew, nrhs, nstp)
 
 #ifdef FLOATS
 !
-        integer, allocatable :: nf(:)
-        integer, allocatable :: nfp1(:)
-        integer, allocatable :: nfm3(:)
-        integer, allocatable :: nfm2(:)
-        integer, allocatable :: nfm1(:)
+        integer, public, allocatable :: nf(:)
+        integer, public, allocatable :: nfp1(:)
+        integer, public, allocatable :: nfm3(:)
+        integer, public, allocatable :: nfm2(:)
+        integer, public, allocatable :: nfm1(:)
 !$OMP THREADPRIVATE (nf, nfp1, nfm3, nfm2, nfm1)
 #endif
 
 #ifdef ICE_MODEL
 !
-        integer, allocatable :: linew(:)
-        integer, allocatable :: liold(:)
-        integer, allocatable :: liunw(:)
-        integer, allocatable :: liuol(:)
-        integer, allocatable :: lienw(:)
-        integer, allocatable :: lieol(:)
+        integer, public, allocatable :: linew(:)
+        integer, public, allocatable :: liold(:)
+        integer, public, allocatable :: liunw(:)
+        integer, public, allocatable :: liuol(:)
+        integer, public, allocatable :: lienw(:)
+        integer, public, allocatable :: lieol(:)
 !$OMP THREADPRIVATE (linew, liold, liunw, liuol, lienw, lieol)
 #endif
 !
 #ifdef ADJUST_BOUNDARY
-        integer, allocatable :: Lbinp(:)
-        integer, allocatable :: Lbout(:)
+        integer, public, allocatable :: Lbinp(:)
+        integer, public, allocatable :: Lbout(:)
 #endif
 
 #if defined ADJUST_BOUNDARY || defined ADJUST_STFLUX || \
     defined ADJUST_WSTRESS
-        integer, allocatable :: Lfinp(:)
-        integer, allocatable :: Lfout(:)
+        integer, public, allocatable :: Lfinp(:)
+        integer, public, allocatable :: Lfout(:)
 #endif
 
-        integer, allocatable :: Lnew(:)
-        integer, allocatable :: Lold(:)
+        integer, public, allocatable :: Lnew(:)
+        integer, public, allocatable :: Lold(:)
 
 #if defined SSH_TIDES || defined UV_TIDES
-        integer, allocatable :: NTC(:)
+        integer, public, allocatable :: NTC(:)
 #endif
 !
       CONTAINS

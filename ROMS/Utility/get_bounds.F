@@ -26,6 +26,7 @@
       PUBLIC  :: tile_bounds_1d
       PUBLIC  :: tile_bounds_2d
       PRIVATE :: var_bounds
+      PRIVATE
 !
       CONTAINS
 !

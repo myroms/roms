@@ -34,15 +34,16 @@
 !
         implicit none
 !
-        PUBLIC :: allocate_bbl
-        PUBLIC :: deallocate_bbl
-        PUBLIC :: initialize_bbl
+        PUBLIC  :: allocate_bbl
+        PUBLIC  :: deallocate_bbl
+        PUBLIC  :: initialize_bbl
+        PRIVATE
 !
 !-----------------------------------------------------------------------
 !  Define T_BBL structure.
 !-----------------------------------------------------------------------
 !
-        TYPE T_BBL
+        TYPE, PUBLIC :: T_BBL
 
           integer,  pointer :: Iconv(:,:)
 
@@ -59,7 +60,7 @@
 
         END TYPE T_BBL
 !
-        TYPE (T_BBL), allocatable :: BBL(:)
+        TYPE (T_BBL), public, allocatable :: BBL(:)
 !
       CONTAINS
 !

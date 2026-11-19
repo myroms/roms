@@ -54,6 +54,13 @@
 #endif
       END INTERFACE get_varcoords
 !
+      PUBLIC  :: get_varcoords
+      PRIVATE :: get_varcoords_nf90
+#if defined PIO_LIB && defined DISTRIBUTE
+      PRIVATE :: get_varcoords_pio
+#endif
+      PRIVATE
+!
       CONTAINS
 !
 !***********************************************************************

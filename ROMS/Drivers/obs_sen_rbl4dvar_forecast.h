@@ -813,13 +813,13 @@
       SourceFile=MyFile
       DO ng=1,Ngrids
 #ifdef OBS_SPACE
-        CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name)
+        CALL close_file (ng, iNLM, OBS(1,ng), OBS(1,ng)%name)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
         IF (ImpOrd.ne.2) THEN
-          WRITE (OBS(ng)%name,90) TRIM(OIFB(ng)%head)
+          WRITE (OBS(1,ng)%name,90) TRIM(OIFB(ng)%head)
         ELSE
-          WRITE (OBS(ng)%name,90) TRIM(OIFA(ng)%head)
+          WRITE (OBS(1,ng)%name,90) TRIM(OIFA(ng)%head)
         END IF
 #else
         CALL close_file (ng, iNLM, ADS(ng), ADS(ng)%name)
@@ -885,7 +885,7 @@
         Lsen4DVAR(ng)=.TRUE.
         LsenFCT(ng)=.FALSE.
 #endif
-        CALL close_file (ng, iADM, OBS(ng), OBS(ng)%name)
+        CALL close_file (ng, iADM, OBS(1,ng), OBS(1,ng)%name)
         IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
         CALL ad_initial (ng)
@@ -958,13 +958,13 @@
         SourceFile=MyFile
         DO ng=1,Ngrids
 #ifdef OBS_SPACE
-          CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iNLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
           IF (ImpOrd.eq.2) THEN
-             WRITE (OBS(ng)%name,90) TRIM(OIFB(ng)%head)
+             WRITE (OBS(1,ng)%name,90) TRIM(OIFB(ng)%head)
           ELSE
-             WRITE (OBS(ng)%name,90) TRIM(OIFA(ng)%head)
+             WRITE (OBS(1,ng)%name,90) TRIM(OIFA(ng)%head)
           END IF
 #else
           CALL close_file (ng, iNLM, ADS(ng), ADS(ng)%name)
@@ -1021,7 +1021,7 @@
           Lsen4DVAR(ng)=.TRUE.
           LsenFCT(ng)=.FALSE.
 #endif
-          CALL close_file (ng, iADM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iADM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL ad_initial (ng)
@@ -1223,7 +1223,7 @@
           LsenFCT(ng)=.FALSE.
 #endif
 !!AMM
-          CALL close_file (ng, iADM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iADM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL ad_initial (ng)
@@ -1357,10 +1357,10 @@
 !  file.
 !
         DO ng=1,Ngrids
-          CALL close_file (ng, iNLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iNLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 
-          WRITE (OBS(ng)%name,80) TRIM(OBS(ng)%head), charC
+          WRITE (OBS(1,ng)%name,80) TRIM(OBS(1,ng)%head), charC
         END DO
 !
         CALL deallocate_fourdvar
@@ -1570,7 +1570,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
-          CALL close_file (ng, iTLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iTLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL tl_initial (ng)
@@ -1697,7 +1697,7 @@
             LadjVAR(ng)=.TRUE.
 #  endif
 # endif
-            CALL close_file (ng, iADM, OBS(ng), OBS(ng)%name)
+            CALL close_file (ng, iADM, OBS(1,ng), OBS(1,ng)%name)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
             CALL ad_initial (ng)
@@ -1813,7 +1813,7 @@
 !
           DO ng=1,Ngrids
             ITL(ng)%Rindex=Rec1
-            CALL close_file (ng, iTLM, OBS(ng), OBS(ng)%name)
+            CALL close_file (ng, iTLM, OBS(1,ng), OBS(1,ng)%name)
 !
             CALL tl_initial (ng)
             IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
@@ -2018,7 +2018,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
-          CALL close_file (ng, iTLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iTLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL tl_initial (ng)
@@ -2160,7 +2160,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
-          CALL close_file (ng, iTLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iTLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL tl_initial (ng)
@@ -2303,7 +2303,7 @@
 !
         DO ng=1,Ngrids
           ITL(ng)%Rindex=Rec1
-          CALL close_file (ng, iTLM, OBS(ng), OBS(ng)%name)
+          CALL close_file (ng, iTLM, OBS(1,ng), OBS(1,ng)%name)
           IF (FoundError(exit_flag, NoError, __LINE__, MyFile)) RETURN
 !
           CALL tl_initial (ng)

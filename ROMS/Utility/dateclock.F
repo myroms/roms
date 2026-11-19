@@ -31,6 +31,8 @@
 !    get_date     Retuns today date string of the form:                !
 !                   DayOfWeak - Month day, year - hh:mm:ss ?M          !
 !                                                                      !
+!    get_etime    Computes and reports run elapsed time.               !
+!                                                                      !
 !    ref_clock    Sets application time clock/reference and loads its  !
 !                   to structure Rclock of TYPE T_CLOCK.               !
 !                                                                      !
@@ -52,6 +54,11 @@
 !
       USE mod_kinds
 !
+      USE mod_parallel, ONLY : Master
+      USE mod_scalars,  ONLY : Rclock, time_ref
+      USE mod_iounits,  ONLY : stdout
+      USE round_mod,    ONLY : ROUND
+!
       implicit none
 !
       PUBLIC :: caldate
@@ -60,12 +67,21 @@
       PUBLIC :: datevec
       PUBLIC :: day_code
       PUBLIC :: get_date
+      PUBLIC :: get_etime
       PUBLIC :: ref_clock
       PUBLIC :: ROMS_clock
       PUBLIC :: time_iso8601
       PUBLIC :: time_string
       PUBLIC :: time_units
       PUBLIC :: yearday
+!
+      PRIVATE
+!
+!  Module variables.
+!
+      integer (i8b) :: start_tick      ! start of wall-clock count
+      integer (i8b) :: end_tick        ! end   of wall-clock count
+      integer (i8b) :: clock_rate      ! number of counts per second
 !
       CONTAINS
 !
@@ -107,11 +123,6 @@
 !  the calendar.                                                       !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
-!
-      USE round_mod, ONLY : ROUND
 !
 !  Imported variable declarations.
 !
@@ -196,10 +207,10 @@
 !  The model clock is the elapsed time since reference time of the form
 !  'time-units since 1968-05-23 00:00:00 GMT'. It is a Truncated Julian
 !  day introduced by NASA and primarily used by Astronomers. It has
-!  a year length of 365.25 days. It is less used nowadays since the length
-!  of the year is 648 seconds less (365.2425) resulting in too many leap
-!  years.  So it was corrected after 15 October 1582 and it is now called
-!  the Gregorian Calendar.
+!  a year length of 365.25 days. It is less used nowadays since the
+!  length of the year is 648 seconds less (365.2425) resulting in too
+!  many leap years.  So it was corrected after 15 October 1582 and it
+!  is now called the Gregorian Calendar.
 !
       ELSE IF (INT(time_ref).eq.-2) THEN
         IF (CurrentTime.ge.RefDateNumber) THEN        ! fractional day
@@ -302,8 +313,6 @@
 !                    DateValue(2) => fractional seconds                !
 !                                                                      !
 !=======================================================================
-!
-      USE mod_scalars, ONLY : time_ref
 !
 !  Imported variable declarations.
 !
@@ -411,7 +420,7 @@
 !     datenum(0000,00,00) = 0
 !
         IF ((year.eq.0).and.(month.eq.0).and.(day.eq.0)) THEN
-          MyDay=0;
+          MyDay=0
         ELSE
           IF (MyDay.lt.0) THEN
             MyDay=MyDay+offset-1
@@ -542,9 +551,6 @@
 !                                                                      !
 !***********************************************************************
 !
-      USE mod_scalars, ONLY : Rclock, time_ref
-      USE round_mod,   ONLY : ROUND
-!
 !  Imported variable declarations.
 !
       logical,  intent(in) :: IsDayUnits
@@ -557,7 +563,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: ProlepticJulian = .FALSE.
+      logical, parameter :: ProlepticJulian = .FALSE.
 
       integer :: MyDay, MyMonth, MyYear, yday
       integer :: ja, jalpha, jb, jc, jd, jday, je
@@ -697,7 +703,7 @@
           MyDateNumber=MyDateNumber-offset+1.0_dp   ! zero origin,
         ELSE                                        ! datenum(0,0,0)=0,
           MyDateNumber=MyDateNumber-offset          ! 61 days offset
-        ENDIF
+        END IF
 !
         MyYear=INT((10000.0_dp*AINT(MyDateNumber)+14780.0_dp)/          &
      &             3652425.0_dp)
@@ -798,7 +804,7 @@
 
       integer :: i, leap, no_day, no_yr, nqy, nyc, nyqc
 
-      integer, dimension(12) :: month_day =                             &
+      integer, parameter, dimension(12) :: month_day =                  &
      &         (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
 !
 !-----------------------------------------------------------------------
@@ -880,10 +886,10 @@
 
       integer, dimension(8) :: values
 
-      integer, dimension(31) :: lday =                                  &
+      integer, parameter, dimension(31) :: lday =                       &
      &          (/ (1,i=1,9), (2,i=1,22) /)
 
-      integer, dimension(12) :: lmonth =                                &
+      integer, parameter, dimension(12) :: lmonth =                     &
      &          (/ 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 /)
 
       character (len= 5) :: czone
@@ -894,15 +900,15 @@
       character (len=20) :: fmt
       character (len=44) :: dstring
 
-      character (len=3), dimension(0:1) :: ampm =                       &
+      character (len=3), parameter, dimension(0:1) :: ampm =            &
      &                   (/' AM',' PM'/)
 
-      character (len=9), dimension(0:6) :: day =                        &
+      character (len=9), parameter, dimension(0:6) :: day =             &
      &                   (/ 'Sunday   ','Monday   ','Tuesday  ',        &
      &                      'Wednesday','Thursday ','Friday   ',        &
      &                      'Saturday ' /)
 
-      character (len=9), dimension(12) :: month =                       &
+      character (len=9), parameter, dimension(12) :: month =            &
      &                   (/ 'January  ','February ','March    ',        &
      &                      'April    ','May      ','June     ',        &
      &                      'July     ','August   ','September',        &
@@ -968,6 +974,66 @@
       END SUBROUTINE get_date
 !
 !***********************************************************************
+      SUBROUTINE get_etime (Lstart)
+!***********************************************************************
+!                                                                      !
+!  This routine computes and reports ROMS run elapsed time (wall-clock !
+!  time). It uses SYSTEM_CLOCK intrinsic function.                     !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Lstart     Elapsed time switch (logical)                         !
+!                  Lstart = .TRUE.    starts elapsed time clock        !
+!                  Lstart = .FALSE.   reports elapsed time             !
+!                                                                      !
+!***********************************************************************
+!
+!  Imported variable declarations.
+!
+      logical, intent(in) :: Lstart
+!
+!  Local variable declarations.
+!
+      integer (i8b) :: remainder, total_seconds
+      integer       :: days, hours, minutes, seconds       
+!
+      real (dp)     :: etime
+!
+      character (len=40) :: string
+!
+!-----------------------------------------------------------------------
+!  Compute and report run elapsed time.
+!-----------------------------------------------------------------------
+!
+!  Compute ROMS run wall-clock time in seconds.
+!
+      IF (Lstart) THEN
+        CALL system_clock (start_tick)
+      ELSE
+        CALL system_clock (end_tick, clock_rate)
+        etime=REAL(end_tick-start_tick, dp)/REAL(clock_rate, dp)
+      END IF
+!
+!  Report elapsed time in DD hh:mm:sec.
+!
+      IF (.not.Lstart.and.Master) THEN
+        total_seconds=INT(etime)
+        days=total_seconds/86400
+        remainder=MOD(total_seconds, 86400)
+        hours=remainder/3600
+        remainder=MOD(remainder, 3600)
+        minutes=remainder/60
+        seconds=MOD(remainder, 60)
+        WRITE (string,10) days, hours, minutes, seconds
+ 10     FORMAT ('ROMS: Wall-Clock Time = ',                             &
+     &          i2.2, 1x, i2.2, ':', i2.2, ':', i2.2)
+        WRITE (stdout,'(1x,a)') TRIM(string)
+      END IF
+!
+      RETURN
+      END SUBROUTINE get_etime
+!
+!***********************************************************************
       SUBROUTINE ref_clock (r_time)
 !***********************************************************************
 !                                                                      !
@@ -998,9 +1064,6 @@
 !                  Rclock%calendar   => date calendar                  !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !
@@ -1175,9 +1238,6 @@
 !                  from reference time (real)                          !
 !                                                                      !
 !***********************************************************************
-!
-      USE mod_param
-      USE mod_scalars
 !
 !  Imported variable declarations.
 !

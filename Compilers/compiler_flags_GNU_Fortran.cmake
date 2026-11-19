@@ -31,13 +31,13 @@ set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -frepack-arrays -fallow-argumen
 # RELEASE FLAGS
 ###########################################################################
 
-set( CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math" )
+set( CMAKE_Fortran_FLAGS_RELEASE "-O3" )
 
 ###########################################################################
 # RELEASE WITH DEBUG INFORMATION FLAGS
 ###########################################################################
 
-set( CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-O3 -g -ffast-math -fbounds-check -fbacktrace -fcheck=all" )
+set( CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-O3 -g -fbounds-check -fbacktrace -fcheck=all" )
 
 ###########################################################################
 # DEBUG FLAGS

@@ -46,7 +46,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
@@ -111,7 +111,7 @@
       tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
@@ -177,7 +177,7 @@
           END DO
       END SELECT
 !
-!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Advance in K-space implicit pseudo-diffusion equation using
 !  Weaver et al. (2016) algorithm 3 (fixed number of iterations
 !  to a pre-determined value K).
 !
@@ -340,7 +340,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
@@ -402,7 +402,7 @@
       self%ci2d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
@@ -664,7 +664,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
@@ -730,7 +730,7 @@
       tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
@@ -780,7 +780,7 @@
           END DO
       END SELECT
 !
-!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Advance in K-space implicit pseudo-diffusion equation using
 !  Weaver et al. (2016) algorithm 3 (fixed number of iterations
 !  to a pre-determined value K).
 !
@@ -957,7 +957,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
       integer,            intent(in   ) :: NiterCI   ! CI iterations
@@ -1020,7 +1020,7 @@
       self%ci3d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms). Also, select pre-computed extrema
 !  eigenvalues of matrix A.
 !
@@ -1283,7 +1283,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -1354,7 +1354,7 @@
       tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -1418,7 +1418,7 @@
         END SELECT
       END IF
 !
-!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Advance in K-space implicit pseudo-diffusion equation using
 !  Weaver et al. (2016) algorithm 3 (fixed number of iterations
 !  to a pre-determined value K).
 !
@@ -1616,7 +1616,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -1684,7 +1684,7 @@
       self%ciB1d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -2024,7 +2024,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -2097,7 +2097,7 @@
       tl_scale=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
@@ -2166,7 +2166,7 @@
         END SELECT
       END IF
 !
-!  Advance in K-space implicit pseudo-diffusion equation using 
+!  Advance in K-space implicit pseudo-diffusion equation using
 !  Weaver et al. (2016) algorithm 3 (fixed number of iterations
 !  to a pre-determined value K).
 !
@@ -2378,7 +2378,7 @@
       integer,            intent(in   ) :: ng        ! nested grid
       integer,            intent(in   ) :: tile      ! domain partition
       integer,            intent(in   ) :: model     ! kernel ID
-      integer,            intent(in   ) :: ifield    ! state field ID 
+      integer,            intent(in   ) :: ifield    ! state field ID
       integer,            intent(in   ) :: ibry      ! boundary ID
       integer,            intent(in   ) :: ctype     ! C-grid type
       integer,            intent(in   ) :: ms        ! multiscale index
@@ -2447,7 +2447,7 @@
       self%ciB2d_x=0.0_r8
 !
 !  Select number of K-Laplacian inverse operator applications (Mlap)
-!  for requested variable in the 2D state/control vector and 
+!  for requested variable in the 2D state/control vector and
 !  multiscale index/counter (ms).
 !
 !  Mlap MUST be greater than 2 and EVEN. Choose Mlap > or O(10) to
