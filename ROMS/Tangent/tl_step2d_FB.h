@@ -155,7 +155,7 @@
      &                     FORCES(ng) % Pair,                           &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                     COUPLING(ng) % rhoA,                         &
      &                     COUPLING(ng) % tl_rhoA,                      &
      &                     COUPLING(ng) % rhoS,                         &
@@ -250,7 +250,7 @@
      &                           Pair,                                  &
 # endif
 #else
-# ifdef VAR_RHO_2D
+# ifdef VAR_RHO_2D_NOT_YET
      &                           rhoA, tl_rhoA,                         &
      &                           rhoS, tl_rhoS,                         &
 # endif
@@ -352,7 +352,7 @@
       real(r8), intent(in   ) :: Pair(LBi:,LBj:)
 #  endif
 # else
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in   ) :: rhoA(LBi:,LBj:)
       real(r8), intent(in   ) :: rhoS(LBi:,LBj:)
       real(r8), intent(in   ) :: tl_rhoA(LBi:,LBj:)
@@ -471,7 +471,7 @@
       real(r8), intent(in   ) :: Pair(LBi:UBi,LBj:UBj)
 #  endif
 # else
-#  ifdef VAR_RHO_2D
+#  ifdef VAR_RHO_2D_NOT_YET
       real(r8), intent(in   ) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: rhoS(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: tl_rhoA(LBi:UBi,LBj:UBj)
@@ -576,7 +576,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rubar
@@ -620,7 +620,7 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rzeta2
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rzetaSA
 #endif
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rzeta
@@ -664,7 +664,7 @@
       grad=IniVal
 # endif
       rzeta2=IniVal
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       rzetaSA=IniVal
 # endif
       rzeta=IniVal
@@ -989,7 +989,7 @@
      &                 bkw1*tl_zeta(i,j,kbak)+                          &
      &                 bkw2*tl_zeta(i,j,kold)
 
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
           rzeta(i,j)=(1.0_r8+rhoS(i,j))*zwrk(i,j)
           tl_rzeta(i,j)=(1.0_r8+rhoS(i,j))*tl_zwrk(i,j)+                &
      &                  tl_rhoS(i,j)*zwrk(i,j)
@@ -1146,7 +1146,7 @@
 !-----------------------------------------------------------------------
 !
       cff1=0.5_r8*g
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
       cff2=0.333333333333_r8
 #endif
 #if defined ATM_PRESS && !defined SOLVE3D
@@ -1160,7 +1160,7 @@
 !^   &                   h(i  ,j))*                                     &
 !^   &                  (rzeta(i-1,j)-                                  &
 !^   &                   rzeta(i  ,j))+                                 &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                  (h(i-1,j)-                                      &
 !^   &                   h(i  ,j))*                                     &
 !^   &                  (rzetaSA(i-1,j)+                                &
@@ -1182,7 +1182,7 @@
      &                      h(i ,j))*                                   &
      &                     (tl_rzeta(i-1,j)-                            &
      &                      tl_rzeta(i  ,j))+                           &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
      &                     (tl_h(i-1,j)-                                &
      &                      tl_h(i  ,j))*                               &
      &                     (rzetaSA(i-1,j)+                             &
@@ -1246,7 +1246,7 @@
 !^   &                   h(i,j  ))*                                     &
 !^   &                  (rzeta(i,j-1)-                                  &
 !^   &                   rzeta(i,j  ))+                                 &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                  (h(i,j-1)-                                      &
 !^   &                   h(i,j  ))*                                     &
 !^   &                  (rzetaSA(i,j-1)+                                &
@@ -1268,7 +1268,7 @@
      &                      h(i,j  ))*                                  &
      &                     (tl_rzeta(i,j-1)-                            &
      &                      tl_rzeta(i,j  ))+                           &
-#if defined VAR_RHO_2D && defined SOLVE3D
+#if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
      &                     (tl_h(i,j-1)-                                &
      &                      tl_h(i,j  ))*                               &
      &                     (rzetaSA(i,j-1)+                             &
@@ -2089,7 +2089,7 @@
 !^          zwrk(i,j)=zeta_new(i,j)-zeta(i,j,kstp)
 !^
             tl_zwrk(i,j)=tl_zeta_new(i,j)-tl_zeta(i,j,kstp)
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^          rzeta(i,j)=(1.0_r8+rhoS(i,j))*zwrk(i,j)
 !^
             tl_rzeta(i,j)=(1.0_r8+rhoS(i,j))*tl_zwrk(i,j)+              &
@@ -2121,7 +2121,7 @@
         END DO
 !
         cff1=0.5*g
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
         cff2=0.333333333333_r8
 # endif
         DO j=Jstr,Jend
@@ -2133,7 +2133,7 @@
 !^   &                     h(i  ,j))*                                   &
 !^   &                    (rzeta(i-1,j)-                                &
 !^   &                     rzeta(i  ,j))+                               &
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                    (h(i-1,j)-                                    &
 !^   &                     h(i  ,j))*                                   &
 !^   &                    (rzetaSA(i-1,j)+                              &
@@ -2156,7 +2156,7 @@
      &                        h(i ,j))*                                 &
      &                       (tl_rzeta(i-1,j)-                          &
      &                        tl_rzeta(i  ,j))+                         &
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
      &                       (tl_h(i-1,j)-                              &
      &                        tl_h(i  ,j))*                             &
      &                       (rzetaSA(i-1,j)+                           &
@@ -2193,7 +2193,7 @@
 !^   &                     h(i,j  ))*                                   &
 !^   &                    (rzeta(i,j-1)-                                &
 !^   &                     rzeta(i,j  ))+                               &
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
 !^   &                    (h(i,j-1)-                                    &
 !^   &                     h(i,j  ))*                                   &
 !^   &                    (rzetaSA(i,j-1)+                              &
@@ -2216,7 +2216,7 @@
      &                        h(i,j  ))*                                &
      &                       (tl_rzeta(i,j-1)-                          &
      &                        tl_rzeta(i,j  ))+                         &
-# if defined VAR_RHO_2D && defined SOLVE3D
+# if defined VAR_RHO_2D_NOT_YET && defined SOLVE3D
      &                       (tl_h(i,j-1)-                              &
      &                        tl_h(i,j  ))*                             &
      &                       (rzetaSA(i,j-1)+                           &
