@@ -68,6 +68,9 @@
 #ifdef SOLVE3D
      &                  nstp(ng), nnew(ng),                             &
 #endif
+#if defined EMINUSP_SHIMA && defined SOLVE3D
+     &                  FORCES(ng) % stflux,                            &
+#endif
 #ifdef MASKING
      &                  GRID(ng) % pmask,       GRID(ng) % rmask,       &
      &                  GRID(ng) % umask,       GRID(ng) % vmask,       &
@@ -184,6 +187,9 @@
      &                        krhs, kstp, knew,                         &
 #ifdef SOLVE3D
      &                        nstp, nnew,                               &
+#endif
+#if defined EMINUSP_SHIMA && SOLVE3D
+     &                        stflux,                                   &
 #endif
 #ifdef MASKING
      &                        pmask, rmask, umask, vmask,               &
@@ -302,6 +308,9 @@
 #endif
 !
 #ifdef ASSUMED_SHAPE
+# if defined EMINUSP_SHIMA && SOLVE3D
+      real(r8), intent(in) :: stflux(LBi:,LBj:,:)
+# endif
 # ifdef MASKING
       real(r8), intent(in   ) :: pmask(LBi:,LBj:)
       real(r8), intent(in   ) :: rmask(LBi:,LBj:)
@@ -443,6 +452,9 @@
 
 #else
 
+# if defined EMINUSP_SHIMA && defined SOLVE3D
+      real(r8), intent(in) :: stflux(LBi:UBi,LBj:UBj,NT(ng))
+# endif
 # ifdef MASKING
       real(r8), intent(in   ) :: pmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in   ) :: rmask(LBi:UBi,LBj:UBj)
@@ -587,7 +599,7 @@
 !
       logical :: CORRECTOR_2D_STEP
 !
-      integer :: i, is, j, ptsk
+      integer :: i, is, j, k, ptsk
 #ifdef DIAGNOSTICS_UV
       integer :: idiag
 #endif
@@ -1074,14 +1086,25 @@
           END IF
         END DO
       END IF
-
+#if defined EMINUSP_SHIMA && defined SOLVE3D
+!
+! Freshwater flux is positive out of the domain.
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          zeta(i,j,knew)=zeta(i,j,knew)-                                &
+     &                       stflux(i,j,isalt)*dtfast(ng)
+        END DO
+      END DO
+#endif
 #if defined SEDIMENT && defined SED_MORPH
 !
 !  Scale the bed change with the fast time stepping. The half is
 !  becasue we do predictor and corrector. The "ndtfast/nfast" is
 !  becasue we do "nfast" steps to here.
 !
-      fac=0.5_r8*dtfast(ng)*ndtfast(ng)/(nfast(ng)*dt(ng))
+!     fac=0.5_r8*dtfast(ng)*ndtfast(ng)/(nfast(ng)*dt(ng))
+      fac=0.5_r8/nfast(ng)
       DO j=Jstr,Jend
         DO i=Istr,Iend
           cff=fac*(bed_thick(i,j,nstp)-bed_thick(i,j,nnew))

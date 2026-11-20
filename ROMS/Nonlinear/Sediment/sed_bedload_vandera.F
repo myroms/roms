@@ -352,6 +352,10 @@
 
 # include "set_bounds.h"
 !
+!-----------------------------------------------------------------------
+!  Initialize.
+!-----------------------------------------------------------------------
+!
       twopi=2.0_r8*pi
       otwopi=1.0_r8/twopi
       sqrt2=SQRT(2.0_r8)
@@ -388,7 +392,7 @@
         END DO
       END DO
 !
-      DO ised=NCS+1,NST
+      SED_LOOP : DO ised=NCS+1,NST
         rhos=Srho(ised,ng)                      ! (kg/m3)
         d50=sd50(ised,ng)                       ! (m)
         d90=1.3_r8*d50                          ! (m)
@@ -405,8 +409,8 @@
         smgd_3=sqrt((cff-1.0_r8)*g*d50**3.0_r8)
 !
 # if defined SED_WENO
-      DO j=Jstrm3,Jendp2i
-        DO i=Istrm3,Iendp2i
+        DO j=Jstrm3,Jendp2i
+          DO i=Istrm3,Iendp2i
 # else
         DO j=Jstrm1,Jendp1
           DO i=Istrm1,Iendp1
@@ -786,7 +790,7 @@
      &          (FX_r(i-1,j)-2.0_r8*FX_r(i,j)+FX_r(i+1,j))**2+          &
      &          0.25_r8*                                                &
      &          (FX_r(i-1,j)-FX_r(i+1,j))**2
-!     &          (-FX_r(i-1,j)+FX_r(i+1,j))**2
+!    &          (-FX_r(i-1,j)+FX_r(i+1,j))**2
             S3p=thirtotwelv*                                            &
      &          (FX_r(i,j)-2.0_r8*FX_r(i+1,j)+FX_r(i+2,j))**2+          &
      &          0.25_r8*                                                &
@@ -892,7 +896,7 @@
      &          (FE_r(i,j-1)-2.0_r8*FE_r(i,j)+FE_r(i,j+1))**2+          &
      &          0.25_r8*                                                &
      &          (FE_r(i,j-1)-FE_r(i,j+1))**2
-!     &          (-FE_r(i,j-1)+FE_r(i,j+1))**2
+!    &          (-FE_r(i,j-1)+FE_r(i,j+1))**2
             S3p=thirtotwelv*                                            &
      &          (FE_r(i,j)-2.0_r8*FE_r(i,j+1)+FE_r(i,j+2))**2+          &
      &          0.25_r8*                                                &
@@ -1240,7 +1244,7 @@
             bedldv(i,j,ised)=FE(i,j)*(pm(i,j-1)+pm(i,j))*cff
           END DO
         END DO
-      END DO
+      END DO SED_LOOP
 !
 !  Need to update bed mass for the non-cohesive sediment types, becasue 
 !  they did not partake in the bedload transport.
