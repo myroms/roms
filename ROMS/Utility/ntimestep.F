@@ -51,11 +51,8 @@
 !
       integer :: extra, gn, ig, il, ng, ngm1
       integer, dimension(Ngrids) :: WindowSteps, my_Nsteps
-
-#if defined MODEL_COUPLING && !defined MCT_LIB
 !
       real(dp) :: ENDtime, NEXTtime
-#endif
 !
 !=======================================================================
 !  Set number of time steps to execute for grid "ng".
