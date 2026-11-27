@@ -533,6 +533,13 @@
         logical, allocatable :: Lm2CLM(:)            ! 2D momentum
         logical, allocatable :: Lm3CLM(:)            ! 3D momentum
         logical, allocatable :: LtracerCLM(:,:)      ! tracers
+#ifdef ADJOINT
+        logical, allocatable :: ad_LtracerCLM(:,:)   ! ADM tracers
+#endif
+#ifdef TANGENT
+        logical, allocatable :: tl_LtracerCLM(:,:)   ! TLM tracers
+#endif
+
 !
 !  Switched to nudge to climatology fields.
 !
@@ -2352,6 +2359,18 @@
         allocate ( LtracerCLM(MT,Ngrids) )
         Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
       END IF
+#ifdef ADJOINT
+      IF (.not.allocated(ad_LtracerCLM)) THEN
+        allocate ( ad_LtracerCLM(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
+      END IF
+#endif
+#ifdef TANGENT
+      IF (.not.allocated(tl_LtracerCLM)) THEN
+        allocate ( tl_LtracerCLM(MT,Ngrids) )
+        Dmem(1)=Dmem(1)+REAL(MT*Ngrids,r8)
+      END IF
+#endif
 
       IF (.not.allocated(Lnudging)) THEN
         allocate ( Lnudging(Ngrids) )
@@ -3763,6 +3782,14 @@
 
       IF (allocated(LtracerCLM))        deallocate ( LtracerCLM )
 
+#ifdef ADJOINT
+      IF (allocated(ad_LtracerCLM))     deallocate ( ad_LtracerCLM )
+#endif
+
+#ifdef TANGENT
+      IF (allocated(tl_LtracerCLM))     deallocate ( tl_LtracerCLM )
+#endif
+
       IF (allocated(Lnudging))          deallocate ( Lnudging )
 
       IF (allocated(LnudgeM2CLM))       deallocate ( LnudgeM2CLM )
@@ -4662,6 +4689,12 @@
         DO itrc=1,MT
           LnudgeTCLM(itrc,ng)=.FALSE.
           LtracerCLM(itrc,ng)=.FALSE.
+#ifdef ADJOINT
+          ad_LtracerCLM(itrc,ng)=.FALSE.
+#endif
+#ifdef TANGENT
+          tl_LtracerCLM(itrc,ng)=.FALSE.
+#endif
           LtracerSrc(itrc,ng)=.FALSE.
           LtracerSponge(itrc,ng)=.FALSE.
           ad_Akt_fac(itrc,ng)=1.0_r8

@@ -99,7 +99,7 @@
       integer :: ng
 !
       character (len=*), parameter :: MyFile =                          &
-     &  __FILE__//", close_inp"
+     &  __FILE__//", close_forward"
 !
       SourceFile=MyFile
 !
@@ -123,6 +123,10 @@
 #endif
 !
 !  Close forward trajectory and fluxes files.
+!
+      IF (Master) THEN
+        WRITE (stdout,10)
+      END IF
 !
       DO ng=1,Ngrids
 #if defined FORWARD_WRITE
@@ -153,6 +157,9 @@
         CALL close_file (ng, iNLM, XTR(ng), XTR(ng)%name, Lupdate)
 #endif
       END DO
+!
+ 10   FORMAT (' CLOSE_FORWARD - Closing forward trajectory files ',     &
+     &        'to synchronize with disk.')
 !
       RETURN
       END SUBROUTINE close_forward

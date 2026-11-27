@@ -1225,7 +1225,7 @@
 !
       ic=0
       DO i=1,NT(ng)
-        IF (LtracerCLM(i,ng)) THEN
+        IF (tl_LtracerCLM(i,ng)) THEN
           ic=ic+1
           CALL get_3dfld (ng, iTLM, idTclm(i),                          &
      &                    CLMncid(idTclm(i),ng),                        &
