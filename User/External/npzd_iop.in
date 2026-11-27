@@ -1,0 +1,417 @@
+!  IOP-based, NPZD Ecosystem Model Parameters.
+!
+!svn $Id$
+!========================================================= Hernan G. Arango ===
+!  Copyright (c) 2002-2024 The ROMS/TOMS Group                                !
+!    Licensed under a MIT/X style license                                     !
+!    See License_ROMS.md                                                      !
+!==============================================================================
+!                                                                             !
+! Input parameters can be entered in ANY order, provided that the parameter   !
+! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
+! symbols. Any comment lines are allowed and must begin with an exclamation   !
+! mark (!) in column one.  Comments may  appear to the right of a parameter   !
+! specification to improve documentation.  Comments will be ignored  during   !
+! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
+! a parameter specification are allowed and must be preceded by a backslash   !
+! (\).  In some instances, more than one value is required for a parameter.   !
+! If fewer values are provided, the  last value  is assigned for the entire   !
+! parameter array.  The multiplication symbol (*),  without blank spaces in   !
+! between, is allowed for a parameter specification.  For example, in a two   !
+! grids nested application:                                                   !
+!                                                                             !
+!    AKT_BAK == 2*1.0d-6  2*5.0d-6              ! m2/s                        !
+!                                                                             !
+! indicates that the first two entries of array AKT_BAK,  in fortran column-  !
+! major order, will have the same value of "1.0d-6" for grid 1,  whereas the  !
+! next two entries will have the same value of "5.0d-6" for grid 2.           !
+!                                                                             !
+! In multiple levels of nesting and/or multiple connected domains  step-ups,  !
+! "Ngrids" entries are expected for some of these parameters.  In such case,  !
+! the order of the entries for a parameter is extremely important.  It  must  !
+! follow the same order (1:Ngrids) as in the state variable declaration. The  !
+! USER may follow the above guidelines for specifying his/her values.  These  !
+! parameters are marked by "==" plural symbol after the KEYWORD.              !
+!                                                                             !
+!==============================================================================
+!
+! NOTICE: Input parameter units are specified within brackets and default
+! ******  values are specified within braces.
+!
+! Switch to control the computation of biology within nested and/or multiple
+! connected grids.
+
+     Lbiology == T
+
+! Maximum number of iterations to achieve convergence of the nonlinear
+! solution.
+
+      BioIter == 1
+
+! Initial concentration for analytical uniform initial conditions for
+! ecosystem tracers. Except for DIN, two values are expected for two
+! spectral bands: 410nm and 510nm.
+
+BioIni(iDIN_) == 1.0d0               ! Dissolved Inorganic Nitrogen
+BioIni(iAphy) == 1.0d0  1.0d0        ! Phytoplankton absorption at 440, 510nm
+BioIni(iBphy) == 1.0d0  1.0d0        ! Phytoplankton scattering at 440, 510nm
+BioIni(aCDOM) == 1.0d0  1.0d0        ! CDOM absorption at 440, 510nm
+BioIni(iBdet) == 1.0d0  1.0d0        ! Detritus scatteing at 440, 510 nm
+
+! Fraction of shortwave radiation that is photosynthetically active
+! (nondimensional), {0.43d0}.
+
+      PARfrac == 0.43d0
+
+! Light attenuation due to seawater [1/m], {0.04d0}.
+
+        AttSW == 0.04d0
+
+! Light attenuation factor due to CDOM absorption at 440nm
+! [nondimensional].
+
+CDOM_LightAtt == 0.8d0
+
+! Light-dependent degradation rate for CDOM absorption at 440nm
+! [1/(Watt m-2 day)].
+
+   CDOM_sigma == 0.01d0
+
+! Half-saturation for phytoplankton nitrogen uptake [millimole_N m-3].
+
+        K_DIN == 0.5d0
+
+! Phytoplankton, initial slope of the P-I curve [m2/Watt].
+
+        PhyIS == 0.025d0
+
+! Phytoplankton mortality rate to the Detritus pool [1/day].
+
+       PhyMRD == 0.0d0
+
+! Phytoplankton loss rate to the Nitrogen pool [1/day].
+
+       PhyMRN == 0.0d0
+
+! Nitrogen uptake rate [1/day].
+
+       Vm_DIN == 1.0d0
+
+! Detritus remineraliztion rate [1/day].
+
+        DetRR == 0.0d0
+
+! Maximum photosynthetic rate [1/day].
+
+    PhotoRmax == 1.0d0
+
+! Maximum ratio of phytoplankton backscatter to absorption
+! [nondimensional].
+
+       ThetaM == 1.0d0
+
+! Mapping from phytoplankton backscatter to Nitrogen biomass at 440 nm
+! [millimole_N/m2].
+
+      BphyMap == 50.0d0
+
+! Mapping from detritus backscatter to Nitrogen biomass at 440 nm
+! [millimole_N/m2].
+
+      BdetMap == 8.0d0
+
+! Phytoplankton sinking rate [m/day].
+
+         wPhy == 0.d0
+
+! Detrital sinking rate [m/day].
+
+         wDet == 0.d0
+
+! Harmonic/biharmonic horizontal diffusion of biological tracer for
+! nonlinear model and adjoint-based algorithms: [1:NBT,Ngrids].
+
+         TNU2 == 9*20.0d0                        ! m2/s
+         TNU4 == 9*2.0d8                         ! m4/s
+
+      ad_TNU2 == 9*0.0d0                         ! m2/s
+      ad_TNU4 == 9*0.0d0                         ! m4/s
+
+! Vertical mixing coefficients for biological tracers for nonlinear
+! model and basic state scale factor in adjoint-based algorithms:
+! [1:NBT,Ngrids].
+
+      AKT_BAK == 9*1.0d-6                        ! m2/s
+
+   ad_AKT_fac == 9*1.0d0                         ! nondimensional
+
+! Nudging/relaxation time scales, inverse scales will be computed
+! internally: [1:NBT,Ngrids].
+
+        TNUDG == 9*0.5d0                         ! days
+
+! Logical switches (TRUE/FALSE) to specify which variables to consider on
+! tracers point Sources/Sinks (like river runoff): [NBT,Ngrids] values are
+! expected. See glossary below for details.
+
+   LtracerSrc == 9*F
+
+! Logical switches (TRUE/FALSE) to activate writing of biological tracers
+! into HISTORY/AVERAGE output files: [1:NBT,Ngrids].
+
+ Hout(idTvar) == 9*T                             ! biological tracer
+ Hout(idTsur) == 9*F                             ! surface tracer flux
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged fields
+! into AVERAGE output file: [1:NBT,Ngrids].
+
+ Aout(idTvar) == 9*T                             ! biological tracer
+
+! Logical switches (TRUE/FALSE) to activate writing of time-averaged,
+! biological tracer diagnostic terms into DIAGNOSTIC output file:
+! [1:NBT,Ngrids].
+
+ Dout(iTrate) == 9*T                             ! time rate of change
+ Dout(iThadv) == 9*T                             ! horizontal total advection
+ Dout(iTxadv) == 9*T                             ! horizontal XI-advection
+ Dout(iTyadv) == 9*T                             ! horizontal ETA-advection
+ Dout(iTvadv) == 9*T                             ! vertical advection
+ Dout(iThdif) == 9*T                             ! horizontal total diffusion
+ Dout(iTxdif) == 9*T                             ! horizontal XI-diffusion
+ Dout(iTydif) == 9*T                             ! horizontal ETA-diffusion
+ Dout(iTsdif) == 9*T                             ! horizontal S-diffusion
+ Dout(iTvdif) == 9*T                             ! vertical diffusion
+
+!
+!  GLOSSARY:
+!  =========
+!
+!------------------------------------------------------------------------------
+! IOP-based, NPZD Ecosystem Model Parameters. Currently, it is configured with
+! 9 biological tracers:
+!
+!   idbio(1)      Dissolved inorganic nitrogen
+!   idbio(2)      Phytoplankton absorption at 440nm
+!   idbio(3)      Phytoplankton backscattering at 440nm
+!   idbio(4)      CDOM absorption at 440nm
+!   idbio(5)      Detritus backscattering at 440nm
+!   idbio(6)      Phytoplankton absorption at 510nm
+!   idbio(7)      Phytoplankton backscattering at 510nm
+!   idbio(8)      CDOM absorption at 510nm
+!   idbio(9)      Detritus backscattering at 510nm
+!
+!------------------------------------------------------------------------------
+!
+!  Lbiology       Switch to control the computation of a particular module
+!                   within nested and/or multiple connected grids. By default
+!                   this switch is set to TRUE in "mod_scalars" for all grids.
+!                   Ngrids values are expected. The USER has the option, for
+!                   example, to compute the biology in just one of the nested
+!                   grids. If so, this switch needs to be consistent with the
+!                   dimension parameter NBT in "mod_param".  In order to make
+!                   the model more efficient in memory usage, NBT(:) should
+!                   be zero in such grids.
+!
+!  BioIter        Maximum number of iterations to achieve convergence of
+!                   the nonlinear implicit solution.
+!
+!  BioIni         Initial concentration for analytical uniform initial
+!                   conditions, [1/meter]. It is only used when
+!                   ANA_BIOLOGY is activated.  Except for DIN, two values are
+!                   expected for two spectral bands: 410nm and 510nm.
+!
+!                     BioIni(iDIN_)    Dissolved Inorganic Nitrogen
+!                     BioIni(iAphy)    Phytoplankton absorption at 440, 510nm
+!                     BioIni(iBphy)    Phytoplankton scattering at 440, 510nm
+!                     BioIni(iBdet)    Detritus absorption at 440, 510 nm
+!                     BioIni(aCDOM)    CDOM absorption at 440, 510nm
+!
+!  PARfrac        Fraction of shortwave radiation that is photosynthetically
+!                   active (nondimensional).
+!
+!  AttSW          Light attenuation due to seawater [1/m].
+!
+!  CDOM_LightAtt  Light attenuation factor due to CDOM absorption
+!                   [nondimensional].
+!
+!  CDOM_sigma     Light-dependent degradation rate for CDOM absorption
+!                   [1/(Watt m-2 day)].
+!
+!  K_DIN          Half-saturation for phytoplankton nitrogen uptake
+!                   [millimole_N m-3].
+!
+!  PhyIS          Phytoplankton, initial slope of the P-I curve [m2/Watt].
+!
+!  PhyMRD         Phytoplankton mortality rate to the Detritus pool [1/day].
+!
+!  PhyMRN         Phytoplankton loss rate to the Nitrogen pool [1/day].
+!
+!  Vm_DIN         Nitrogen uptake rate [1/day].
+!
+!  DetRR          Detritus remineraliztion rate [1/day].
+!
+!  PhotoRmax      Maximum photosynthetic rate [1/day].
+!
+!  ThetaM         Maximum ratio of phytoplankton backscatter to absorption
+!                   [nondimensional].
+!
+!  BphyMap        Mapping from phytoplankton backscatter to Nitrogen biomass
+!                   at 440 nm [millimole_N/m2].
+!
+!  BdetMap        Mapping from detritus backscatter to Nitrogen biomass
+!                   at 440 nm [millimole_N/m2].
+!
+!  wPhy           Phytoplankton sinking rate [m/day].
+!
+!  wDet           Detrital sinking rate [m/day].
+!
+!------------------------------------------------------------------------------
+! Physical Parameters, [1:NBT,1:Ngrids] values are expected.
+!------------------------------------------------------------------------------
+!
+!  TNU2           Nonlinear model lateral, harmonic, constant, mixing
+!                   coefficient (m2/s) for biological tracer variables;
+!                   [1:NBT,1:Ngrids] values are expected. If variable
+!                   horizontal diffusion is activated, TNU2 is the mixing
+!                   coefficient for the largest grid-cell in the domain.
+!
+!  TNU4           Nonlinear model lateral, biharmonic, constant, mixing
+!                   coefficient (m4/s) for biological tracer variables;
+!                   [1:NBT,1:Ngrids] values are expected. If variable
+!                   horizontal diffusion is activated, TNU4 is the mixing
+!                   coefficient for the largest grid-cell in the domain.
+!
+!  ad_TNU2        Adjoint-based algorithms lateral, harmonic, constant,
+!                   mixing coefficient (m2/s) for biological tracer variables;
+!                   [1:NBT,1:Ngrids] values are expected. If variable
+!                   horizontal diffusion is activated, ad_TNU2 is the mixing
+!                   coefficient for the largest grid-cell in the domain.
+!
+!  ad_TNU4        Adjoint-based algorithms lateral, biharmonic, constant,
+!                   mixing coefficient (m4/s) for biological tracer variables;
+!                   [1:NBT,1:Ngrids] values are expected. If variable
+!                   horizontal diffusion is activated, ad_TNU4 is the mixing
+!                   coefficient for the largest grid-cell in the domain.
+!
+!  AKT_BAK        Background vertical mixing coefficient (m2/s) for biological
+!                   tracer variables, [1:NBT,1:Ngrids] values are expected.
+!
+!
+!  ad_AKT_fac     Adjoint-based algorithms vertical mixing, basic state,
+!                   scale factor (nondimensional) for biological tracer
+!                   variables; [1:NBT,1:Ngrids] values are expected. In
+!                   some applications, a smaller/larger values of vertical
+!                   mixing are necessary for stability. It is only used
+!                   when FORWARD_MIXING is activated.
+!
+!  TNUDG          Nudging time scale (days), [1:NBT,1:Ngrids]. Inverse scale
+!                   will be computed internally.
+!
+!
+!------------------------------------------------------------------------------
+!  Tracer point Sources/Sink sources switches.
+!------------------------------------------------------------------------------
+!
+!  LtracerSrc     Logical switches (T/F) to specify which tracer variables
+!                   to consider when the option TS_PSOURCE is activated;
+!                   [1:NBT,1:Ngrids] values are expected.
+!
+!                     LtracerSrc(idbio(1),ng)     Dissolved inorganic Nitrogen
+!                     LtracerSrc(idbio(2),ng)     Phy absorption at 440nm
+!                     LtracerSrc(idbio(3),ng)     Phy backscattering at 440nm
+!                     LtracerSrc(idbio(4),ng)     CDOM absorption at 440nm
+!                     LtracerSrc(idbio(5),ng)     Det backscattering at 440nm
+!                     LtracerSrc(idbio(6),ng)     Phy absorption at 510nm
+!                     LtracerSrc(idbio(7),ng)     Phy backscattering at 510nm
+!                     LtracerSrc(idbio(8),ng)     CDOM absorption at 510nm
+!                     LtracerSrc(idbio(9),ng)     Det backscattering at 510nm
+!
+!                   Recall that TS_PSOURCE is usually activated to add river
+!                   runoff as a point source. At minimum, it is necessary to
+!                   specify both temperature and salinity for all rivers. The
+!                   other tracers are optional. The user needs to know the
+!                   correspondence between biological variables and indices
+!                   idbio(1:NBT) when activating one or more of these switches.
+!
+!                   This logical switch REPLACES and ELIMINATES the need to
+!                   have or read the variable "river_flag(river)" in the input
+!                   rivers forcing NetCDF file:
+!
+!                     double river_flag(river)
+!                        river_flag:long_name = "river runoff tracer flag"
+!                        river_flag:option_0 = "all tracers are off"
+!                        river_flag:option_1 = "only temperature"
+!                        river_flag:option_2 = "only salinity"
+!                        river_flag:option_3 = "both temperature and salinity"
+!                        river_flag:units = "nondimensional"
+!
+!                   This logic was too cumbersome and complicated when
+!                   additional tracers are considered. However, this change
+!                   is backward compatible.
+!
+!                   The LtracerSrc switch will be used to activate the reading
+!                   of respective tracer variable from input river forcing
+!                   NetCDF file. If you want to add other tracer variables
+!                   (other than temperature and salinity) as a source for a
+!                   particular river(s), you just need to specify such values
+!                   on those river(s). Then, set the values to ZERO on the
+!                   other river(s) that do NOT require such river forcing for
+!                   that tracer. Recall that you need to specify the tracer
+!                   values for all rivers, even if their values are zero.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into HISTORY files.
+!------------------------------------------------------------------------------
+!
+!  Hout           Logical switches (T/F) to write out biological data into
+!                   output HISTORY NetCDF file, [1:NBT,1:Ngrids] values are
+!                   expected:
+!
+!                   Hout(idTvar)              biological tracers
+!                   Hout(idTsur)              biological tracers surface flux
+!
+!                   idTvar(idbio(1))=iDIN_         dissolved Inorganic Nitrogen
+!                   idTvar(idbio(2))=iAphy(i440n)  Phy absorption at 440nm
+!                   idTvar(idbio(3))=iBphy(i440n)  Phy backscattering at 440nm
+!                   idTvar(idbio(4))=aCDOM(i440n)  CDOM absorption at 440nm
+!                   idTvar(idbio(5))=iBdet(i440n)  Det backscattering at 440nm
+!                   idTvar(idbio(6))=iAphy(i510n)  Phy absorption at 510nm
+!                   idTvar(idbio(7))=iBphy(i510n)  Phy backscattering at 510nm
+!                   idTvar(idbio(8))=aCDOM(i510n)  CDOM absorption at 510nm
+!                   idTvar(idbio(9))=iBdet(i510n)  Det backscattering at 510nm
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of fields into AVERAGE file.
+!------------------------------------------------------------------------------
+!
+!  Aout           Logical switches to write out biological fields into
+!                   output AVERAGE NetCDF file, [1:NBT,1:Ngrids] values
+!                   are expected:
+!
+!                   Aout(idTvar)              biological tracers
+!
+!                   The idTvar(idbio(:)) are the same to those in the HISTORY
+!                   file.
+!
+!------------------------------------------------------------------------------
+! Logical switches (T/F) to activate writing of time-averaged fields into
+! DIAGNOSTIC file.
+!------------------------------------------------------------------------------
+!
+!  Time-averaged, biological tracers  diagnostic terms, [1:NBT,Ngrids] values
+!  expected: (if DIAGNOSTICS_TS)
+!
+!                 Dout(idDtrc(idbio(1:NBT),iT....),1:Ngrids)
+!
+!  Dout(iTrate)   Write out time rate of change.
+!  Dout(iThadv)   Write out horizontal total advection.
+!  Dout(iTxadv)   Write out horizontal  XI-advection.
+!  Dout(iTyadv)   Write out horizontal ETA-advection.
+!  Dout(iTvadv)   Write out vertical advection.
+!  Dout(iThdif)   Write out horizontal total diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTxdif)   Write out horizonta1  XI-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTydif)   Write out horizontal ETA-diffusion, if TS_DIF2 or TS_DIF4.
+!  Dout(iTsdif)   Write out horizontal   S-diffusion, if TS_DIF2 or TS_DIF4 and
+!                   rotated tensor (MIX_GEO_TS or MIX_ISO_TS).
+!  Dout(iTvdif)   Write out vertical diffusion.
+!
