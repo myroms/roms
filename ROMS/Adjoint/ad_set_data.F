@@ -1156,13 +1156,13 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_TCLIMA
-      IF (ANY(LtracerCLM(:,ng))) THEN
+      IF (ANY(ad_LtracerCLM(:,ng))) THEN
         CALL ana_tclima (ng, tile, iADM)
       END IF
 #  else
       ic=0
       DO itrc=1,NT(ng)
-        IF (LtracerCLM(itrc,ng)) THEN
+        IF (ad_LtracerCLM(itrc,ng)) THEN
           ic=ic+1
           CALL set_3dfldr_tile (ng, tile, iADM, idTclm(itrc),           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
