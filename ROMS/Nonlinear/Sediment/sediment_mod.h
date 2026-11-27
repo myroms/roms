@@ -150,7 +150,7 @@
 !
 #if defined MIXED_BED
       integer, parameter :: MBOTP = 35 ! Number of bottom properties
-#elseif defined COHESIVE_BED || defined SED_BIODIFF
+#elif defined COHESIVE_BED || defined SED_BIODIFF
       integer, parameter :: MBOTP = 34 ! Number of bottom properties
 #else
       integer, parameter :: MBOTP = 26 ! Number of bottom properties
