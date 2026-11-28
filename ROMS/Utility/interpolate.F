@@ -83,7 +83,7 @@
 !  Set ROMS interpolation structure for Object Oriented Programming.
 !-----------------------------------------------------------------------
 !
-      TYPE :: roms_interp_type
+      TYPE, PUBLIC :: roms_interp_type
 
         logical :: rectangular = .FALSE.            ! plaid grid switch
 !
